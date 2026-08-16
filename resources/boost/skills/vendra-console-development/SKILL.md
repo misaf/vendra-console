@@ -1,0 +1,56 @@
+---
+name: vendra-console-development
+description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and properties across every tenant. Use for ConsolePanelServiceProvider, ConsoleUser, ConsoleOverview, PropertyResource, PropertyForm, PropertyTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the console_users password broker, and the console.<host> panel domain."
+---
+
+# Vendra Console
+
+## Workflow
+
+- Inspect `composer.json`, sibling files, and existing tests before changing the package.
+- Use Laravel Boost `application-info` and `search-docs` before code changes.
+- Apply `laravel-best-practices` to Laravel PHP and `pest-testing` whenever tests change.
+- Keep changes inside this package's boundary and preserve its public contracts.
+- Add or update focused Pest coverage, then run `php artisan test --compact --testsuite=vendra-console` from the project root.
+
+## Translatable Persistence
+
+- Making a persisted model field translatable is an explicit domain choice unless this package already requires it.
+- Every field listed in a model's `$translatable` array must definitely use a JSON database column. Keep its model traits/casts, factories, validation, Filament locale UI, API serialization, and tests translation-aware.
+- A field not listed in `$translatable` must use the appropriate scalar database type and must not use Spatie Translatable, translatable slug traits, locale switchers, translated callbacks, or translation-shaped array data.
+
+## Vendra Transitive API Policy
+
+- Treat a Vendra dependency intentionally exposed through the public API of a directly required Vendra platform package as part of the supported public contract of that package.
+- Do not add a redundant direct Composer requirement solely because source code imports a type from that exposed dependency.
+- Apply this only to Vendra platform packages listed under `require`; never extend it to `require-dev`, `suggest`, incidental implementation dependencies, or third-party packages. Removing or replacing an exposed dependency is a breaking change; keep `self.version` alignment across the Vendra package graph.
+
+## Module Boundary
+
+- This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-property` → `vendra-container`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
+- The panel is presentation. Business operations live in the domain packages' actions — `ProvisionPropertyAction`, `CreatePropertyAction`, `DeletePropertyAction`, `OffboardResellerAction`. A page or table action that mutates state directly is in the wrong place.
+
+## Tenancy
+
+- The console panel runs **outside** the tenant middleware stack; an operator works across all tenants.
+- Never assume a current tenant, and never scope console queries with tenant-aware helpers. Where a listing must be per-tenant, join explicitly.
+
+## Panel Wiring
+
+- `Providers\ConsolePanelServiceProvider` owns the panel: `console` auth guard, `console_users` password broker, `console.<app host>` domain derived from `app.url`, top navigation, and the `AddPanelToRequestJobContext` / `SetLocale` middleware.
+- Authentication is against `Models\ConsoleUser`, not the tenant user model. Email verification is required.
+- Do not hard-code the panel host; it is derived from configuration.
+
+## Resources
+
+- `PropertyResource`, `ResellerResource`, and `PlanResource` render and delegate. Property creation extends `Misaf\VendraProperty\Filament\Pages\CreatePropertyPage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
+- The only intended difference from the reseller panel is which reseller is resolved as the property's billing owner — the console picks one from the form. Keep any other divergence out.
+
+## Testing
+
+- Act as a `ConsoleUser` on the `console` guard and assert against the panel's own pages; a test that sets up a current tenant is testing the wrong panel.
+- Cover delegation: assert the domain action ran, rather than re-asserting the domain package's own behaviour.
+
+## Filament
+
+- Resources with a cluster live in `src/Filament/Clusters/Resources/`; resources without one live in `src/Filament/Resources/`.
