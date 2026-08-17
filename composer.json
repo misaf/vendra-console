@@ -42,6 +42,7 @@
         "laravel/boost": "^2.4.12",
         "laravel/pint": "^1.29.3",
         "misaf/vendra-testing": "self.version",
+        "misaf/vendra-user": "self.version",
         "mockery/mockery": "^1.6.12",
         "nunomaduro/collision": "^8.9.4",
         "orchestra/testbench": "^11.1",
@@ -55,7 +56,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Misaf\\VendraConsole\\": "src/"
+            "Misaf\\VendraConsole\\": "src/",
+            "Misaf\\VendraConsole\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {

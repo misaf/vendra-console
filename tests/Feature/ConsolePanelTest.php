@@ -1,0 +1,564 @@
+<?php
+
+declare(strict_types=1);
+
+use Filament\Actions\DeleteAction;
+use Filament\Actions\Testing\TestAction;
+use Filament\Facades\Filament;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersLayout;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
+use Misaf\VendraConsole\Database\Seeders\ConsoleUserSeeder;
+use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
+use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
+use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
+use Misaf\VendraConsole\Filament\Resources\Plans\PlanResource;
+use Misaf\VendraConsole\Filament\Resources\Properties\Pages\CreateProperty;
+use Misaf\VendraConsole\Filament\Resources\Properties\Pages\EditProperty;
+use Misaf\VendraConsole\Filament\Resources\Properties\Pages\ListProperties;
+use Misaf\VendraConsole\Filament\Resources\Properties\PropertyResource as ConsolePropertyResource;
+use Misaf\VendraConsole\Filament\Resources\Properties\RelationManagers\DomainsRelationManager;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
+use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
+use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraProperty\Models\StorefrontDeployment;
+use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraReseller\Models\ResellerUser;
+use Misaf\VendraSubscription\Enums\PeriodUnit;
+use Misaf\VendraSubscription\Models\Plan;
+use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
+use Misaf\VendraTenant\Models\Tenant;
+use Misaf\VendraTenant\Models\TenantDomain;
+use Misaf\VendraUser\Models\User;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+use function Pest\Livewire\livewire;
+
+beforeEach(function (): void {
+    Event::fake([TenantProvisioned::class]);
+    Artisan::shouldReceive('call')->andReturn(0);
+    Config::set('vendra-container.endpoint', 'http://provisioner:8080');
+    fakeDockerEngine();
+});
+
+function consoleAdmin(): ConsoleUser
+{
+    return ConsoleUser::factory()->create();
+}
+
+function actAsConsoleAdmin(): ConsoleUser
+{
+    $admin = consoleAdmin();
+    actingAs($admin, 'console');
+    Filament::setCurrentPanel(Filament::getPanel('console'));
+
+    return $admin;
+}
+
+function consoleStorefrontFormData(): array
+{
+    return [
+        'storefront_slug'                 => 'console-flowers',
+        'storefront_theme'                => 'default',
+        'storefront_name_en'              => 'Console Flowers',
+        'storefront_name_fa'              => 'گل‌فروشی کنسول',
+        'storefront_business_type'        => 'Florist',
+        'storefront_price_currency'       => 'IRR',
+        'storefront_locality'             => 'Tehran',
+        'storefront_country'              => 'IR',
+        'storefront_mobile_phone'         => '09120000000',
+        'storefront_office_phone'         => '02100000000',
+        'storefront_contact_email'        => 'contact@console-flowers.test',
+        'storefront_hours_open'           => '08:00',
+        'storefront_hours_close'          => '21:00',
+        'storefront_map_query'            => '35.7,51.4',
+        'storefront_whatsapp_phone'       => '+989120000000',
+        'storefront_telegram_username'    => 'consoleflowers',
+        'storefront_instagram_username'   => 'consoleflowers',
+    ];
+}
+
+it('uses the Vendra logo in light and dark modes', function (): void {
+    $panel = Filament::getPanel('console');
+
+    expect($panel->getBrandName())->toBe('Vendra Console')
+        ->and($panel->getBrandLogo())->toBe(asset('images/vendra-logo.svg'))
+        ->and($panel->getDarkModeBrandLogo())->toBe(asset('images/vendra-logo-dark.svg'))
+        ->and($panel->getBrandLogoHeight())->toBe('2rem');
+});
+
+it('globally searches console resources', function (): void {
+    actAsConsoleAdmin();
+
+    $plan = Plan::factory()->create(['name' => 'Enterprise Search Plan']);
+    $reseller = Reseller::factory()->create([
+        'name'  => 'Search Partner',
+        'email' => 'partner-search@example.com',
+    ]);
+    $property = Tenant::factory()->create(['name' => 'Search Property']);
+    TenantDomain::factory()->for($property)->create([
+        'name'   => 'global-search-property.test',
+        'active' => true,
+    ]);
+
+    $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
+    $resellerResult = ResellerResource::getGlobalSearchResults('partner-search@example.com')->sole();
+    $propertyResult = ConsolePropertyResource::getGlobalSearchResults('global-search-property.test')->sole();
+
+    expect($planResult->title)->toBe($plan->name)
+        ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
+        ->and($resellerResult->title)->toBe($reseller->name)
+        ->and($resellerResult->url)->toBe(ResellerResource::getUrl('edit', ['record' => $reseller]))
+        ->and($propertyResult->title)->toBe($property->name)
+        ->and($propertyResult->url)->toBe(ConsolePropertyResource::getUrl('edit', ['record' => $property]))
+        ->and($propertyResult->details)->toBe([
+            __('console.domain') => 'global-search-property.test',
+        ]);
+});
+
+it('isolates console operators from application users', function (): void {
+    $tenant = createTestTenant();
+    $admin = ConsoleUser::factory()->create();
+    $regular = User::factory()->forTenant($tenant)->create();
+
+    $panel = Filament::getPanel('console');
+
+    expect($admin->canAccessPanel($panel))->toBeTrue()
+        ->and($regular->canAccessPanel($panel))->toBeFalse()
+        ->and($panel->getAuthGuard())->toBe('console')
+        ->and($panel->getAuthPasswordBroker())->toBe('console_users')
+        ->and(config('auth.guards.console.provider'))->toBe('console_users')
+        ->and(config('auth.providers.console_users.model'))->toBe(ConsoleUser::class)
+        ->and(Filament::getPanel('reseller')->getAuthGuard())->toBe('reseller')
+        ->and(Filament::getPanel('admin')->getAuthGuard())->toBe('web');
+
+    actingAs($admin, 'console');
+
+    expect(auth('console')->id())->toBe($admin->getKey())
+        ->and(auth('web')->check())->toBeFalse();
+});
+
+it('redirects an application user away from the console panel', function (): void {
+    actingAs(User::factory()->forTenant(createTestTenant())->create());
+
+    $this->get('https://console.vendra.test')
+        ->assertRedirect('https://console.vendra.test/login');
+});
+
+it('allows a verified console operator into the console panel', function (): void {
+    actingAs(ConsoleUser::factory()->create(), 'console');
+
+    $this->get('https://console.vendra.test')->assertOk();
+});
+
+it('seeds the initial console operator only from explicit credentials', function (): void {
+    Config::set('console.operator', [
+        'username' => 'console_owner',
+        'email'    => 'OWNER@EXAMPLE.TEST',
+        'password' => 'a-secure-console-password',
+    ]);
+
+    app(ConsoleUserSeeder::class)->run();
+
+    $operator = ConsoleUser::query()->sole();
+
+    expect($operator->username)->toBe('console_owner')
+        ->and($operator->email)->toBe('owner@example.test')
+        ->and($operator->hasVerifiedEmail())->toBeTrue()
+        ->and(Hash::check('a-secure-console-password', $operator->password))->toBeTrue();
+});
+
+it('does not seed a console operator when explicit credentials are absent', function (): void {
+    Config::set('console.operator', [
+        'username' => '',
+        'email'    => '',
+        'password' => '',
+    ]);
+
+    app(ConsoleUserSeeder::class)->run();
+
+    expect(ConsoleUser::query()->count())->toBe(0);
+});
+
+it('lets a console admin create a plan', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreatePlan::class)
+        ->fillForm([
+            'name'          => 'Pro',
+            'max_units'     => 3,
+            'period_unit'   => 'month',
+            'period_count'  => 1,
+            'active'        => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('plans', [
+        'name'          => 'Pro',
+        'max_units'     => 3,
+        'period_unit'   => 'month',
+    ]);
+});
+
+it('requires a currency for a paid plan', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreatePlan::class)
+        ->fillForm([
+            'name'           => 'Paid',
+            'max_units'      => 3,
+            'period_unit'    => 'month',
+            'period_count'   => 1,
+            'price'          => 1500,
+            'currency_code'  => null,
+            'active'         => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['currency_code' => 'required']);
+});
+
+it('honors a disabled state when creating a reseller', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateReseller::class)
+        ->fillForm([
+            'plan_id'               => Plan::factory()->create()->getKey(),
+            'username'              => 'paused_owner',
+            'email'                 => 'owner@gmail.com',
+            'password'              => 'Secure123',
+            'password_confirmation' => 'Secure123',
+            'active'                => false,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $reseller = Reseller::query()->where('name', 'paused_owner')->sole();
+
+    expect($reseller->active)->toBeFalse()
+        ->and($reseller->ownerUser()->sole())->toBeInstanceOf(ResellerUser::class)
+        ->and(Hash::check('Secure123', $reseller->ownerUser()->sole()->password))->toBeTrue();
+});
+
+it('prevents deleting a plan used by subscriptions from list and edit pages', function (): void {
+    actAsConsoleAdmin();
+
+    $plan = Plan::factory()->create();
+    Subscription::factory()->for($plan)->create();
+
+    livewire(ListPlans::class)
+        ->assertActionHidden(TestAction::make('delete')->table($plan));
+
+    livewire(EditPlan::class, ['record' => $plan->getKey()])
+        ->assertActionHidden(DeleteAction::class);
+});
+
+it('allows deleting an unused plan from list and edit pages', function (): void {
+    actAsConsoleAdmin();
+
+    $plan = Plan::factory()->create();
+
+    livewire(ListPlans::class)
+        ->assertActionVisible(TestAction::make('delete')->table($plan));
+
+    livewire(EditPlan::class, ['record' => $plan->getKey()])
+        ->assertActionVisible(DeleteAction::class);
+});
+
+it('creates a property for a reseller within its plan limit', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
+
+    livewire(CreateProperty::class)
+        ->fillForm([
+            'reseller_id' => $reseller->getKey(),
+            'domain'      => 'acme.test',
+            'email'       => 'admin@gmail.com',
+            'active'      => true,
+            ...consoleStorefrontFormData(),
+            'storefront_slug' => 'acme',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('tenants', [
+        'name'        => 'Acme',
+        'reseller_id' => $reseller->getKey(),
+    ]);
+    assertDatabaseHas('users', [
+        'username' => 'admin',
+        'email'    => 'admin@gmail.com',
+    ]);
+    expect(StorefrontDeployment::query()->count())->toBe(1);
+});
+
+it('uses a wizard when creating a property and florist storefront', function (): void {
+    actAsConsoleAdmin();
+
+    $component = livewire(CreateProperty::class);
+
+    expect($component->instance()->hasSkippableSteps())->toBeTrue();
+
+    $component
+        ->assertWizardCurrentStep(1)
+        ->assertWizardStepExists(2)
+        ->assertWizardStepExists(3)
+        ->assertWizardStepExists(4)
+        ->assertFormFieldDoesNotExist('create_storefront')
+        ->assertSee(__('console.storefront_map_query'))
+        ->call('create')
+        ->assertHasFormErrors([
+            'reseller_id'               => 'required',
+            'domain'                    => 'required',
+            'email'                     => 'required',
+            'storefront_slug'           => 'required',
+            'storefront_name_en'        => 'required',
+            'storefront_name_fa'        => 'required',
+            'storefront_mobile_phone'   => 'required',
+            'storefront_office_phone'   => 'required',
+            'storefront_contact_email'  => 'required',
+            'storefront_hours_open'     => 'required',
+            'storefront_hours_close'    => 'required',
+            'storefront_locality'       => 'required',
+            'storefront_map_query'      => 'required',
+        ]);
+});
+
+it('suggests storefront identity from the property domain', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateProperty::class)
+        ->set('data.domain', 'Rose-Garden.Example')
+        ->assertHasNoFormErrors(['domain'])
+        ->assertFormSet([
+            'storefront_slug'    => 'rose-garden',
+            'storefront_name_en' => 'Rose Garden',
+        ]);
+});
+
+it('requests a storefront when a console admin creates a property', function (): void {
+    actAsConsoleAdmin();
+    $reseller = Reseller::factory()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
+
+    livewire(CreateProperty::class)
+        ->fillForm([
+            'reseller_id' => $reseller->getKey(),
+            'domain'      => 'console-flowers.test',
+            'email'       => 'console.flowers@gmail.com',
+            'active'      => true,
+            ...consoleStorefrontFormData(),
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('storefront_deployments', [
+        'slug'   => 'console-flowers',
+        'domain' => 'console-flowers.test',
+        'theme'  => 'default',
+        'status' => 'ready',
+    ]);
+});
+
+it('blocks property creation once the reseller reaches its plan limit', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(1))->create();
+    Tenant::factory()->create(['reseller_id' => $reseller->getKey()]);
+
+    livewire(CreateProperty::class)
+        ->fillForm([
+            'reseller_id'    => $reseller->getKey(),
+            'domain'         => 'second.test',
+            'email'          => 'admin@second.test',
+            'active'         => true,
+        ])
+        ->call('create');
+
+    assertDatabaseMissing('tenant_domains', ['name' => 'second.test']);
+    expect($reseller->tenants()->count())->toBe(1);
+});
+
+it('validates property domains during creation', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(3))->create();
+    $existingProperty = Tenant::factory()->create();
+    TenantDomain::factory()->for($existingProperty)->create(['name' => 'taken.test', 'active' => true]);
+
+    livewire(CreateProperty::class)
+        ->fillForm([
+            'reseller_id'    => $reseller->getKey(),
+            'domain'         => 'not a domain',
+            'email'          => 'invalid@example.test',
+            'active'         => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['domain' => 'regex']);
+
+    livewire(CreateProperty::class)
+        ->fillForm([
+            'reseller_id'    => $reseller->getKey(),
+            'domain'         => 'taken.test',
+            'email'          => 'duplicate@example.test',
+            'active'         => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['domain' => 'unique']);
+});
+
+it('lets a console admin replace a domain and shows the old one in trashed history', function (): void {
+    actAsConsoleAdmin();
+
+    $property = Tenant::factory()->create(['active' => true]);
+    $original = TenantDomain::factory()->for($property)->create(['name' => 'old.test', 'active' => true]);
+
+    livewire(ListProperties::class)
+        ->callAction(TestAction::make('replaceDomain')->table($property), ['domain' => 'new.test'])
+        ->assertHasNoErrors();
+
+    $current = $property->execute(fn() => $property->tenantDomains()->where('active', true)->value('name'));
+    expect($current)->toBe('new.test');
+
+    livewire(DomainsRelationManager::class, [
+        'ownerRecord' => $property,
+        'pageClass'   => EditProperty::class,
+    ])
+        ->call('loadTable')
+        ->filterTable('trashed', ['value' => '0'])
+        ->assertCanSeeTableRecords([$original]);
+});
+
+it('lets a console admin soft-delete then restore a property', function (): void {
+    actAsConsoleAdmin();
+
+    $property = Tenant::factory()->create(['active' => true]);
+
+    livewire(ListProperties::class)
+        ->callAction(TestAction::make('delete')->table($property))
+        ->assertHasNoErrors();
+
+    expect($property->fresh()?->trashed())->toBeTrue();
+
+    livewire(ListProperties::class)
+        ->loadTable()
+        ->filterTable('trashed', ['value' => 'trashed'])
+        ->callAction(TestAction::make('restore')->table($property))
+        ->assertHasNoErrors();
+
+    expect($property->fresh()?->trashed())->toBeFalse();
+});
+
+it('lets a console admin permanently delete a trashed property', function (): void {
+    actAsConsoleAdmin();
+
+    $property = Tenant::factory()->trashed()->create();
+
+    livewire(ListProperties::class)
+        ->loadTable()
+        ->filterTable('trashed', ['value' => 'trashed'])
+        ->callAction(TestAction::make('forceDelete')->table($property))
+        ->assertHasNoErrors();
+
+    assertDatabaseMissing('tenants', ['id' => $property->getKey()]);
+});
+
+it('filters properties by active', function (): void {
+    actAsConsoleAdmin();
+
+    $active = Tenant::factory()->create(['active' => true]);
+    $inactive = Tenant::factory()->create(['active' => false]);
+
+    livewire(ListProperties::class)
+        ->loadTable()
+        ->filterTable('active', ['value' => true])
+        ->assertCanSeeTableRecords([$active])
+        ->assertCanNotSeeTableRecords([$inactive]);
+});
+
+it('filters properties by reseller', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create(['active' => true]);
+    $owned = Tenant::factory()->create(['reseller_id' => $reseller->getKey(), 'active' => true]);
+    $unowned = Tenant::factory()->create(['active' => true]);
+
+    livewire(ListProperties::class)
+        ->loadTable()
+        ->filterTable('reseller_id', $reseller->getKey())
+        ->assertCanSeeTableRecords([$owned])
+        ->assertCanNotSeeTableRecords([$unowned]);
+});
+
+it('filters resellers by active', function (): void {
+    actAsConsoleAdmin();
+
+    $active = Reseller::factory()->create(['active' => true]);
+    $inactive = Reseller::factory()->create(['active' => false]);
+
+    livewire(ListResellers::class)
+        ->loadTable()
+        ->filterTable('active', ['value' => true])
+        ->assertCanSeeTableRecords([$active])
+        ->assertCanNotSeeTableRecords([$inactive]);
+});
+
+it('filters plans by period unit', function (): void {
+    actAsConsoleAdmin();
+
+    $monthly = Plan::factory()->create(['period_unit' => PeriodUnit::Month]);
+    $yearly = Plan::factory()->create(['period_unit' => PeriodUnit::Year]);
+
+    livewire(ListPlans::class)
+        ->loadTable()
+        ->filterTable('period_unit', PeriodUnit::Month->value)
+        ->assertCanSeeTableRecords([$monthly])
+        ->assertCanNotSeeTableRecords([$yearly]);
+});
+
+it('uses the package table presentation conventions in the console', function (
+    string $page,
+    string $resource,
+    Heroicon $emptyStateIcon,
+): void {
+    actAsConsoleAdmin();
+
+    $component = livewire($page)
+        ->assertTableColumnExists('row')
+        ->assertTableColumnExists('created_at')
+        ->assertTableColumnExists('updated_at');
+    $table = $component->instance()->getTable();
+
+    expect($table->getDescription())->toBe(__("console.tables.description.{$resource}"))
+        ->and($table->getEmptyStateHeading())->toBe(__("console.tables.empty_state.heading.{$resource}"))
+        ->and($table->getEmptyStateDescription())->toBe(__("console.tables.empty_state.description.{$resource}"))
+        ->and($table->getEmptyStateIcon())->toBe($emptyStateIcon)
+        ->and($table->getFiltersLayout())->toBe(FiltersLayout::AboveContentCollapsible);
+})->with([
+    'plans' => [
+        ListPlans::class,
+        'plans',
+        Heroicon::OutlinedRectangleStack,
+    ],
+    'resellers' => [
+        ListResellers::class,
+        'resellers',
+        Heroicon::OutlinedBuildingOffice2,
+    ],
+    'properties' => [
+        ListProperties::class,
+        'properties',
+        Heroicon::OutlinedGlobeAlt,
+    ],
+]);
