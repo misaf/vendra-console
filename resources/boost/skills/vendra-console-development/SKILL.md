@@ -1,6 +1,6 @@
 ---
 name: vendra-console-development
-description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and properties across every tenant. Use for ConsolePanelServiceProvider, ConsoleUser, ConsoleOverview, PropertyResource, PropertyForm, PropertyTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the console_users password broker, and the console.<host> panel domain."
+description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and stores across every tenant. Use for ConsolePanelServiceProvider, ConsoleUser, ConsoleOverview, StoreResource, StoreForm, StoreTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the console_users password broker, and the console.<host> panel domain."
 ---
 
 # Vendra Console
@@ -27,8 +27,8 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 ## Module Boundary
 
-- This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-property` → `vendra-container`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
-- The panel is presentation. Business operations live in the domain packages' actions — `ProvisionPropertyAction`, `CreatePropertyAction`, `DeletePropertyAction`, `OffboardResellerAction`. A page or table action that mutates state directly is in the wrong place.
+- This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-store` → `vendra-container`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
+- The panel is presentation. Business operations live in the domain packages' actions — `ProvisionStoreAction`, `CreateStoreAction`, `DeleteStoreAction`, `OffboardResellerAction`. A page or table action that mutates state directly is in the wrong place.
 
 ## Tenancy
 
@@ -43,8 +43,8 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 ## Resources
 
-- `PropertyResource`, `ResellerResource`, and `PlanResource` render and delegate. Property creation extends `Misaf\VendraProperty\Filament\Pages\CreatePropertyPage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
-- The only intended difference from the reseller panel is which reseller is resolved as the property's billing owner — the console picks one from the form. Keep any other divergence out.
+- `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
+- The only intended difference from the reseller panel is which reseller is resolved as the store's billing owner — the console picks one from the form. Keep any other divergence out.
 
 ## Testing
 

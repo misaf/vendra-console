@@ -23,7 +23,7 @@ final class ResellerTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query): Builder => $query->withCount('tenants'))
+            ->modifyQueryUsing(fn(Builder $query): Builder => $query->withCount('stores'))
             ->columns([
                 TextColumn::make('row')
                     ->label('#')
@@ -36,8 +36,8 @@ final class ResellerTable
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('tenants_count')
-                    ->label(__('console.properties_count'))
+                TextColumn::make('stores_count')
+                    ->label(__('console.stores_count'))
                     ->alignCenter(),
 
                 ToggleColumn::make('active')

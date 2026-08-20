@@ -16,24 +16,24 @@ use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
 use Misaf\VendraConsole\Filament\Resources\Plans\PlanResource;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\CreateProperty;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\EditProperty;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\ListProperties;
-use Misaf\VendraConsole\Filament\Resources\Properties\PropertyResource as ConsolePropertyResource;
-use Misaf\VendraConsole\Filament\Resources\Properties\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
+use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
+use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
 use Misaf\VendraConsole\Models\ConsoleUser;
-use Misaf\VendraProperty\Models\StorefrontDeployment;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraReseller\Models\ResellerUser;
+use Misaf\VendraStore\Models\Store;
+use Misaf\VendraStore\Models\StoreDomain;
+use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
-use Misaf\VendraTenant\Models\Tenant;
-use Misaf\VendraTenant\Models\TenantDomain;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -102,24 +102,24 @@ it('globally searches console resources', function (): void {
         'name'  => 'Search Partner',
         'email' => 'partner-search@example.com',
     ]);
-    $property = Tenant::factory()->create(['name' => 'Search Property']);
-    TenantDomain::factory()->for($property)->create([
-        'name'   => 'global-search-property.test',
+    $store = Store::factory()->create(['name' => 'Search Store']);
+    StoreDomain::factory()->for($store)->create([
+        'name'   => 'global-search-store.test',
         'active' => true,
     ]);
 
     $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
     $resellerResult = ResellerResource::getGlobalSearchResults('partner-search@example.com')->sole();
-    $propertyResult = ConsolePropertyResource::getGlobalSearchResults('global-search-property.test')->sole();
+    $storeResult = ConsoleStoreResource::getGlobalSearchResults('global-search-store.test')->sole();
 
     expect($planResult->title)->toBe($plan->name)
         ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
         ->and($resellerResult->title)->toBe($reseller->name)
         ->and($resellerResult->url)->toBe(ResellerResource::getUrl('edit', ['record' => $reseller]))
-        ->and($propertyResult->title)->toBe($property->name)
-        ->and($propertyResult->url)->toBe(ConsolePropertyResource::getUrl('edit', ['record' => $property]))
-        ->and($propertyResult->details)->toBe([
-            __('console.domain') => 'global-search-property.test',
+        ->and($storeResult->title)->toBe($store->name)
+        ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('edit', ['record' => $store]))
+        ->and($storeResult->details)->toBe([
+            __('console.domain') => 'global-search-store.test',
         ]);
 });
 
@@ -272,13 +272,13 @@ it('allows deleting an unused plan from list and edit pages', function (): void 
         ->assertActionVisible(DeleteAction::class);
 });
 
-it('creates a property for a reseller within its plan limit', function (): void {
+it('creates a store for a reseller within its plan limit', function (): void {
     actAsConsoleAdmin();
 
     $reseller = Reseller::factory()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->fillForm([
             'reseller_id' => $reseller->getKey(),
             'domain'      => 'acme.test',
@@ -290,7 +290,7 @@ it('creates a property for a reseller within its plan limit', function (): void 
         ->call('create')
         ->assertHasNoFormErrors();
 
-    assertDatabaseHas('tenants', [
+    assertDatabaseHas('stores', [
         'name'        => 'Acme',
         'reseller_id' => $reseller->getKey(),
     ]);
@@ -301,10 +301,10 @@ it('creates a property for a reseller within its plan limit', function (): void 
     expect(StorefrontDeployment::query()->count())->toBe(1);
 });
 
-it('uses a wizard when creating a property and florist storefront', function (): void {
+it('uses a wizard when creating a store and florist storefront', function (): void {
     actAsConsoleAdmin();
 
-    $component = livewire(CreateProperty::class);
+    $component = livewire(CreateStore::class);
 
     expect($component->instance()->hasSkippableSteps())->toBeTrue();
 
@@ -315,9 +315,11 @@ it('uses a wizard when creating a property and florist storefront', function ():
         ->assertWizardStepExists(4)
         ->assertFormFieldDoesNotExist('create_storefront')
         ->assertSee(__('console.storefront_map_query'))
+        // The billing reseller is optional; leaving it empty makes a
+        // platform-owned store, so it must not appear among the errors.
+        ->assertFormFieldExists('reseller_id')
         ->call('create')
         ->assertHasFormErrors([
-            'reseller_id'               => 'required',
             'domain'                    => 'required',
             'email'                     => 'required',
             'storefront_slug'           => 'required',
@@ -330,13 +332,14 @@ it('uses a wizard when creating a property and florist storefront', function ():
             'storefront_hours_close'    => 'required',
             'storefront_locality'       => 'required',
             'storefront_map_query'      => 'required',
-        ]);
+        ])
+        ->assertHasNoFormErrors(['reseller_id']);
 });
 
-it('suggests storefront identity from the property domain', function (): void {
+it('suggests storefront identity from the store domain', function (): void {
     actAsConsoleAdmin();
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->set('data.domain', 'Rose-Garden.Example')
         ->assertHasNoFormErrors(['domain'])
         ->assertFormSet([
@@ -345,12 +348,12 @@ it('suggests storefront identity from the property domain', function (): void {
         ]);
 });
 
-it('requests a storefront when a console admin creates a property', function (): void {
+it('requests a storefront when a console admin creates a store', function (): void {
     actAsConsoleAdmin();
     $reseller = Reseller::factory()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->fillForm([
             'reseller_id' => $reseller->getKey(),
             'domain'      => 'console-flowers.test',
@@ -369,14 +372,14 @@ it('requests a storefront when a console admin creates a property', function ():
     ]);
 });
 
-it('blocks property creation once the reseller reaches its plan limit', function (): void {
+it('blocks store creation once the reseller reaches its plan limit', function (): void {
     actAsConsoleAdmin();
 
     $reseller = Reseller::factory()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(1))->create();
-    Tenant::factory()->create(['reseller_id' => $reseller->getKey()]);
+    Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->fillForm([
             'reseller_id'    => $reseller->getKey(),
             'domain'         => 'second.test',
@@ -385,19 +388,19 @@ it('blocks property creation once the reseller reaches its plan limit', function
         ])
         ->call('create');
 
-    assertDatabaseMissing('tenant_domains', ['name' => 'second.test']);
-    expect($reseller->tenants()->count())->toBe(1);
+    assertDatabaseMissing('store_domains', ['name' => 'second.test']);
+    expect($reseller->stores()->count())->toBe(1);
 });
 
-it('validates property domains during creation', function (): void {
+it('validates store domains during creation', function (): void {
     actAsConsoleAdmin();
 
     $reseller = Reseller::factory()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(3))->create();
-    $existingProperty = Tenant::factory()->create();
-    TenantDomain::factory()->for($existingProperty)->create(['name' => 'taken.test', 'active' => true]);
+    $existingStore = Store::factory()->create();
+    StoreDomain::factory()->for($existingStore)->create(['name' => 'taken.test', 'active' => true]);
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->fillForm([
             'reseller_id'    => $reseller->getKey(),
             'domain'         => 'not a domain',
@@ -407,7 +410,7 @@ it('validates property domains during creation', function (): void {
         ->call('create')
         ->assertHasFormErrors(['domain' => 'regex']);
 
-    livewire(CreateProperty::class)
+    livewire(CreateStore::class)
         ->fillForm([
             'reseller_id'    => $reseller->getKey(),
             'domain'         => 'taken.test',
@@ -421,80 +424,80 @@ it('validates property domains during creation', function (): void {
 it('lets a console admin replace a domain and shows the old one in trashed history', function (): void {
     actAsConsoleAdmin();
 
-    $property = Tenant::factory()->create(['active' => true]);
-    $original = TenantDomain::factory()->for($property)->create(['name' => 'old.test', 'active' => true]);
+    $store = Store::factory()->create(['active' => true]);
+    $original = StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
 
-    livewire(ListProperties::class)
-        ->callAction(TestAction::make('replaceDomain')->table($property), ['domain' => 'new.test'])
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'new.test'])
         ->assertHasNoErrors();
 
-    $current = $property->execute(fn() => $property->tenantDomains()->where('active', true)->value('name'));
+    $current = $store->execute(fn() => $store->storeDomains()->where('active', true)->value('name'));
     expect($current)->toBe('new.test');
 
     livewire(DomainsRelationManager::class, [
-        'ownerRecord' => $property,
-        'pageClass'   => EditProperty::class,
+        'ownerRecord' => $store,
+        'pageClass'   => EditStore::class,
     ])
         ->call('loadTable')
         ->filterTable('trashed', ['value' => '0'])
         ->assertCanSeeTableRecords([$original]);
 });
 
-it('lets a console admin soft-delete then restore a property', function (): void {
+it('lets a console admin soft-delete then restore a store', function (): void {
     actAsConsoleAdmin();
 
-    $property = Tenant::factory()->create(['active' => true]);
+    $store = Store::factory()->create(['active' => true]);
 
-    livewire(ListProperties::class)
-        ->callAction(TestAction::make('delete')->table($property))
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('delete')->table($store))
         ->assertHasNoErrors();
 
-    expect($property->fresh()?->trashed())->toBeTrue();
+    expect($store->fresh()?->trashed())->toBeTrue();
 
-    livewire(ListProperties::class)
+    livewire(ListStores::class)
         ->loadTable()
         ->filterTable('trashed', ['value' => 'trashed'])
-        ->callAction(TestAction::make('restore')->table($property))
+        ->callAction(TestAction::make('restore')->table($store))
         ->assertHasNoErrors();
 
-    expect($property->fresh()?->trashed())->toBeFalse();
+    expect($store->fresh()?->trashed())->toBeFalse();
 });
 
-it('lets a console admin permanently delete a trashed property', function (): void {
+it('lets a console admin permanently delete a trashed store', function (): void {
     actAsConsoleAdmin();
 
-    $property = Tenant::factory()->trashed()->create();
+    $store = Store::factory()->trashed()->create();
 
-    livewire(ListProperties::class)
+    livewire(ListStores::class)
         ->loadTable()
         ->filterTable('trashed', ['value' => 'trashed'])
-        ->callAction(TestAction::make('forceDelete')->table($property))
+        ->callAction(TestAction::make('forceDelete')->table($store))
         ->assertHasNoErrors();
 
-    assertDatabaseMissing('tenants', ['id' => $property->getKey()]);
+    assertDatabaseMissing('stores', ['id' => $store->getKey()]);
 });
 
-it('filters properties by active', function (): void {
+it('filters stores by active', function (): void {
     actAsConsoleAdmin();
 
-    $active = Tenant::factory()->create(['active' => true]);
-    $inactive = Tenant::factory()->create(['active' => false]);
+    $active = Store::factory()->create(['active' => true]);
+    $inactive = Store::factory()->create(['active' => false]);
 
-    livewire(ListProperties::class)
+    livewire(ListStores::class)
         ->loadTable()
         ->filterTable('active', ['value' => true])
         ->assertCanSeeTableRecords([$active])
         ->assertCanNotSeeTableRecords([$inactive]);
 });
 
-it('filters properties by reseller', function (): void {
+it('filters stores by reseller', function (): void {
     actAsConsoleAdmin();
 
     $reseller = Reseller::factory()->create(['active' => true]);
-    $owned = Tenant::factory()->create(['reseller_id' => $reseller->getKey(), 'active' => true]);
-    $unowned = Tenant::factory()->create(['active' => true]);
+    $owned = Store::factory()->create(['reseller_id' => $reseller->getKey(), 'active' => true]);
+    $unowned = Store::factory()->create(['active' => true]);
 
-    livewire(ListProperties::class)
+    livewire(ListStores::class)
         ->loadTable()
         ->filterTable('reseller_id', $reseller->getKey())
         ->assertCanSeeTableRecords([$owned])
@@ -556,9 +559,59 @@ it('uses the package table presentation conventions in the console', function (
         'resellers',
         Heroicon::OutlinedBuildingOffice2,
     ],
-    'properties' => [
-        ListProperties::class,
-        'properties',
+    'stores' => [
+        ListStores::class,
+        'stores',
         Heroicon::OutlinedGlobeAlt,
     ],
 ]);
+
+it('creates a store the platform owns directly, with no reseller', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateStore::class)
+        ->fillForm([
+            'reseller_id' => null,
+            'domain'      => 'direct.test',
+            'email'       => 'owner@gmail.com',
+            'active'      => true,
+            ...consoleStorefrontFormData(),
+            'storefront_slug' => 'direct',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('stores', [
+        'name'        => 'Direct',
+        'reseller_id' => null,
+    ]);
+
+    $store = Store::query()->where('name', 'Direct')->firstOrFail();
+
+    expect($store->reseller_id)->toBeNull()
+        ->and($store->domains()->where('active', true)->value('name'))->toBe('direct.test');
+});
+
+it('manages resellers and the stores that belong to them', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $other = Reseller::factory()->create();
+
+    $owned = Store::factory()->active()->create(['reseller_id' => $reseller->getKey()]);
+    $foreign = Store::factory()->active()->create(['reseller_id' => $other->getKey()]);
+    $direct = Store::factory()->active()->create();
+
+    // The console is the cross-tenant surface: it sees every store, whoever owns it.
+    livewire(ListStores::class)
+        ->loadTable()
+        ->assertCanSeeTableRecords([$owned, $foreign, $direct]);
+
+    livewire(ListResellers::class)
+        ->loadTable()
+        ->assertCanSeeTableRecords([$reseller, $other]);
+
+    expect($reseller->stores()->pluck('id')->all())->toBe([$owned->getKey()])
+        ->and($other->stores()->pluck('id')->all())->toBe([$foreign->getKey()])
+        ->and($direct->reseller_id)->toBeNull();
+});

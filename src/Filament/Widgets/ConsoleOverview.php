@@ -7,10 +7,10 @@ namespace Misaf\VendraConsole\Filament\Widgets;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Misaf\VendraProperty\Filament\Concerns\BuildsDailyTrend;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraStore\Filament\Concerns\BuildsDailyTrend;
+use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSubscription\Models\Subscription;
-use Misaf\VendraTenant\Models\Tenant;
 
 final class ConsoleOverview extends StatsOverviewWidget
 {
@@ -28,9 +28,9 @@ final class ConsoleOverview extends StatsOverviewWidget
             Stat::make(__('console.resellers'), Reseller::query()->count())
                 ->icon(Heroicon::OutlinedBuildingOffice2)
                 ->chart($this->dailyTrend(Reseller::query())),
-            Stat::make(__('console.properties'), Tenant::query()->count())
+            Stat::make(__('console.stores'), Store::query()->count())
                 ->icon(Heroicon::OutlinedGlobeAlt)
-                ->chart($this->dailyTrend(Tenant::query())),
+                ->chart($this->dailyTrend(Store::query())),
             Stat::make(__('console.active_subscriptions'), Subscription::query()->active()->count())
                 ->icon(Heroicon::OutlinedCheckBadge)
                 ->color('success')

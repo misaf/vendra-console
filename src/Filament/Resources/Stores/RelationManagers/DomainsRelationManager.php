@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Misaf\VendraConsole\Filament\Resources\Properties\RelationManagers;
+namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Icons\Heroicon;

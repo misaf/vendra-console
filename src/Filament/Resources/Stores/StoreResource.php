@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Misaf\VendraConsole\Filament\Resources\Properties;
+namespace Misaf\VendraConsole\Filament\Resources\Stores;
 
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -13,37 +13,37 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\CreateProperty;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\EditProperty;
-use Misaf\VendraConsole\Filament\Resources\Properties\Pages\ListProperties;
-use Misaf\VendraConsole\Filament\Resources\Properties\RelationManagers\DomainsRelationManager;
-use Misaf\VendraConsole\Filament\Resources\Properties\Schemas\PropertyForm;
-use Misaf\VendraConsole\Filament\Resources\Properties\Tables\PropertyTable;
-use Misaf\VendraTenant\Models\Tenant;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
+use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
+use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
+use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
+use Misaf\VendraStore\Models\Store;
 
-final class PropertyResource extends Resource
+final class StoreResource extends Resource
 {
-    protected static ?string $model = Tenant::class;
+    protected static ?string $model = Store::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGlobeAlt;
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?string $slug = 'properties';
+    protected static ?string $slug = 'stores';
 
     public static function getModelLabel(): string
     {
-        return __('console.property');
+        return __('console.store');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.properties');
+        return __('console.stores');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.properties');
+        return __('console.stores');
     }
 
     public static function getNavigationGroup(): string
@@ -53,12 +53,12 @@ final class PropertyResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return PropertyForm::configure($schema);
+        return StoreForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return PropertyTable::configure($table);
+        return StoreTable::configure($table);
     }
 
     /**
@@ -81,8 +81,8 @@ final class PropertyResource extends Resource
      */
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        $property = self::property($record);
-        $domainName = $property->domains->pluck('name')->first();
+        $store = self::store($record);
+        $domainName = $store->domains->pluck('name')->first();
 
         return [
             __('console.domain') => is_string($domainName) ? $domainName : '—',
@@ -99,16 +99,16 @@ final class PropertyResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListProperties::route('/'),
-            'create' => CreateProperty::route('/create'),
-            'edit'   => EditProperty::route('/{record}/edit'),
+            'index'  => ListStores::route('/'),
+            'create' => CreateStore::route('/create'),
+            'edit'   => EditStore::route('/{record}/edit'),
         ];
     }
 
-    private static function property(Model $record): Tenant
+    private static function store(Model $record): Store
     {
-        if ( ! $record instanceof Tenant) {
-            throw new InvalidArgumentException('Property resources require a Tenant record.');
+        if ( ! $record instanceof Store) {
+            throw new InvalidArgumentException('Store resources require a Store record.');
         }
 
         return $record;

@@ -1,7 +1,7 @@
 # Vendra Console
 
 The console (platform admin) panel for Laravel. It is the operator's
-cross-tenant view of the platform: resellers, plans, and every property with its
+cross-tenant view of the platform: resellers, plans, and every store with its
 domains and storefront state.
 
 The panel is presentation. Every state change it performs belongs to a domain
@@ -12,7 +12,7 @@ package's action, so this package stays thin on purpose.
 - PHP 8.3+
 - Laravel 13
 - Filament 5
-- `misaf/vendra-reseller`, `misaf/vendra-property`, `misaf/vendra-subscription`,
+- `misaf/vendra-reseller`, `misaf/vendra-store`, `misaf/vendra-subscription`,
   `misaf/vendra-tenant`, `misaf/vendra-localization` and `misaf/vendra-support`
 
 ## Installation
@@ -44,15 +44,15 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 
 | Resource | Delegates to |
 | --- | --- |
-| `PropertyResource` | `Misaf\VendraProperty`'s `CreatePropertyPage` (which runs `ProvisionPropertyAction`), `StorefrontConfigurationFields` and `ReplaceDomainAction` |
+| `StoreResource` | `Misaf\VendraStore`'s `CreateStorePage` (which runs `ProvisionStoreAction`), `StorefrontConfigurationFields` and `ReplaceDomainAction` |
 | `ResellerResource` | `Misaf\VendraReseller`'s `CreateResellerAction`, `CreateResellerOwnerAction` and `OffboardResellerAction`, plus `misaf/vendra-subscription`'s `SubscribeAction` |
 | `PlanResource` | `misaf/vendra-subscription`'s plan model |
 
-`DomainsRelationManager` manages a property's domains, and `ConsoleOverview`
+`DomainsRelationManager` manages a store's domains, and `ConsoleOverview`
 gives the operator the platform-wide counts.
 
 The only intended difference from the reseller panel is which reseller is
-resolved as a property's billing owner — the console picks one from the form,
+resolved as a store's billing owner — the console picks one from the form,
 the reseller panel uses the authenticated owner. Keep any other divergence out,
 and put a behaviour both panels need in the domain package instead.
 
@@ -61,7 +61,7 @@ and put a behaviour both panels need in the domain package instead.
 This is the topmost layer:
 
 ```
-vendra-console → vendra-reseller → vendra-property → vendra-container
+vendra-console → vendra-reseller → vendra-store → vendra-container
 ```
 
 Nothing depends on this package, so anything reusable belongs one layer down.

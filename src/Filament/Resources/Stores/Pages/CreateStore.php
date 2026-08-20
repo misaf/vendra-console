@@ -2,24 +2,25 @@
 
 declare(strict_types=1);
 
-namespace Misaf\VendraConsole\Filament\Resources\Properties\Pages;
+namespace Misaf\VendraConsole\Filament\Resources\Stores\Pages;
 
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Icons\Heroicon;
 use InvalidArgumentException;
-use Misaf\VendraConsole\Filament\Resources\Properties\PropertyResource;
-use Misaf\VendraConsole\Filament\Resources\Properties\Schemas\PropertyForm;
-use Misaf\VendraProperty\Filament\Pages\CreatePropertyPage;
-use Misaf\VendraProperty\Filament\Schemas\StorefrontConfigurationFields;
+use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
+use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraStore\Filament\Pages\CreateStorePage;
+use Misaf\VendraStore\Filament\Schemas\StorefrontConfigurationFields;
+use Misaf\VendraSubscription\Contracts\SubscriptionSubscriber;
 
-final class CreateProperty extends CreatePropertyPage
+final class CreateStore extends CreateStorePage
 {
     use CreateRecord\Concerns\HasWizard;
 
-    protected static string $resource = PropertyResource::class;
+    protected static string $resource = StoreResource::class;
 
     public function hasSkippableSteps(): bool
     {
@@ -48,9 +49,9 @@ final class CreateProperty extends CreatePropertyPage
     protected function getSteps(): array
     {
         return [
-            $this->step(__('console.property_details'), __('console.property_details_description'), Heroicon::BuildingStorefront, [
-                ...PropertyForm::propertyFields(),
-                PropertyForm::activeField(),
+            $this->step(__('console.store_details'), __('console.store_details_description'), Heroicon::BuildingStorefront, [
+                ...StoreForm::storeFields(),
+                StoreForm::activeField(),
             ]),
             $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: false)),
             $this->step(__('console.storefront_contact'), __('console.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: false)),
@@ -59,11 +60,18 @@ final class CreateProperty extends CreatePropertyPage
     }
 
     /**
+     * The console picks the billing reseller on the form. Leaving it empty
+     * creates a store the platform owns directly.
+     *
      * @param array<string, mixed> $data
      */
-    protected function resolveReseller(array $data): Reseller
+    protected function resolveOwner(array $data): ?SubscriptionSubscriber
     {
         $resellerId = $data['reseller_id'] ?? null;
+
+        if (null === $resellerId || '' === $resellerId) {
+            return null;
+        }
 
         if ( ! is_numeric($resellerId)) {
             throw new InvalidArgumentException('Invalid reseller provided.');

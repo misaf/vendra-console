@@ -38,7 +38,7 @@ it('changes a reseller plan through the edit page action', function (): void {
     expect($reseller->activeSubscription()?->plan_id)->toBe($newPlan->getKey());
 });
 
-it('blocks a plan change that cannot hold the current properties', function (): void {
+it('blocks a plan change that cannot hold the current stores', function (): void {
     actingConsoleAdmin();
 
     $reseller = Reseller::factory()->create();
