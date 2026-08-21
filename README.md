@@ -51,10 +51,11 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 `DomainsRelationManager` manages a store's domains, and `ConsoleOverview`
 gives the operator the platform-wide counts.
 
-The only intended difference from the reseller panel is which reseller is
-resolved as a store's billing owner — the console picks one from the form,
-the reseller panel uses the authenticated owner. Keep any other divergence out,
-and put a behaviour both panels need in the domain package instead.
+The console picks a store's billing owner from the form and lets the operator
+turn off `Create storefront`. Turning it off creates the store and domain but
+does not record or provision a managed storefront, which supports storefront
+source running outside Docker. The reseller panel continues to require a
+managed storefront.
 
 ## Layering
 

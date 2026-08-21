@@ -6,8 +6,10 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Pages;
 
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
@@ -32,7 +34,7 @@ final class CreateStore extends CreateStorePage
         return __('console.create_florist_storefront');
     }
 
-    public function getSubheading(): ?string
+    public function getSubheading(): string
     {
         return __('console.create_florist_storefront_description');
     }
@@ -51,11 +53,15 @@ final class CreateStore extends CreateStorePage
         return [
             $this->step(__('console.store_details'), __('console.store_details_description'), Heroicon::BuildingStorefront, [
                 ...StoreForm::storeFields(),
+                StorefrontConfigurationFields::creationToggle(default: true),
                 StoreForm::activeField(),
             ]),
-            $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: false)),
-            $this->step(__('console.storefront_contact'), __('console.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: false)),
-            $this->step(__('console.storefront_location_social'), __('console.storefront_location_social_description'), Heroicon::MapPin, StorefrontConfigurationFields::locationAndSocialFields(optional: false)),
+            $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: true))
+                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
+            $this->step(__('console.storefront_contact'), __('console.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: true))
+                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
+            $this->step(__('console.storefront_location_social'), __('console.storefront_location_social_description'), Heroicon::MapPin, StorefrontConfigurationFields::locationAndSocialFields(optional: true))
+                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
         ];
     }
 
@@ -83,7 +89,7 @@ final class CreateStore extends CreateStorePage
     /**
      * Every wizard step is laid out the same way, so the shape is written once.
      *
-     * @param array<int, mixed> $schema
+     * @param array<int, Htmlable|string> $schema
      */
     private function step(string $label, string $description, Heroicon $icon, array $schema): Step
     {

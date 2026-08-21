@@ -44,7 +44,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Resources
 
 - `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
-- The only intended difference from the reseller panel is which reseller is resolved as the store's billing owner — the console picks one from the form. Keep any other divergence out.
+- The console store wizard picks the optional billing reseller and exposes a `create_storefront` toggle that defaults on. Pass `optional: true` to its shared storefront field groups so an explicit off can create only the store and domain; the reseller panel keeps storefront creation mandatory.
 
 ## Testing
 

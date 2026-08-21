@@ -19,6 +19,8 @@ use Misaf\VendraConsole\Filament\Resources\Plans\PlanResource;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
+use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\CreateStorefrontImage;
+use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\ListStorefrontImages;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
@@ -30,6 +32,7 @@ use Misaf\VendraReseller\Models\ResellerUser;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StoreDomain;
 use Misaf\VendraStore\Models\StorefrontDeployment;
+use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
@@ -65,6 +68,7 @@ function actAsConsoleAdmin(): ConsoleUser
 function consoleStorefrontFormData(): array
 {
     return [
+        'storefront_image_id'             => StorefrontImage::factory()->create()->id,
         'storefront_slug'                 => 'console-flowers',
         'storefront_theme'                => 'default',
         'storefront_name_en'              => 'Console Flowers',
@@ -92,6 +96,28 @@ it('uses the Vendra logo in light and dark modes', function (): void {
         ->and($panel->getBrandLogo())->toBe(asset('images/vendra-logo.svg'))
         ->and($panel->getDarkModeBrandLogo())->toBe(asset('images/vendra-logo-dark.svg'))
         ->and($panel->getBrandLogoHeight())->toBe('2rem');
+});
+
+it('lets console operators define storefront images and their themes', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateStorefrontImage::class)
+        ->fillForm([
+            'name'   => 'Florist 2026.08',
+            'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
+            'themes' => ['default', 'minimal'],
+            'active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors()
+        ->assertNotified()
+        ->assertRedirect();
+
+    assertDatabaseHas('storefront_images', [
+        'name'   => 'Florist 2026.08',
+        'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
+        'active' => true,
+    ]);
 });
 
 it('globally searches console resources', function (): void {
@@ -313,7 +339,7 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
         ->assertWizardStepExists(2)
         ->assertWizardStepExists(3)
         ->assertWizardStepExists(4)
-        ->assertFormFieldDoesNotExist('create_storefront')
+        ->assertFormFieldExists('create_storefront')
         ->assertSee(__('console.storefront_map_query'))
         // The billing reseller is optional; leaving it empty makes a
         // platform-owned store, so it must not appear among the errors.
@@ -334,6 +360,23 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
             'storefront_map_query'      => 'required',
         ])
         ->assertHasNoFormErrors(['reseller_id']);
+});
+
+it('lets a console admin create a store without a managed storefront', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateStore::class)
+        ->fillForm([
+            'domain'            => 'local-source.test',
+            'email'             => 'local-source@gmail.com',
+            'active'            => true,
+            'create_storefront' => false,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('store_domains', ['name' => 'local-source.test']);
+    assertDatabaseMissing('storefront_deployments', ['domain' => 'local-source.test']);
 });
 
 it('suggests storefront identity from the store domain', function (): void {
@@ -563,6 +606,11 @@ it('uses the package table presentation conventions in the console', function (
         ListStores::class,
         'stores',
         Heroicon::OutlinedGlobeAlt,
+    ],
+    'storefront images' => [
+        ListStorefrontImages::class,
+        'storefront_images',
+        Heroicon::OutlinedCube,
     ],
 ]);
 
