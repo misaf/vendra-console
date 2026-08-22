@@ -9,7 +9,7 @@ package's action, so this package stays thin on purpose.
 
 ## Requirements
 
-- PHP 8.3+
+- PHP 8.4+
 - Laravel 13
 - Filament 5
 - `misaf/vendra-reseller`, `misaf/vendra-store`, `misaf/vendra-subscription`,
