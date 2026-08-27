@@ -20,6 +20,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelati
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
 use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
 use Misaf\VendraStore\Models\Store;
+use Misaf\VendraStore\Support\StoreCreationPolicy;
 
 final class StoreResource extends Resource
 {
@@ -94,6 +95,19 @@ final class StoreResource extends Resource
         return [
             DomainsRelationManager::class,
         ];
+    }
+
+    /**
+     * Whether the console may create a store right now.
+     *
+     * The platform-wide freeze switch, owned by `vendra-store` so the reseller
+     * panel can honour the same rule without depending on the console. It is
+     * resolved per request, so flipping it on the platform settings page takes
+     * effect on the next page load.
+     */
+    public static function canCreate(): bool
+    {
+        return app(StoreCreationPolicy::class)->isOpen();
     }
 
     public static function getPages(): array

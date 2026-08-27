@@ -24,6 +24,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReplaceDomainAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Models\Store;
@@ -128,6 +129,8 @@ final class StoreTable
             )
             ->recordActions([
                 ActionGroup::make([
+                    AssignResellerAction::make(),
+
                     ReplaceDomainAction::make(),
 
                     EditAction::make(),

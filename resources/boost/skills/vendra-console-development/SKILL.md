@@ -46,6 +46,11 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 - `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
 - The console store wizard picks the optional billing reseller and exposes a `create_storefront` toggle that defaults on. Pass `optional: true` to its shared storefront field groups so an explicit off can create only the store and domain; the reseller panel keeps storefront creation mandatory.
 
+## Platform Settings
+
+- `config/console.php` under `platform` holds only deployment-fixed values (`Config::string('console.platform.name')`). Anything an operator flips at runtime is a settings row.
+- `Filament\Pages\ManagePlatformSettings` edits `Misaf\VendraStore\Settings\StoreCreationSettings`; `StoreResource::canCreate()` reads it through `Misaf\VendraStore\Support\StoreCreationPolicy`. A rule the reseller or store layer must honour belongs to the layer that enforces it.
+
 ## Testing
 
 - Act as a `ConsoleUser` on the `console` guard and assert against the panel's own pages; a test that sets up a current tenant is testing the wrong panel.
