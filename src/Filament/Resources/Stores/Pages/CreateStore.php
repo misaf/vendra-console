@@ -54,7 +54,6 @@ final class CreateStore extends CreateStorePage
             $this->step(__('console.store_details'), __('console.store_details_description'), Heroicon::BuildingStorefront, [
                 ...StoreForm::storeFields(),
                 StorefrontConfigurationFields::creationToggle(default: true),
-                StoreForm::activeField(),
             ]),
             $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: true))
                 ->visible(fn(Get $get): bool => true === $get('create_storefront')),

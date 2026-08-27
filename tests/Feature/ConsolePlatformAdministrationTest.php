@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraConsole\Filament\Pages\ManagePlatformSettings;
 use Misaf\VendraConsole\Filament\Resources\ActivityLogs\ActivityLogResource;
@@ -17,12 +18,16 @@ use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
+use Misaf\VendraStore\Enums\StorefrontDesiredState;
+use Misaf\VendraStore\Jobs\CompleteStoreProvisioningJob;
+use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
+use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
@@ -114,6 +119,91 @@ describe('assigning stores to resellers', function (): void {
             ->assertHasNoErrors();
 
         expect($store->fresh()?->reseller_id)->toBe($reseller->getKey());
+    });
+});
+
+describe('operating store lifecycles', function (): void {
+    it('suspends and reactivates a store through domain-backed table actions', function (): void {
+        $store = Store::factory()->active()->create();
+
+        actAsPlatformOperator();
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('suspendStore')->table($store))
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->active)->toBeFalse();
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('reactivateStore')->table($store->fresh()))
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->active)->toBeTrue();
+    });
+
+    it('queues the existing provisioning recovery job for a failed store', function (): void {
+        Queue::fake();
+        $store = Store::factory()->provisioningFailed()->create();
+
+        actAsPlatformOperator();
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('retryStoreProvisioning')->table($store))
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->provisioning_status)->toBe(TenantProvisioningStatus::Pending);
+        Queue::assertPushed(
+            CompleteStoreProvisioningJob::class,
+            fn(CompleteStoreProvisioningJob $job): bool => $job->tenantId === $store->getKey(),
+        );
+    });
+
+    it('stops and starts a storefront through its domain lifecycle actions', function (): void {
+        $store = Store::factory()->active()->create();
+        $deployment = StorefrontDeployment::factory()->for($store)->create([
+            'status'        => StorefrontDeploymentStatus::Ready,
+            'desired_state' => StorefrontDesiredState::Running,
+            'slug'          => 'acme-flowers',
+            'domain'        => 'acme.test',
+            'configuration' => [
+                'slug'          => 'acme-flowers',
+                'theme'         => 'default',
+                'domain'        => 'acme.test',
+                'siteUrl'       => 'https://acme.test',
+                'businessType'  => 'Florist',
+                'priceCurrency' => 'IRR',
+                'name'          => ['en' => 'Acme Flowers'],
+                'address'       => ['locality' => 'Tehran', 'country' => 'IR'],
+                'contact'       => [
+                    'mobilePhone' => '09120000000',
+                    'officePhone' => '02100000000',
+                    'email'       => 'contact@acme.test',
+                    'hoursOpen'   => '08:00',
+                    'hoursClose'  => '21:00',
+                    'mapQuery'    => '35.7,51.4',
+                ],
+                'social' => [
+                    'whatsappPhone'     => '+989120000000',
+                    'telegramUsername'  => 'acmeflowers',
+                    'instagramUsername' => 'acmeflowers',
+                ],
+            ],
+        ]);
+        app()->call([new ProvisionStorefrontJob($deployment->id, force: true), 'handle']);
+
+        actAsPlatformOperator();
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('stopStorefront')->table($store))
+            ->assertHasNoErrors();
+
+        expect($deployment->fresh()?->desired_state)->toBe(StorefrontDesiredState::Stopped);
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('startStorefront')->table($store->fresh()))
+            ->assertHasNoErrors();
+
+        expect($deployment->fresh()?->desired_state)->toBe(StorefrontDesiredState::Running);
     });
 });
 

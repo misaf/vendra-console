@@ -27,8 +27,6 @@ final class StoreForm
                 ...self::storeFields(),
 
                 ...StorefrontConfigurationFields::make(optional: true),
-
-                self::activeField(),
             ])
             ->columns(2);
     }

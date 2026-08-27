@@ -8,9 +8,10 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -40,9 +41,10 @@ final class ResellerTable
                     ->label(__('console.stores_count'))
                     ->alignCenter(),
 
-                ToggleColumn::make('active')
+                IconColumn::make('active')
                     ->label(__('console.active'))
-                    ->onIcon(Heroicon::Bolt),
+                    ->boolean()
+                    ->trueIcon(Heroicon::Bolt),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
@@ -80,6 +82,31 @@ final class ResellerTable
                             false: fn(Builder $query): Builder => $query->where('active', false),
                             blank: fn(Builder $query): Builder => $query,
                         ),
+
+                    SelectFilter::make('subscription_health')
+                        ->label(__('console.subscription_status'))
+                        ->options([
+                            'active'        => __('console.status_active'),
+                            'expiring_soon' => __('console.expiring_soon'),
+                            'none'          => __('console.no_active_subscription'),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return match ($data['value'] ?? null) {
+                                'active' => $query->whereHas(
+                                    'subscriptions',
+                                    fn(Builder $query): Builder => $query->active(),
+                                ),
+                                'expiring_soon' => $query->whereHas(
+                                    'subscriptions',
+                                    fn(Builder $query): Builder => $query->expiringWithin(7),
+                                ),
+                                'none' => $query->whereDoesntHave(
+                                    'subscriptions',
+                                    fn(Builder $query): Builder => $query->active(),
+                                ),
+                                default => $query,
+                            };
+                        }),
 
                     TrashedFilter::make(),
                 ],

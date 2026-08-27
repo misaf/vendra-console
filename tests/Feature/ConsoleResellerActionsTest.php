@@ -10,6 +10,7 @@ use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Filament\Pages\Auth\Login;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraReseller\Models\ResellerUser;
+use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 
@@ -173,6 +174,78 @@ it('creates an owner login for an existing reseller', function (): void {
     expect($owner)->toBeInstanceOf(ResellerUser::class)
         ->and($owner->email)->toBe('owner@existing.test')
         ->and(Hash::check('Secure123', $owner->password))->toBeTrue();
+});
+
+it('updates disables and re-enables a reseller owner through domain actions', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $owner = ResellerUser::factory()->forReseller($reseller)->create();
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('changeOwnerEmail', ['email' => 'NEW-OWNER@EXAMPLE.COM'])
+        ->assertHasNoActionErrors();
+
+    expect($owner->fresh()?->email)->toBe('new-owner@example.com')
+        ->and($reseller->fresh()?->email)->toBe('new-owner@example.com');
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('disableOwnerAccount')
+        ->assertHasNoActionErrors();
+
+    expect($owner->fresh()?->trashed())->toBeTrue();
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('enableOwnerAccount')
+        ->assertHasNoActionErrors();
+
+    expect($owner->fresh()?->trashed())->toBeFalse();
+});
+
+it('replaces a reseller owner while preserving the old account as history', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $originalOwner = ResellerUser::factory()->forReseller($reseller)->create();
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('replaceOwnerAccount', [
+            'username'              => 'replacement',
+            'email'                 => 'replacement@example.com',
+            'password'              => 'NewSecure123',
+            'password_confirmation' => 'NewSecure123',
+        ])
+        ->assertHasNoActionErrors();
+
+    expect($originalOwner->fresh()?->trashed())->toBeTrue()
+        ->and($reseller->ownerUser()->sole()->email)->toBe('replacement@example.com');
+});
+
+it('extends cancels and reactivates a reseller subscription through domain actions', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $subscription = Subscription::factory()->forSubscriber($reseller)->for(Plan::factory())->create();
+    $extendedUntil = $subscription->ends_at?->copy()->addMonth();
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('extendSubscription', ['ends_at' => $extendedUntil?->toDateTimeString()])
+        ->assertHasNoActionErrors();
+
+    expect($subscription->fresh()?->ends_at?->equalTo($extendedUntil))->toBeTrue();
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('cancelSubscription')
+        ->assertHasNoActionErrors();
+
+    expect($subscription->fresh()?->status)->toBe(SubscriptionStatus::Cancelled);
+
+    livewire(EditReseller::class, ['record' => $reseller->getKey()])
+        ->callAction('reactivateSubscription')
+        ->assertHasNoActionErrors();
+
+    expect($reseller->subscriptions()->count())->toBe(2)
+        ->and($reseller->activeSubscription())->not->toBeNull();
 });
 
 it('renders the console overview widget', function (): void {

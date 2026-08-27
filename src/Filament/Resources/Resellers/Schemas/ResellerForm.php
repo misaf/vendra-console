@@ -58,7 +58,8 @@ final class ResellerForm
                             new EmailValidation(),
                             Rule::unique(ResellerUser::class, 'email')->withoutTrashed(),
                         ]
-                        : []),
+                        : [])
+                    ->visibleOn('create'),
 
                 TextInput::make('password')
                     ->label(__('console.new_password'))
@@ -105,7 +106,8 @@ final class ResellerForm
                     ->default(true)
                     ->live()
                     ->onIcon(Heroicon::Bolt)
-                    ->required(),
+                    ->required()
+                    ->visibleOn('create'),
 
                 Section::make(__('console.current_subscription'))
                     ->visibleOn('edit')

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Stores;
 
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -12,10 +13,12 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
+use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
 use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
@@ -62,6 +65,14 @@ final class StoreResource extends Resource
         return StoreTable::configure($table);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with([
+            'storefrontDeployments' => fn(Relation $relation): Relation => $relation->orderByDesc('id'),
+            'domains'               => fn(Relation $relation): Relation => $relation->where('active', true),
+        ]);
+    }
+
     /**
      * @return array<int, string>
      */
@@ -90,9 +101,27 @@ final class StoreResource extends Resource
         ];
     }
 
+    /**
+     * @return array<Action>
+     */
+    public static function getGlobalSearchResultActions(Model $record): array
+    {
+        $store = self::store($record);
+
+        return [
+            Action::make('openAdmin')
+                ->label(__('console.admin_url'))
+                ->url(
+                    'https://' . $store->slug . '.' . Config::string('vendra-tenant.central_host'),
+                    shouldOpenInNewTab: true,
+                ),
+        ];
+    }
+
     public static function getRelations(): array
     {
         return [
+            AdministratorsRelationManager::class,
             DomainsRelationManager::class,
         ];
     }

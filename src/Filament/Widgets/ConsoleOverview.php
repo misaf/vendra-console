@@ -7,6 +7,10 @@ namespace Misaf\VendraConsole\Filament\Widgets;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Database\Eloquent\Builder;
+use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
+use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
@@ -21,10 +25,12 @@ final class ConsoleOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $expiringSoon = Subscription::query()
-            ->active()
-            ->whereNotNull('ends_at')
-            ->whereBetween('ends_at', [now(), now()->addDays(7)])
+        $expiringSoon = Reseller::query()
+            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->expiringWithin(7))
+            ->count();
+
+        $activeSubscriptions = Reseller::query()
+            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->active())
             ->count();
 
         $activeStores = Store::query()->withStatus(StoreStatus::Active)->count();
@@ -44,6 +50,7 @@ final class ConsoleOverview extends StatsOverviewWidget
             Stat::make(__('console.resellers'), Reseller::query()->count())
                 ->description(__('console.active_resellers') . ': ' . Reseller::query()->active()->count())
                 ->icon(Heroicon::OutlinedBuildingOffice2)
+                ->url(ResellerResource::getUrl('index'))
                 ->chart($this->dailyTrend(Reseller::query())),
 
             Stat::make(__('console.stores'), Store::query()->count())
@@ -52,31 +59,61 @@ final class ConsoleOverview extends StatsOverviewWidget
                     'suspended' => $suspendedStores,
                 ]))
                 ->icon(Heroicon::OutlinedGlobeAlt)
+                ->url(StoreResource::getUrl('index'))
                 ->chart($this->dailyTrend(Store::query())),
 
-            /*
-             | Provisioning is the queue an operator can still act on; failures
-             | are the ones that stopped moving on their own. Kept in one stat so
-             | the dashboard shows both halves of "is anything stuck".
-             */
             Stat::make(__('console.provisioning'), $provisioningStores)
                 ->description(__('console.failed_stores') . ': ' . $failedStores)
                 ->icon(Heroicon::OutlinedArrowPath)
-                ->color($failedStores > 0 ? 'danger' : ($provisioningStores > 0 ? 'warning' : 'gray')),
+                ->color($failedStores > 0 ? 'danger' : ($provisioningStores > 0 ? 'warning' : 'gray'))
+                ->url(StoreResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['values' => [StoreStatus::Pending->value, StoreStatus::Provisioning->value]],
+                    ],
+                ])),
+
+            Stat::make(__('console.failed_stores'), $failedStores)
+                ->icon(Heroicon::OutlinedExclamationCircle)
+                ->color($failedStores > 0 ? 'danger' : 'gray')
+                ->url(StoreResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['values' => [StoreStatus::Failed->value]],
+                    ],
+                ])),
 
             Stat::make(__('console.storefronts_live'), $liveDeployments)
                 ->description(__('console.failed_deployments') . ': ' . $failedDeployments)
                 ->icon(Heroicon::OutlinedRocketLaunch)
-                ->color($failedDeployments > 0 ? 'danger' : 'success'),
+                ->color('success')
+                ->url(StorefrontDeploymentResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['value' => StorefrontDeploymentStatus::Ready->value],
+                    ],
+                ])),
 
-            Stat::make(__('console.active_subscriptions'), Subscription::query()->active()->count())
+            Stat::make(__('console.failed_deployments'), $failedDeployments)
+                ->icon(Heroicon::OutlinedExclamationTriangle)
+                ->color($failedDeployments > 0 ? 'danger' : 'gray')
+                ->url(StorefrontDeploymentResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['value' => StorefrontDeploymentStatus::Failed->value],
+                    ],
+                ])),
+
+            Stat::make(__('console.active_subscriptions'), $activeSubscriptions)
                 ->icon(Heroicon::OutlinedCheckBadge)
                 ->color('success')
+                ->url(ResellerResource::getUrl('index', [
+                    'tableFilters' => ['subscription_health' => ['value' => 'active']],
+                ]))
                 ->chart($this->dailyTrend(Subscription::query(), 'starts_at')),
 
             Stat::make(__('console.expiring_soon'), $expiringSoon)
                 ->icon(Heroicon::OutlinedClock)
-                ->color($expiringSoon > 0 ? 'warning' : 'gray'),
+                ->color($expiringSoon > 0 ? 'warning' : 'gray')
+                ->url(ResellerResource::getUrl('index', [
+                    'tableFilters' => ['subscription_health' => ['value' => 'expiring_soon']],
+                ])),
         ];
     }
 }

@@ -6,8 +6,8 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -35,9 +35,10 @@ final class DomainsRelationManager extends RelationManager
                     ->icon(Heroicon::GlobeAlt)
                     ->searchable(),
 
-                ToggleColumn::make('active')
+                IconColumn::make('active')
                     ->label(__('console.active'))
-                    ->onIcon(Heroicon::Bolt),
+                    ->boolean()
+                    ->trueIcon(Heroicon::Bolt),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
