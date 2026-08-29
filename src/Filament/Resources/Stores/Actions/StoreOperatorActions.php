@@ -32,20 +32,41 @@ use Throwable;
 final class StoreOperatorActions
 {
     /** @return list<Action> */
-    public static function make(): array
+    public static function inspection(): array
     {
         return [
             self::viewDeployment(),
             self::viewLogs(),
+        ];
+    }
+
+    /** @return list<Action> */
+    public static function storeLifecycle(): array
+    {
+        return [
             self::suspend(),
             self::reactivate(),
             self::retryProvisioning(),
+        ];
+    }
+
+    /** @return list<Action> */
+    public static function storefrontLifecycle(): array
+    {
+        return [
             self::startStorefront(),
             self::stopStorefront(),
             self::restartStorefront(),
             self::reconcileStorefront(),
             self::redeployStorefront(),
             self::retryStorefront(),
+        ];
+    }
+
+    /** @return list<Action> */
+    public static function destructive(): array
+    {
+        return [
             self::offboard(),
             self::restore(),
         ];

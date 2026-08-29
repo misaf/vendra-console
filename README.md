@@ -54,7 +54,7 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 `DomainsRelationManager` manages a store's domains. `ConsoleOverview` links its
 platform-wide counts to the matching filtered resource tables, and
 `ContainerRuntimeHealth` reports runtime connection and storefront-network
-availability through the `vendra-container` contract. The overview includes
+availability through `vendra-store`'s runtime adapter over `laravel-docker-engine`. The overview includes
 resellers and how many are active,
 stores split into active and suspended, how many are provisioning against how
 many failed, live storefronts against failed deployments, and the subscription
@@ -121,7 +121,7 @@ managed storefront.
 This is the topmost layer:
 
 ```
-vendra-console → vendra-reseller → vendra-store → vendra-container
+vendra-console → vendra-reseller → vendra-store → laravel-docker-engine
 ```
 
 Nothing depends on this package, so anything reusable belongs one layer down.

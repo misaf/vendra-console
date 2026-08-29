@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rules\Unique;
 use Livewire\Component as Livewire;
-use Misaf\LaravelEmailValidation\Rules\EmailValidation;
+use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraReseller\Models\ResellerUser;
 use Misaf\VendraSubscription\Models\Plan;

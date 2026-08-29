@@ -65,13 +65,21 @@ final class AdministratorsRelationManager extends RelationManager
             ->headerActions([$this->addAdministratorAction()])
             ->recordActions([
                 ActionGroup::make([
-                    $this->changePasswordAction(),
-                    $this->changeEmailAction(),
-                    $this->promoteAction(),
-                    $this->demoteAction(),
-                    $this->disableAction(),
-                    $this->enableAction(),
-                    $this->removeAction(),
+                    ActionGroup::make([
+                        $this->changePasswordAction(),
+                        $this->changeEmailAction(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        $this->promoteAction(),
+                        $this->demoteAction(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        $this->disableAction(),
+                        $this->enableAction(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        $this->removeAction(),
+                    ])->dropdown(false),
                 ]),
             ]);
     }
@@ -80,6 +88,7 @@ final class AdministratorsRelationManager extends RelationManager
     {
         return Action::make('addAdministrator')
             ->label(__('console.add_administrator'))
+            ->slideOver()
             ->schema([
                 TextInput::make('username')
                     ->label(__('console.username'))

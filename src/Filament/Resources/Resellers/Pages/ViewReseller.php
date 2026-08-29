@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Pages;
 
-use Filament\Actions\ViewAction;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Actions\EditAction;
+use Filament\Resources\Pages\ViewRecord;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 
-final class EditReseller extends EditRecord
+final class ViewReseller extends ViewRecord
 {
     protected static string $resource = ResellerResource::class;
 
     protected function getHeaderActions(): array
     {
-        return [ViewAction::make()];
+        return [EditAction::make()];
     }
 }

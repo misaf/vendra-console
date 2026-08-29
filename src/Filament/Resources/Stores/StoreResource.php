@@ -6,6 +6,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -18,9 +19,11 @@ use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ViewStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
+use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreInfolist;
 use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Support\StoreCreationPolicy;
@@ -58,6 +61,16 @@ final class StoreResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return StoreForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return StoreInfolist::configure($schema);
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([ViewStore::class, EditStore::class]);
     }
 
     public static function table(Table $table): Table
@@ -144,6 +157,7 @@ final class StoreResource extends Resource
         return [
             'index'  => ListStores::route('/'),
             'create' => CreateStore::route('/create'),
+            'view'   => ViewStore::route('/{record}'),
             'edit'   => EditStore::route('/{record}/edit'),
         ];
     }

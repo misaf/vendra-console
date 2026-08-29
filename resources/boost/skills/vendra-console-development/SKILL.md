@@ -27,7 +27,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 ## Module Boundary
 
-- This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-store` → `vendra-container`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
+- This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-store` → `laravel-docker-engine`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
 - The panel is presentation. Business operations live in the domain packages' actions — including store/storefront lifecycle and offboarding, administrator membership, reseller-owner accounts, and subscriptions. A page or table action that mutates state directly is in the wrong place.
 
 ## Tenancy

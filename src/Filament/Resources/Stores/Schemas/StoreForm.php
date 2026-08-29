@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Schemas;
 
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
@@ -13,7 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
-use Misaf\LaravelEmailValidation\Rules\EmailValidation;
+use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Filament\Schemas\StorefrontConfigurationFields;
 use Misaf\VendraStore\Models\StoreDomain;
@@ -24,6 +25,19 @@ final class StoreForm
     {
         return $schema
             ->components([
+                TextInput::make('name')
+                    ->label(__('console.name'))
+                    ->required()
+                    ->maxLength(255)
+                    ->visibleOn('edit'),
+
+                Textarea::make('description')
+                    ->label(__('console.description'))
+                    ->rows(4)
+                    ->maxLength(2000)
+                    ->visibleOn('edit')
+                    ->columnSpanFull(),
+
                 ...self::storeFields(),
 
                 ...StorefrontConfigurationFields::make(optional: true),

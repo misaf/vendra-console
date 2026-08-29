@@ -5,16 +5,21 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Resellers;
 
 use BackedEnum;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\EditReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerForm;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerInfolist;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Tables\ResellerTable;
 use Misaf\VendraReseller\Models\Reseller;
 
@@ -53,6 +58,28 @@ final class ResellerResource extends Resource
         return ResellerForm::configure($schema);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return ResellerInfolist::configure($schema);
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([ViewReseller::class, EditReseller::class]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withCount('stores')
+            ->with([
+                'ownerUser',
+                'subscriptions' => fn(MorphMany $relation): MorphMany => $relation
+                    ->with('plan')
+                    ->orderByDesc('starts_at'),
+            ]);
+    }
+
     public static function table(Table $table): Table
     {
         return ResellerTable::configure($table);
@@ -83,6 +110,7 @@ final class ResellerResource extends Resource
         return [
             'index'  => ListResellers::route('/'),
             'create' => CreateReseller::route('/create'),
+            'view'   => ViewReseller::route('/{record}'),
             'edit'   => EditReseller::route('/{record}/edit'),
         ];
     }

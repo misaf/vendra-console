@@ -7,6 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Resellers\Tables;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -16,8 +17,11 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ResellerOperatorActions;
+use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
+use Misaf\VendraReseller\Models\Reseller;
 
 final class ResellerTable
 {
@@ -114,11 +118,14 @@ final class ResellerTable
             )
             ->recordActions([
                 ActionGroup::make([
+                    ViewAction::make(),
                     EditAction::make(),
-
-                    OffboardResellerAction::make(),
+                    ActionGroup::make(ResellerOperatorActions::owner())->dropdown(false),
+                    ActionGroup::make(ResellerOperatorActions::subscription())->dropdown(false),
+                    ActionGroup::make([OffboardResellerAction::make()])->dropdown(false),
                 ]),
             ])
+            ->recordUrl(fn(Reseller $record): string => ResellerResource::getUrl('view', ['record' => $record]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     OffboardResellerBulkAction::make(),

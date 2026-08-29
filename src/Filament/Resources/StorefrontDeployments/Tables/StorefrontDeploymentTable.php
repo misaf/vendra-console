@@ -119,11 +119,15 @@ final class StorefrontDeploymentTable
             )
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make(),
-                    StorefrontDeploymentActions::logs(),
-                    StorefrontDeploymentActions::retry(),
-                    StorefrontDeploymentActions::reconcile(),
-                    StorefrontDeploymentActions::restart(),
+                    ActionGroup::make([
+                        ViewAction::make(),
+                        StorefrontDeploymentActions::logs(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        StorefrontDeploymentActions::retry(),
+                        StorefrontDeploymentActions::reconcile(),
+                        StorefrontDeploymentActions::restart(),
+                    ])->dropdown(false),
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');

@@ -35,7 +35,7 @@ use function Pest\Livewire\livewire;
 beforeEach(function (): void {
     Event::fake([TenantProvisioned::class]);
     Artisan::shouldReceive('call')->andReturn(0);
-    Config::set('vendra-container.endpoint', 'http://provisioner:8080');
+    Config::set('container.drivers.docker.host', 'http://provisioner:8080');
     fakeDockerEngine();
 });
 

@@ -18,12 +18,14 @@ use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
 use Misaf\VendraConsole\Filament\Resources\Plans\PlanResource;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\CreateStorefrontImage;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\ListStorefrontImages;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ViewStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
@@ -51,7 +53,7 @@ use Spatie\Permission\PermissionRegistrar;
 beforeEach(function (): void {
     Event::fake([TenantProvisioned::class]);
     Artisan::shouldReceive('call')->andReturn(0);
-    Config::set('vendra-container.endpoint', 'http://provisioner:8080');
+    Config::set('container.drivers.docker.host', 'http://provisioner:8080');
     fakeDockerEngine();
 });
 
@@ -146,9 +148,9 @@ it('globally searches console resources', function (): void {
     expect($planResult->title)->toBe($plan->name)
         ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
         ->and($resellerResult->title)->toBe($reseller->name)
-        ->and($resellerResult->url)->toBe(ResellerResource::getUrl('edit', ['record' => $reseller]))
+        ->and($resellerResult->url)->toBe(ResellerResource::getUrl('view', ['record' => $reseller]))
         ->and($storeResult->title)->toBe($store->name)
-        ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('edit', ['record' => $store]))
+        ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('view', ['record' => $store]))
         ->and($storeResult->details)->toBe([
             __('console.domain') => 'global-search-store.test',
         ])
@@ -157,6 +159,30 @@ it('globally searches console resources', function (): void {
             'https://' . $store->slug . '.' . Config::string('vendra-tenant.central_host'),
         )
         ->and($storeAction->shouldOpenUrlInNewTab())->toBeTrue();
+});
+
+it('uses a reseller overview as the record landing page', function (): void {
+    actAsConsoleAdmin();
+
+    $plan = Plan::factory()->create(['name' => 'Growth']);
+    $reseller = Reseller::factory()->create([
+        'name'  => 'Overview Partner',
+        'email' => 'overview@example.com',
+    ]);
+    $owner = ResellerUser::factory()->forReseller($reseller)->create([
+        'username' => 'overview_owner',
+    ]);
+    Subscription::factory()->forSubscriber($reseller)->for($plan)->create();
+    Store::factory()->count(2)->create(['reseller_id' => $reseller->getKey()]);
+
+    livewire(ListResellers::class)
+        ->assertActionVisible(TestAction::make('view')->table($reseller));
+
+    livewire(ViewReseller::class, ['record' => $reseller->getKey()])
+        ->assertOk()
+        ->assertSee('Overview Partner')
+        ->assertSee($owner->username)
+        ->assertSee('Growth');
 });
 
 it('isolates console operators from application users', function (): void {
@@ -494,6 +520,53 @@ it('lets a console admin replace a domain and shows the old one in trashed histo
         ->call('loadTable')
         ->filterTable('trashed', ['value' => '0'])
         ->assertCanSeeTableRecords([$original]);
+});
+
+it('uses a store overview as the console record landing page', function (): void {
+    actAsConsoleAdmin();
+
+    $store = Store::factory()->create(['name' => 'Console overview store']);
+    StoreDomain::factory()->for($store)->create(['name' => 'overview.test', 'active' => true]);
+
+    livewire(ListStores::class)
+        ->assertActionVisible(TestAction::make('view')->table($store));
+
+    livewire(ViewStore::class, ['record' => $store->getKey()])
+        ->assertOk()
+        ->assertSee('Console overview store')
+        ->assertSee('overview.test');
+});
+
+it('edits store details without directly mutating operational identity fields', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $otherReseller = Reseller::factory()->create();
+    $store = Store::factory()->active()->create([
+        'reseller_id' => $reseller->getKey(),
+        'name'        => 'Original store',
+    ]);
+    $originalSlug = $store->slug;
+
+    livewire(EditStore::class, ['record' => $store->getKey()])
+        ->fillForm([
+            'name'        => 'Updated store',
+            'description' => 'Operational description.',
+            'slug'        => 'protected-slug',
+            'reseller_id' => $otherReseller->getKey(),
+            'active'      => false,
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors()
+        ->assertNotified();
+
+    $store->refresh();
+
+    expect($store->name)->toBe('Updated store')
+        ->and($store->description)->toBe('Operational description.')
+        ->and($store->slug)->toBe($originalSlug)
+        ->and($store->reseller_id)->toBe($reseller->getKey())
+        ->and($store->active)->toBeTrue();
 });
 
 it('adds a store administrator through the tenant membership action', function (): void {

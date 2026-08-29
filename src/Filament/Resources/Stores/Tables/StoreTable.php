@@ -6,6 +6,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Tables;
 
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReplaceDomainAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\StoreOperatorActions;
+use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
@@ -150,15 +152,19 @@ final class StoreTable
             )
             ->recordActions([
                 ActionGroup::make([
-                    AssignResellerAction::make(),
-
-                    ReplaceDomainAction::make(),
-
-                    ...StoreOperatorActions::make(),
-
+                    ViewAction::make(),
                     EditAction::make(),
+                    ActionGroup::make([
+                        AssignResellerAction::make(),
+                        ReplaceDomainAction::make(),
+                    ])->dropdown(false),
+                    ActionGroup::make(StoreOperatorActions::inspection())->dropdown(false),
+                    ActionGroup::make(StoreOperatorActions::storeLifecycle())->dropdown(false),
+                    ActionGroup::make(StoreOperatorActions::storefrontLifecycle())->dropdown(false),
+                    ActionGroup::make(StoreOperatorActions::destructive())->dropdown(false),
                 ]),
             ])
+            ->recordUrl(fn(Store $record): string => StoreResource::getUrl('view', ['record' => $record]))
             ->defaultSort(column: 'id', direction: 'desc');
     }
 

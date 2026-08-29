@@ -15,8 +15,6 @@ use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
 use Misaf\VendraConsole\Models\ConsoleUser;
-use Misaf\VendraContainer\Contracts\ContainerRuntime;
-use Misaf\VendraContainer\Testing\FakeContainerRuntime;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
@@ -30,7 +28,7 @@ use function Pest\Livewire\livewire;
 beforeEach(function (): void {
     Event::fake([TenantProvisioned::class]);
     Artisan::shouldReceive('call')->andReturn(0);
-    Config::set('vendra-container.endpoint', 'memory://console-runtime');
+    Config::set('container.drivers.docker.host', 'http://console-runtime.test');
     Config::set('vendra-store.storefront.network', 'traefik-public');
 });
 
@@ -111,10 +109,7 @@ it('reconciles, restarts, and reads logs through storefront and runtime contract
         'status' => StorefrontDeploymentStatus::Ready,
         'slug'   => 'contract-operated',
     ]);
-    $runtime = (new FakeContainerRuntime())
-        ->withRunningContainer('vendra-storefront-contract-operated')
-        ->withLogs('vendra-storefront-contract-operated', "booted\nready");
-    app()->instance(ContainerRuntime::class, $runtime);
+    $runtime = fakeExistingStorefront(logs: "booted\nready");
 
     actAsOperationalConsoleOperator();
 
@@ -131,8 +126,7 @@ it('reconciles, restarts, and reads logs through storefront and runtime contract
         ->assertActionDataSet(['logs' => "booted\nready"]);
 
     expect($runtime->calls)->toContain(
-        'ping',
-        'restart:vendra-storefront-contract-operated',
+        'restart',
         'logs:vendra-storefront-contract-operated',
     );
 });
@@ -142,7 +136,9 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
         'status' => StorefrontDeploymentStatus::Ready,
         'slug'   => 'unavailable-runtime',
     ]);
-    app()->instance(ContainerRuntime::class, (new FakeContainerRuntime())->unreachable());
+    bindFakeDockerEngine(fn($request, bool $stream) => $stream
+        ? dockerStreamResponse('', 500)
+        : dockerResponse(['message' => 'The fake runtime is configured as unreachable.'], 500));
 
     actAsOperationalConsoleOperator();
 
@@ -156,18 +152,19 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
 });
 
 it('shows runtime and required network health without runtime-specific console logic', function (): void {
-    $runtime = (new FakeContainerRuntime())->withNetwork('traefik-public');
-    app()->instance(ContainerRuntime::class, $runtime);
+    $runtime = fakeExistingStorefront();
 
     actAsOperationalConsoleOperator();
 
     livewire(ContainerRuntimeHealth::class)
         ->assertOk()
-        ->assertSee('Fake')
+        ->assertSee('Docker')
         ->assertSee('traefik-public')
         ->assertSee(__('console.network_available', ['driver' => 'bridge']));
 
-    expect($runtime->calls)->toBe(['ping']);
+    expect(collect($runtime->transport->requests)->contains(
+        fn($request): bool => str_ends_with($request->path, '/_ping'),
+    ))->toBeTrue();
 });
 
 it('links operational dashboard stats to resource filters', function (): void {
