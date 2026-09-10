@@ -14,18 +14,16 @@ final class ConsoleUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $username = Config::string('console.operator.username');
         $email = Config::string('console.operator.email');
         $password = Config::string('console.operator.password');
 
-        if ($username === '' || $email === '' || $password === '') {
+        if ($email === '' || $password === '') {
             return;
         }
 
         ConsoleUser::query()->firstOrCreate(
             ['email' => Str::lower(mb_trim($email))],
             [
-                'username' => $username,
                 'email_verified_at' => Date::now(),
                 'password' => $password,
             ],

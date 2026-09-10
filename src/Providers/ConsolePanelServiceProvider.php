@@ -18,18 +18,11 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Uri;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Misaf\VendraLocalization\Http\Middleware\SetLocale;
 use Misaf\VendraSupport\Http\Middleware\AddPanelToRequestJobContext;
 
-/**
- * The console (platform admin) panel.
- *
- * Runs outside the tenant middleware stack so a console operator can manage
- * resellers, plans, subscriptions, and stores across every tenant.
- */
 final class ConsolePanelServiceProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -38,12 +31,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
             ->id('console')
             ->brandLogo(fn (): string => asset('images/vendra-logo.svg'))
             ->brandLogoHeight('2rem')
-            /*
-             | Resolved per request rather than at boot: the brand is an
-             | operator-editable setting, and reading it here means a rename
-             | shows up on the next page load instead of the next deploy.
-             */
-            ->brandName(fn (): string => Config::string('console.platform.name'))
+            ->brandName(fn (): string => config()->string('console.platform.name'))
             ->darkModeBrandLogo(fn (): string => asset('images/vendra-logo-dark.svg'))
             ->databaseNotifications()
             ->databaseTransactions()

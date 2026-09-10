@@ -219,7 +219,6 @@ it('allows a verified console operator into the console panel', function (): voi
 
 it('seeds the initial console operator only from explicit credentials', function (): void {
     Config::set('console.operator', [
-        'username' => 'console_owner',
         'email' => 'OWNER@EXAMPLE.TEST',
         'password' => 'a-secure-console-password',
     ]);
@@ -228,15 +227,13 @@ it('seeds the initial console operator only from explicit credentials', function
 
     $operator = ConsoleUser::query()->sole();
 
-    expect($operator->username)->toBe('console_owner')
-        ->and($operator->email)->toBe('owner@example.test')
+    expect($operator->email)->toBe('owner@example.test')
         ->and($operator->hasVerifiedEmail())->toBeTrue()
         ->and(Hash::check('a-secure-console-password', $operator->password))->toBeTrue();
 });
 
 it('does not seed a console operator when explicit credentials are absent', function (): void {
     Config::set('console.operator', [
-        'username' => '',
         'email' => '',
         'password' => '',
     ]);

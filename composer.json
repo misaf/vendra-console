@@ -51,6 +51,7 @@
     "extra": {
         "laravel": {
             "providers": [
+                "Misaf\\VendraConsole\\Providers\\ConsoleServiceProvider",
                 "Misaf\\VendraConsole\\Providers\\ConsolePanelServiceProvider"
             ]
         }
