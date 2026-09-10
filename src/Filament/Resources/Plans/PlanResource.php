@@ -95,9 +95,7 @@ final class PlanResource extends Resource
 
     private static function plan(Model $record): Plan
     {
-        if (! $record instanceof Plan) {
-            throw new InvalidArgumentException('Plan resources require a Plan record.');
-        }
+        throw_unless($record instanceof Plan, InvalidArgumentException::class, 'Plan resources require a Plan record.');
 
         return $record;
     }

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Arr;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
@@ -139,7 +140,7 @@ it('globally searches console resources', function (): void {
     $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
     $resellerResult = ResellerResource::getGlobalSearchResults('partner-search@example.com')->sole();
     $storeResult = ConsoleStoreResource::getGlobalSearchResults('global-search-store.test')->sole();
-    $storeAction = $storeResult->actions[0];
+    $storeAction = Arr::get($storeResult->actions, 0);
 
     expect($planResult->title)->toBe($plan->name)
         ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
@@ -223,7 +224,7 @@ it('seeds the initial console operator only from explicit credentials', function
         'password' => 'a-secure-console-password',
     ]);
 
-    app(ConsoleUserSeeder::class)->run();
+    resolve(ConsoleUserSeeder::class)->run();
 
     $operator = ConsoleUser::query()->sole();
 
@@ -240,7 +241,7 @@ it('does not seed a console operator when explicit credentials are absent', func
         'password' => '',
     ]);
 
-    app(ConsoleUserSeeder::class)->run();
+    resolve(ConsoleUserSeeder::class)->run();
 
     expect(ConsoleUser::query()->count())->toBe(0);
 });
@@ -568,7 +569,7 @@ it('adds a store administrator through the tenant membership action', function (
     actAsConsoleAdmin();
 
     $store = Store::factory()->create();
-    $roleClass = app(PermissionRegistrar::class)->getRoleClass();
+    $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
     $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
         'name' => Config::string('vendra-permission.admin_role'),
         'guard_name' => 'web',

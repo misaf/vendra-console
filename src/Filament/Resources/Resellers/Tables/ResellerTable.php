@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Tables;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
@@ -94,22 +95,20 @@ final class ResellerTable
                             'expiring_soon' => __('console.expiring_soon'),
                             'none' => __('console.no_active_subscription'),
                         ])
-                        ->query(function (Builder $query, array $data): Builder {
-                            return match ($data['value'] ?? null) {
-                                'active' => $query->whereHas(
-                                    'subscriptions',
-                                    fn (Builder $query): Builder => $query->active(),
-                                ),
-                                'expiring_soon' => $query->whereHas(
-                                    'subscriptions',
-                                    fn (Builder $query): Builder => $query->expiringWithin(7),
-                                ),
-                                'none' => $query->whereDoesntHave(
-                                    'subscriptions',
-                                    fn (Builder $query): Builder => $query->active(),
-                                ),
-                                default => $query,
-                            };
+                        ->query(fn(Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
+                            'active' => $query->whereHas(
+                                'subscriptions',
+                                fn (Builder $query): Builder => $query->active(),
+                            ),
+                            'expiring_soon' => $query->whereHas(
+                                'subscriptions',
+                                fn (Builder $query): Builder => $query->expiringWithin(7),
+                            ),
+                            'none' => $query->whereDoesntHave(
+                                'subscriptions',
+                                fn (Builder $query): Builder => $query->active(),
+                            ),
+                            default => $query,
                         }),
 
                     TrashedFilter::make(),

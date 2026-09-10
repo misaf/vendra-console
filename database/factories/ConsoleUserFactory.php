@@ -14,13 +14,6 @@ use Misaf\VendraConsole\Models\ConsoleUser;
 final class ConsoleUserFactory extends Factory
 {
     /**
-     * The name of the factory's corresponding model.
-     *
-     * @var class-string<ConsoleUser>
-     */
-    protected $model = ConsoleUser::class;
-
-    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>

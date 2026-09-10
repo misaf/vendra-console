@@ -23,7 +23,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
     protected function getStats(): array
     {
         try {
-            $runtime = app(StorefrontContainerRuntime::class);
+            $runtime = resolve(StorefrontContainerRuntime::class);
             $status = $runtime->status();
         } catch (Throwable $exception) {
             report($exception);
@@ -67,7 +67,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
 
     private function networkStat(StorefrontContainerRuntime $runtime, StorefrontRuntimeStatus $status): Stat
     {
-        $networkName = app(StorefrontSettings::class)->network;
+        $networkName = resolve(StorefrontSettings::class)->network;
         $network = null;
         $error = null;
 

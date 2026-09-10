@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Actions;
 
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Date;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -67,11 +69,11 @@ final class ResellerOperatorActions
                     ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
             ])
             ->action(function (Reseller $record, array $data): void {
-                app(CreateResellerOwnerAction::class)->execute(
+                resolve(CreateResellerOwnerAction::class)->execute(
                     $record,
-                    (string) $data['username'],
-                    (string) $data['email'],
-                    (string) $data['password'],
+                    (string) Arr::get($data, 'username'),
+                    (string) Arr::get($data, 'email'),
+                    (string) Arr::get($data, 'password'),
                 );
                 self::success(__('console.owner_account_created'));
             });
@@ -90,9 +92,9 @@ final class ResellerOperatorActions
                     ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
             ])
             ->action(function (Reseller $record, array $data): void {
-                app(UpdateResellerOwnerPasswordAction::class)->execute(
+                resolve(UpdateResellerOwnerPasswordAction::class)->execute(
                     $record->ownerUser()->firstOrFail(),
-                    (string) $data['password'],
+                    (string) Arr::get($data, 'password'),
                 );
                 self::success(__('console.owner_password_updated'));
             });
@@ -109,7 +111,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record, array $data): void {
                 $owner = self::currentOwner($record);
                 if ($owner instanceof ResellerUser) {
-                    app(UpdateResellerOwnerEmailAction::class)->execute($owner, (string) $data['email']);
+                    resolve(UpdateResellerOwnerEmailAction::class)->execute($owner, (string) Arr::get($data, 'email'));
                     self::success(__('console.owner_email_updated'));
                 }
             });
@@ -123,7 +125,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record): void {
                 $owner = self::currentOwner($record);
                 if ($owner instanceof ResellerUser) {
-                    app(SetResellerOwnerAccountEnabledAction::class)->execute($owner, false);
+                    resolve(SetResellerOwnerAccountEnabledAction::class)->execute($owner, false);
                     self::success(__('console.owner_account_disabled'));
                 }
             });
@@ -137,7 +139,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record): void {
                 $owner = self::latestOwner($record);
                 if ($owner instanceof ResellerUser) {
-                    app(SetResellerOwnerAccountEnabledAction::class)->execute($owner, true);
+                    resolve(SetResellerOwnerAccountEnabledAction::class)->execute($owner, true);
                     self::success(__('console.owner_account_enabled'));
                 }
             });
@@ -160,11 +162,11 @@ final class ResellerOperatorActions
                     ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
             ])
             ->action(function (Reseller $record, array $data): void {
-                app(ReplaceResellerOwnerAction::class)->execute(
+                resolve(ReplaceResellerOwnerAction::class)->execute(
                     $record,
-                    (string) $data['username'],
-                    (string) $data['email'],
-                    (string) $data['password'],
+                    (string) Arr::get($data, 'username'),
+                    (string) Arr::get($data, 'email'),
+                    (string) Arr::get($data, 'password'),
                 );
                 self::success(__('console.owner_account_replaced'));
             });
@@ -178,7 +180,7 @@ final class ResellerOperatorActions
                 ->options(fn (): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {
                 try {
-                    app(SubscribeAction::class)->execute($record, Plan::query()->findOrFail((int) $data['plan_id']));
+                    resolve(SubscribeAction::class)->execute($record, Plan::query()->findOrFail((int) Arr::get($data, 'plan_id')));
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()->danger()->title(__('console.downgrade_blocked'))->body($exception->getMessage())->send();
 
@@ -199,7 +201,7 @@ final class ResellerOperatorActions
 
                     return;
                 }
-                app(SubscribeAction::class)->execute($record, $plan);
+                resolve(SubscribeAction::class)->execute($record, $plan);
                 self::success(__('console.subscription_renewed'));
             });
     }
@@ -214,7 +216,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record, array $data): void {
                 $subscription = self::latestSubscription($record);
                 if ($subscription instanceof Subscription) {
-                    app(ExtendSubscriptionAction::class)->execute($subscription, Carbon::parse((string) $data['ends_at']));
+                    resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse((string) Arr::get($data, 'ends_at')));
                     self::success(__('console.subscription_extended'));
                 }
             });
@@ -230,7 +232,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record): void {
                 $subscription = self::latestSubscription($record);
                 if ($subscription instanceof Subscription) {
-                    app(CancelSubscriptionAction::class)->execute($subscription);
+                    resolve(CancelSubscriptionAction::class)->execute($subscription);
                     self::success(__('console.subscription_cancelled'));
                 }
             });
@@ -245,7 +247,7 @@ final class ResellerOperatorActions
             ->action(function (Reseller $record): void {
                 $subscription = self::latestSubscription($record);
                 if ($subscription instanceof Subscription) {
-                    app(ReactivateSubscriptionAction::class)->execute($subscription);
+                    resolve(ReactivateSubscriptionAction::class)->execute($subscription);
                     self::success(__('console.subscription_reactivated'));
                 }
             });

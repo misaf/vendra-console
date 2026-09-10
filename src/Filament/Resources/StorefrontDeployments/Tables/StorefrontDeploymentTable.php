@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Tables;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -112,8 +113,8 @@ final class StorefrontDeploymentTable
                                 ->label(__('console.until_date')),
                         ])
                         ->query(fn (Builder $query, array $data): Builder => $query
-                            ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
-                            ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '<=', $date))),
+                            ->when(Arr::get($data, 'from', null), fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
+                            ->when(Arr::get($data, 'until', null), fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '<=', $date))),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
             )

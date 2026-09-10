@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -275,7 +276,7 @@ final class StoreOperatorActions
                     ->maxLength(OffboardStoreAction::MAX_REASON_LENGTH),
             ])
             ->action(function (Store $record, array $data, OffboardStoreAction $offboardStore): void {
-                $offboardStore->execute($record, (string) $data['reason']);
+                $offboardStore->execute($record, (string) Arr::get($data, 'reason'));
                 self::notify(__('console.store_offboarded'));
             });
     }

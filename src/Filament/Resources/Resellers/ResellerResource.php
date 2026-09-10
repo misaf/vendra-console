@@ -81,7 +81,7 @@ final class ResellerResource extends Resource
                 'ownerUser',
                 'subscriptions' => fn (MorphMany $relation): MorphMany => $relation
                     ->with('plan')
-                    ->orderByDesc('starts_at'),
+                    ->latest('starts_at'),
             ]);
     }
 
@@ -122,9 +122,7 @@ final class ResellerResource extends Resource
 
     private static function reseller(Model $record): Reseller
     {
-        if (! $record instanceof Reseller) {
-            throw new InvalidArgumentException('Reseller resources require a Reseller record.');
-        }
+        throw_unless($record instanceof Reseller, InvalidArgumentException::class, 'Reseller resources require a Reseller record.');
 
         return $record;
     }

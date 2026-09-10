@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -46,13 +47,13 @@ final class AssignResellerAction extends Action
                     ->native(false),
             ])
             ->action(function (Store $record, array $data): void {
-                $resellerId = $data['reseller_id'] ?? null;
+                $resellerId = Arr::get($data, 'reseller_id', null);
                 $reseller = is_numeric($resellerId)
                     ? Reseller::query()->find((int) $resellerId)
                     : null;
 
                 try {
-                    app(AssignStoreOwnerAction::class)->execute($record, $reseller);
+                    resolve(AssignStoreOwnerAction::class)->execute($record, $reseller);
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()
                         ->danger()

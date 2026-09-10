@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Pages;
 
+use Filament\Resources\Pages\CreateRecord\Concerns\HasWizard;
+use Illuminate\Support\Arr;
 use Filament\Actions\Action;
-use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Icons\Heroicon;
@@ -20,7 +21,7 @@ use Misaf\VendraSubscription\Contracts\SubscriptionSubscriber;
 
 final class CreateStore extends CreateStorePage
 {
-    use CreateRecord\Concerns\HasWizard;
+    use HasWizard;
 
     protected static string $resource = StoreResource::class;
 
@@ -72,15 +73,13 @@ final class CreateStore extends CreateStorePage
      */
     protected function resolveOwner(array $data): ?SubscriptionSubscriber
     {
-        $resellerId = $data['reseller_id'] ?? null;
+        $resellerId = Arr::get($data, 'reseller_id', null);
 
         if ($resellerId === null || $resellerId === '') {
             return null;
         }
 
-        if (! is_numeric($resellerId)) {
-            throw new InvalidArgumentException('Invalid reseller provided.');
-        }
+        throw_unless(is_numeric($resellerId), InvalidArgumentException::class, 'Invalid reseller provided.');
 
         return Reseller::query()->findOrFail((int) $resellerId);
     }

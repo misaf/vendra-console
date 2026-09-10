@@ -230,11 +230,11 @@ describe('platform settings', function (): void {
     });
 
     it('freezes console store creation from the platform setting', function (): void {
-        app(StoreCreationSettings::class)->fill(['open' => false])->save();
+        resolve(StoreCreationSettings::class)->fill(['open' => false])->save();
 
         expect(StoreResource::canCreate())->toBeFalse();
 
-        app(StoreCreationSettings::class)->fill(['open' => true])->save();
+        resolve(StoreCreationSettings::class)->fill(['open' => true])->save();
 
         expect(StoreResource::canCreate())->toBeTrue();
     });
@@ -253,7 +253,7 @@ describe('platform settings', function (): void {
             ->call('save')
             ->assertHasNoFormErrors();
 
-        expect(app(StoreCreationSettings::class)->open)->toBeFalse();
+        expect(resolve(StoreCreationSettings::class)->open)->toBeFalse();
     });
 
     it('rejects a non-boolean store creation state', function (): void {
@@ -264,7 +264,7 @@ describe('platform settings', function (): void {
             ->call('save')
             ->assertHasFormErrors(['open']);
 
-        expect(app(StoreCreationSettings::class)->open)->toBeTrue();
+        expect(resolve(StoreCreationSettings::class)->open)->toBeTrue();
     });
 
     it('keeps the platform settings page behind the console guard', function (): void {

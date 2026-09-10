@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Tables;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -136,7 +137,7 @@ final class StoreTable
                         ->query(function (Builder $query, array $data): Builder {
                             $statuses = [];
 
-                            foreach ((array) ($data['values'] ?? []) as $value) {
+                            foreach ((array) (Arr::get($data, 'values', [])) as $value) {
                                 if (is_string($value) && ($status = StoreStatus::tryFrom($value)) instanceof StoreStatus) {
                                     $statuses[] = $status;
                                 }

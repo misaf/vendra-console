@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Database\Seeders;
 
+use Illuminate\Support\Facades\Date;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Misaf\VendraConsole\Models\ConsoleUser;
@@ -26,7 +26,7 @@ final class ConsoleUserSeeder extends Seeder
             ['email' => Str::lower(mb_trim($email))],
             [
                 'username' => $username,
-                'email_verified_at' => Carbon::now(),
+                'email_verified_at' => Date::now(),
                 'password' => $password,
             ],
         );

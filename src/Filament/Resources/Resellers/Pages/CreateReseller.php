@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Pages;
 
+use Illuminate\Support\Arr;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -20,28 +21,24 @@ final class CreateReseller extends CreateRecord
      */
     protected function handleRecordCreation(array $data): Model
     {
-        $planId = $data['plan_id'] ?? null;
-        $email = $data['email'] ?? null;
-        $username = $data['username'] ?? null;
-        $password = $data['password'] ?? null;
-        $active = $data['active'] ?? true;
+        $planId = Arr::get($data, 'plan_id', null);
+        $email = Arr::get($data, 'email', null);
+        $username = Arr::get($data, 'username', null);
+        $password = Arr::get($data, 'password', null);
+        $active = Arr::get($data, 'active', true);
 
-        if (! is_numeric($planId)) {
-            throw new InvalidArgumentException('Invalid plan provided.');
-        }
+        throw_unless(is_numeric($planId), InvalidArgumentException::class, 'Invalid plan provided.');
 
-        if (! is_string($email) || ! is_string($username) || ! is_string($password)) {
-            throw new InvalidArgumentException('Invalid reseller owner credentials provided.');
-        }
+        throw_if(! is_string($email) || ! is_string($username) || ! is_string($password), InvalidArgumentException::class, 'Invalid reseller owner credentials provided.');
 
         $plan = Plan::query()->findOrFail((int) $planId);
 
-        return app(CreateResellerAction::class)->execute(
+        return Arr::get(resolve(CreateResellerAction::class)->execute(
             plan: $plan,
             username: $username,
             email: $email,
             password: $password,
             active: is_bool($active) ? $active : true,
-        )['reseller'];
+        ), 'reseller');
     }
 }

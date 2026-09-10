@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
+use Illuminate\Support\Arr;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\TextInput;
@@ -121,9 +122,9 @@ final class AdministratorsRelationManager extends RelationManager
             ->action(function (array $data, AddTenantAdministratorAction $addAdministrator): void {
                 $addAdministrator->execute(
                     $this->store(),
-                    (string) $data['username'],
-                    (string) $data['email'],
-                    (string) $data['password'],
+                    (string) Arr::get($data, 'username'),
+                    (string) Arr::get($data, 'email'),
+                    (string) Arr::get($data, 'password'),
                 );
 
                 $this->notify(__('console.administrator_added'));
@@ -148,7 +149,7 @@ final class AdministratorsRelationManager extends RelationManager
                     ->dehydrated(false),
             ])
             ->action(function (User $record, array $data, UpdateUserPasswordAction $updatePassword): void {
-                $updatePassword->execute($record, (string) $data['password']);
+                $updatePassword->execute($record, (string) Arr::get($data, 'password'));
                 $this->notify(__('console.administrator_password_updated'));
             });
     }
@@ -162,7 +163,7 @@ final class AdministratorsRelationManager extends RelationManager
                 TextInput::make('email')->label(__('console.email'))->email()->required(),
             ])
             ->action(function (User $record, array $data, UpdateUserEmailAction $updateEmail): void {
-                $updateEmail->execute($record, (string) $data['email']);
+                $updateEmail->execute($record, (string) Arr::get($data, 'email'));
                 $this->notify(__('console.administrator_email_updated'));
             });
     }
@@ -247,9 +248,7 @@ final class AdministratorsRelationManager extends RelationManager
     {
         $store = $this->getOwnerRecord();
 
-        if (! $store instanceof Store) {
-            throw new LogicException('Administrator membership requires a Store owner record.');
-        }
+        throw_unless($store instanceof Store, LogicException::class, 'Administrator membership requires a Store owner record.');
 
         return $store;
     }
