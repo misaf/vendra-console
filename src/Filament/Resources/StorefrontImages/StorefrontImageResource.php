@@ -22,7 +22,7 @@ final class StorefrontImageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    protected static ?string $recordTitleAttribute = 'image';
 
     protected static ?string $slug = 'storefront-images';
 
@@ -43,7 +43,12 @@ final class StorefrontImageResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('console.navigation_group_stores');
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 4;
     }
 
     public static function form(Schema $schema): Schema

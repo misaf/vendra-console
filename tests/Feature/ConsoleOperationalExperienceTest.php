@@ -177,7 +177,11 @@ it('links operational dashboard stats to resource filters', function (): void {
     ]);
     $failedStoresUrl = StoreResource::getUrl('index', [
         'tableFilters' => [
-            'status' => ['values' => [StoreStatus::Failed->value]],
+            'status' => ['values' => [
+                StoreStatus::Failed->value,
+                StoreStatus::Pending->value,
+                StoreStatus::Provisioning->value,
+            ]],
         ],
     ]);
 

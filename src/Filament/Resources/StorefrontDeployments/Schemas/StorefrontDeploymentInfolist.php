@@ -42,8 +42,6 @@ final class StorefrontDeploymentInfolist
                                 TextEntry::make('domain')
                                     ->label(__('console.domain'))
                                     ->copyable(),
-                                TextEntry::make('theme')
-                                    ->label(__('console.storefront_theme')),
                                 TextEntry::make('image')
                                     ->label(__('console.storefront_image_reference'))
                                     ->copyable()

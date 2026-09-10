@@ -56,6 +56,11 @@ final class ActivityLogResource extends Resource
         return __('console.navigation_group');
     }
 
+    public static function getNavigationSort(): int
+    {
+        return 6;
+    }
+
     public static function table(Table $table): Table
     {
         return ActivityLogTable::configure($table);

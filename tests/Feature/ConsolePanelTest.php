@@ -76,7 +76,6 @@ function consoleStorefrontFormData(): array
     return [
         'storefront_image_id'             => StorefrontImage::factory()->create()->id,
         'storefront_slug'                 => 'console-flowers',
-        'storefront_theme'                => 'default',
         'storefront_name_en'              => 'Console Flowers',
         'storefront_name_fa'              => 'گل‌فروشی کنسول',
         'storefront_business_type'        => 'Florist',
@@ -104,14 +103,13 @@ it('uses the Vendra logo in light and dark modes', function (): void {
         ->and($panel->getBrandLogoHeight())->toBe('2rem');
 });
 
-it('lets console operators define storefront images and their themes', function (): void {
+it('lets console operators define storefront images', function (): void {
     actAsConsoleAdmin();
 
     livewire(CreateStorefrontImage::class)
         ->fillForm([
-            'name'   => 'Florist 2026.08',
             'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
-            'themes' => ['default', 'minimal'],
+            'notes'  => 'Florist build used by demo stores.',
             'active' => true,
         ])
         ->call('create')
@@ -120,8 +118,8 @@ it('lets console operators define storefront images and their themes', function 
         ->assertRedirect();
 
     assertDatabaseHas('storefront_images', [
-        'name'   => 'Florist 2026.08',
         'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
+        'notes'  => 'Florist build used by demo stores.',
         'active' => true,
     ]);
 });
@@ -446,7 +444,6 @@ it('requests a storefront when a console admin creates a store', function (): vo
     assertDatabaseHas('storefront_deployments', [
         'slug'   => 'console-flowers',
         'domain' => 'console-flowers.test',
-        'theme'  => 'default',
         'status' => 'ready',
     ]);
 });

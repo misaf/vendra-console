@@ -50,7 +50,12 @@ final class ResellerResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('console.navigation_group_resellers');
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 1;
     }
 
     public static function form(Schema $schema): Schema

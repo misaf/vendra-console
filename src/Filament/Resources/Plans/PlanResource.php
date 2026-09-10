@@ -45,7 +45,12 @@ final class PlanResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('console.navigation_group_resellers');
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 2;
     }
 
     public static function form(Schema $schema): Schema

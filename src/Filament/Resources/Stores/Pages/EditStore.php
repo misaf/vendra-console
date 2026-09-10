@@ -6,6 +6,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Pages;
 
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 
 final class EditStore extends EditRecord
@@ -14,6 +15,9 @@ final class EditStore extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [ViewAction::make()];
+        return [
+            AssignResellerAction::make(),
+            ViewAction::make(),
+        ];
     }
 }

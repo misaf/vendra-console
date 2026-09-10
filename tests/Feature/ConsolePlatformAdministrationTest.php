@@ -12,6 +12,7 @@ use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraConsole\Filament\Pages\ManagePlatformSettings;
 use Misaf\VendraConsole\Filament\Resources\ActivityLogs\ActivityLogResource;
 use Misaf\VendraConsole\Filament\Resources\ActivityLogs\Pages\ListActivityLogs;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
@@ -120,6 +121,21 @@ describe('assigning stores to resellers', function (): void {
 
         expect($store->fresh()?->reseller_id)->toBe($reseller->getKey());
     });
+
+    it('reassigns a store from the edit page header action', function (): void {
+        $from = Reseller::factory()->create();
+        $to = Reseller::factory()->create();
+        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(2))->create();
+        $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
+
+        actAsPlatformOperator();
+
+        livewire(EditStore::class, ['record' => $store->getKey()])
+            ->callAction('assignReseller', ['reseller_id' => $to->getKey()])
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->reseller_id)->toBe($to->getKey());
+    });
 });
 
 describe('operating store lifecycles', function (): void {
@@ -167,7 +183,6 @@ describe('operating store lifecycles', function (): void {
             'domain'        => 'acme.test',
             'configuration' => [
                 'slug'          => 'acme-flowers',
-                'theme'         => 'default',
                 'domain'        => 'acme.test',
                 'siteUrl'       => 'https://acme.test',
                 'businessType'  => 'Florist',
@@ -282,11 +297,12 @@ describe('platform dashboard', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.provisioning'))
-            ->assertSee(__('console.storefronts_live'))
+            ->assertSee(__('console.stores_needing_attention'))
+            ->assertSee(__('console.stores_needing_attention_description'))
+            ->assertSee(__('console.storefronts_ready'))
+            ->assertSee(__('console.deployments_processing') . ': 0')
             ->assertSee(__('console.stores_active_suspended', ['active' => 2, 'suspended' => 1]))
-            ->assertSee(__('console.failed_stores') . ': 1')
-            ->assertSee(__('console.failed_deployments') . ': 1');
+            ->assertSee(__('console.failed_deployments'));
     });
 });
 

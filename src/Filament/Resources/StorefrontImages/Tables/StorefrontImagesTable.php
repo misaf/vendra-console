@@ -27,21 +27,19 @@ final class StorefrontImagesTable
                     ->rowIndex()
                     ->sortable(['id']),
 
-                TextColumn::make('name')
-                    ->label(__('console.name'))
-                    ->icon(Heroicon::Cube)
-                    ->searchable()
-                    ->sortable(),
-
                 TextColumn::make('image')
                     ->label(__('console.storefront_image_reference'))
+                    ->icon(Heroicon::Cube)
                     ->copyable()
                     ->searchable()
+                    ->sortable()
                     ->wrap(),
 
-                TextColumn::make('themes')
-                    ->label(__('console.storefront_themes'))
-                    ->badge(),
+                TextColumn::make('notes')
+                    ->label(__('console.storefront_image_notes'))
+                    ->wrap()
+                    ->placeholder('—')
+                    ->limit(60),
 
                 ToggleColumn::make('active')
                     ->label(__('console.active'))

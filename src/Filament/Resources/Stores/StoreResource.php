@@ -55,7 +55,12 @@ final class StoreResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('console.navigation_group_stores');
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 3;
     }
 
     public static function form(Schema $schema): Schema

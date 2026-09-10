@@ -32,6 +32,11 @@ final class ManagePlatformSettings extends SettingsPage
         return __('console.navigation_group');
     }
 
+    public static function getNavigationSort(): int
+    {
+        return 7;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('console.platform_settings');

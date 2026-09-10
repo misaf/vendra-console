@@ -44,7 +44,12 @@ final class StorefrontDeploymentResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('console.navigation_group_stores');
+    }
+
+    public static function getNavigationSort(): int
+    {
+        return 5;
     }
 
     public static function infolist(Schema $schema): Schema
