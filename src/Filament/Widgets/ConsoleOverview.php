@@ -43,10 +43,10 @@ final class ConsoleOverview extends StatsOverviewWidget
             ->count();
 
         $expiringSoon = Reseller::query()
-            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->expiringWithin(7))
+            ->whereHas('subscriptions', fn (Builder $query): Builder => $query->expiringWithin(7))
             ->count();
         $activeSubscriptions = Reseller::query()
-            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->active())
+            ->whereHas('subscriptions', fn (Builder $query): Builder => $query->active())
             ->count();
 
         return [
@@ -66,7 +66,7 @@ final class ConsoleOverview extends StatsOverviewWidget
 
             Stat::make(__('console.fleet_totals'), Store::query()->count())
                 ->description(__('console.stores_active_suspended', [
-                    'active'    => $activeStores,
+                    'active' => $activeStores,
                     'suspended' => $suspendedStores,
                 ]))
                 ->icon(Heroicon::OutlinedGlobeAlt)
@@ -74,13 +74,13 @@ final class ConsoleOverview extends StatsOverviewWidget
                 ->chart($this->dailyTrend(Store::query())),
 
             Stat::make(__('console.resellers'), Reseller::query()->count())
-                ->description(__('console.active_resellers') . ': ' . Reseller::query()->active()->count())
+                ->description(__('console.active_resellers').': '.Reseller::query()->active()->count())
                 ->icon(Heroicon::OutlinedBuildingOffice2)
                 ->url(ResellerResource::getUrl('index'))
                 ->chart($this->dailyTrend(Reseller::query())),
 
             Stat::make(__('console.storefronts_ready'), $readyDeployments)
-                ->description(__('console.deployments_processing') . ': ' . $processingDeployments)
+                ->description(__('console.deployments_processing').': '.$processingDeployments)
                 ->icon(Heroicon::OutlinedRocketLaunch)
                 ->color('success')
                 ->url(StorefrontDeploymentResource::getUrl('index', [

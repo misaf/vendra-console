@@ -17,7 +17,7 @@ final class EditPlan extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->hidden(fn(Plan $record): bool => $record->isInUse()),
+                ->hidden(fn (Plan $record): bool => $record->isInUse()),
         ];
     }
 }

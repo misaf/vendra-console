@@ -53,13 +53,13 @@ final class ResellerOperatorActions
     {
         return Action::make('createOwnerAccount')
             ->label(__('console.create_owner_account'))->icon(Heroicon::OutlinedUserPlus)
-            ->visible(fn(Reseller $record): bool => null === self::latestOwner($record))
+            ->visible(fn (Reseller $record): bool => self::latestOwner($record) === null)
             ->slideOver()
             ->schema([
                 TextInput::make('username')->label(__('console.username'))->minLength(3)->maxLength(12)
                     ->rules(['alpha_dash'])->required()->rule(Rule::unique(ResellerUser::class, 'username')->withoutTrashed()),
                 TextInput::make('email')->label(__('console.email'))->email()->maxLength(255)
-                    ->default(fn(Reseller $record): ?string => $record->email)->required()
+                    ->default(fn (Reseller $record): ?string => $record->email)->required()
                     ->rule(Rule::unique(ResellerUser::class, 'email')->withoutTrashed()),
                 TextInput::make('password')->label(__('console.new_password'))->password()
                     ->revealable(filament()->arePasswordsRevealable())->required()->confirmed()->rule(Password::default()),
@@ -81,8 +81,8 @@ final class ResellerOperatorActions
     {
         return Action::make('changeOwnerPassword')
             ->label(__('console.change_owner_password'))->icon(Heroicon::OutlinedKey)
-            ->disabled(fn(Reseller $record): bool => ! $record->ownerUser()->exists())
-            ->tooltip(fn(Reseller $record): ?string => $record->ownerUser()->exists() ? null : __('console.owner_account_required'))
+            ->disabled(fn (Reseller $record): bool => ! $record->ownerUser()->exists())
+            ->tooltip(fn (Reseller $record): ?string => $record->ownerUser()->exists() ? null : __('console.owner_account_required'))
             ->schema([
                 TextInput::make('password')->label(__('console.new_password'))->password()
                     ->revealable(filament()->arePasswordsRevealable())->required()->confirmed()->rule(Password::default()),
@@ -102,9 +102,9 @@ final class ResellerOperatorActions
     {
         return Action::make('changeOwnerEmail')
             ->label(__('console.change_owner_email'))->icon(Heroicon::OutlinedEnvelope)
-            ->disabled(fn(Reseller $record): bool => ! $record->ownerUser()->exists())
-            ->tooltip(fn(Reseller $record): ?string => $record->ownerUser()->exists() ? null : __('console.owner_account_required'))
-            ->fillForm(fn(Reseller $record): array => ['email' => self::currentOwner($record)?->email])
+            ->disabled(fn (Reseller $record): bool => ! $record->ownerUser()->exists())
+            ->tooltip(fn (Reseller $record): ?string => $record->ownerUser()->exists() ? null : __('console.owner_account_required'))
+            ->fillForm(fn (Reseller $record): array => ['email' => self::currentOwner($record)?->email])
             ->schema([TextInput::make('email')->label(__('console.email'))->email()->required()])
             ->action(function (Reseller $record, array $data): void {
                 $owner = self::currentOwner($record);
@@ -119,7 +119,7 @@ final class ResellerOperatorActions
     {
         return Action::make('disableOwnerAccount')->label(__('console.disable_owner_account'))
             ->icon(Heroicon::OutlinedNoSymbol)->color('warning')->requiresConfirmation()
-            ->visible(fn(Reseller $record): bool => self::currentOwner($record) instanceof ResellerUser)
+            ->visible(fn (Reseller $record): bool => self::currentOwner($record) instanceof ResellerUser)
             ->action(function (Reseller $record): void {
                 $owner = self::currentOwner($record);
                 if ($owner instanceof ResellerUser) {
@@ -133,7 +133,7 @@ final class ResellerOperatorActions
     {
         return Action::make('enableOwnerAccount')->label(__('console.enable_owner_account'))
             ->icon(Heroicon::OutlinedCheckCircle)
-            ->visible(fn(Reseller $record): bool => null === self::currentOwner($record) && true === self::latestOwner($record)?->trashed())
+            ->visible(fn (Reseller $record): bool => self::currentOwner($record) === null && self::latestOwner($record)?->trashed() === true)
             ->action(function (Reseller $record): void {
                 $owner = self::latestOwner($record);
                 if ($owner instanceof ResellerUser) {
@@ -147,7 +147,7 @@ final class ResellerOperatorActions
     {
         return Action::make('replaceOwnerAccount')->label(__('console.replace_owner_account'))
             ->icon(Heroicon::OutlinedUserPlus)
-            ->visible(fn(Reseller $record): bool => self::latestOwner($record) instanceof ResellerUser)
+            ->visible(fn (Reseller $record): bool => self::latestOwner($record) instanceof ResellerUser)
             ->slideOver()
             ->schema([
                 TextInput::make('username')->label(__('console.username'))->minLength(3)->maxLength(12)
@@ -175,12 +175,13 @@ final class ResellerOperatorActions
         return Action::make('changePlan')->label(__('console.change_plan'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)->slideOver()
             ->schema([Select::make('plan_id')->label(__('console.plan'))
-                ->options(fn(): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
+                ->options(fn (): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {
                 try {
                     app(SubscribeAction::class)->execute($record, Plan::query()->findOrFail((int) $data['plan_id']));
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()->danger()->title(__('console.downgrade_blocked'))->body($exception->getMessage())->send();
+
                     return;
                 }
                 self::success(__('console.plan_changed'));
@@ -193,8 +194,9 @@ final class ResellerOperatorActions
             ->requiresConfirmation()
             ->action(function (Reseller $record): void {
                 $plan = ($record->activeSubscription() ?? $record->subscriptions()->latest('starts_at')->first())?->plan;
-                if (null === $plan) {
+                if ($plan === null) {
                     Notification::make()->danger()->title(__('console.no_active_subscription'))->send();
+
                     return;
                 }
                 app(SubscribeAction::class)->execute($record, $plan);
@@ -205,10 +207,10 @@ final class ResellerOperatorActions
     private static function extendSubscription(): Action
     {
         return Action::make('extendSubscription')->label(__('console.extend_subscription'))->icon(Heroicon::OutlinedCalendarDays)
-            ->visible(fn(Reseller $record): bool => SubscriptionStatus::Active === self::latestSubscription($record)?->status
-                && null !== self::latestSubscription($record)?->ends_at)
+            ->visible(fn (Reseller $record): bool => self::latestSubscription($record)?->status === SubscriptionStatus::Active
+                && self::latestSubscription($record)?->ends_at !== null)
             ->schema([DateTimePicker::make('ends_at')->label(__('console.ends_at'))
-                ->after(fn(Reseller $record): ?Carbon => self::latestSubscription($record)?->ends_at)->required()])
+                ->after(fn (Reseller $record): ?Carbon => self::latestSubscription($record)?->ends_at)->required()])
             ->action(function (Reseller $record, array $data): void {
                 $subscription = self::latestSubscription($record);
                 if ($subscription instanceof Subscription) {
@@ -222,7 +224,7 @@ final class ResellerOperatorActions
     {
         return Action::make('cancelSubscription')->label(__('console.cancel_subscription'))->icon(Heroicon::OutlinedXCircle)
             ->color('danger')->requiresConfirmation()
-            ->visible(fn(Reseller $record): bool => in_array(self::latestSubscription($record)?->status, [
+            ->visible(fn (Reseller $record): bool => in_array(self::latestSubscription($record)?->status, [
                 SubscriptionStatus::PendingPayment, SubscriptionStatus::Active, SubscriptionStatus::PastDue,
             ], true))
             ->action(function (Reseller $record): void {
@@ -237,7 +239,7 @@ final class ResellerOperatorActions
     private static function reactivateSubscription(): Action
     {
         return Action::make('reactivateSubscription')->label(__('console.reactivate_subscription'))->icon(Heroicon::OutlinedPlayCircle)
-            ->visible(fn(Reseller $record): bool => in_array(self::latestSubscription($record)?->status, [
+            ->visible(fn (Reseller $record): bool => in_array(self::latestSubscription($record)?->status, [
                 SubscriptionStatus::Cancelled, SubscriptionStatus::Expired, SubscriptionStatus::PastDue,
             ], true))
             ->action(function (Reseller $record): void {

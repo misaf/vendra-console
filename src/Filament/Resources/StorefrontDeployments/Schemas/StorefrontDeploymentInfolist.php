@@ -31,11 +31,11 @@ final class StorefrontDeploymentInfolist
                                 TextEntry::make('status')
                                     ->label(__('console.status'))
                                     ->badge()
-                                    ->formatStateUsing(fn(StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}")),
+                                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}")),
                                 TextEntry::make('desired_state')
                                     ->label(__('console.desired_state'))
                                     ->badge()
-                                    ->formatStateUsing(fn(StorefrontDesiredState $state): string => __("console.desired_state_{$state->value}")),
+                                    ->formatStateUsing(fn (StorefrontDesiredState $state): string => __("console.desired_state_{$state->value}")),
                                 TextEntry::make('slug')
                                     ->label(__('console.storefront_slug'))
                                     ->copyable(),
@@ -81,7 +81,7 @@ final class StorefrontDeploymentInfolist
                     ->schema([
                         TextEntry::make('runtime_observation')
                             ->hiddenLabel()
-                            ->state(fn(StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => self::runtimeObservation($record, $provisioner))
+                            ->state(fn (StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => self::runtimeObservation($record, $provisioner))
                             ->listWithLineBreaks()
                             ->columnSpanFull(),
                     ])

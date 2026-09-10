@@ -37,7 +37,7 @@ final class StorefrontDeploymentTable
                 TextColumn::make('status')
                     ->label(__('console.status'))
                     ->badge()
-                    ->formatStateUsing(fn(StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}"))
+                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}"))
                     ->sortable(),
 
                 TextColumn::make('storefrontImage.name')
@@ -48,7 +48,7 @@ final class StorefrontDeploymentTable
                 TextColumn::make('image')
                     ->label(__('console.storefront_image_reference'))
                     ->limit(40)
-                    ->tooltip(fn(?string $state): ?string => $state)
+                    ->tooltip(fn (?string $state): ?string => $state)
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -83,7 +83,7 @@ final class StorefrontDeploymentTable
                 TextColumn::make('error')
                     ->label(__('console.failure_information'))
                     ->limit(60)
-                    ->tooltip(fn(?string $state): ?string => $state)
+                    ->tooltip(fn (?string $state): ?string => $state)
                     ->placeholder('—')
                     ->wrap(),
             ])
@@ -111,9 +111,9 @@ final class StorefrontDeploymentTable
                             DatePicker::make('until')
                                 ->label(__('console.until_date')),
                         ])
-                        ->query(fn(Builder $query, array $data): Builder => $query
-                            ->when($data['from'] ?? null, fn(Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
-                            ->when($data['until'] ?? null, fn(Builder $query, string $date): Builder => $query->whereDate('requested_at', '<=', $date))),
+                        ->query(fn (Builder $query, array $data): Builder => $query
+                            ->when($data['from'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
+                            ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '<=', $date))),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
             )
@@ -137,7 +137,7 @@ final class StorefrontDeploymentTable
     private static function statusOptions(): array
     {
         return collect(StorefrontDeploymentStatus::cases())
-            ->mapWithKeys(fn(StorefrontDeploymentStatus $status): array => [
+            ->mapWithKeys(fn (StorefrontDeploymentStatus $status): array => [
                 $status->value => __("console.deployment_status_{$status->value}"),
             ])
             ->all();

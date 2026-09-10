@@ -26,6 +26,7 @@ final class ConsoleUser extends Authenticatable implements FilamentUser, HasName
 {
     /** @use HasFactory<ConsoleUserFactory> */
     use HasFactory;
+
     use Notifiable;
     use SoftDeletes;
 
@@ -36,13 +37,13 @@ final class ConsoleUser extends Authenticatable implements FilamentUser, HasName
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'password' => 'hashed',
         ];
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return 'console' === $panel->getId();
+        return $panel->getId() === 'console';
     }
 
     public function getFilamentName(): string
@@ -56,7 +57,7 @@ final class ConsoleUser extends Authenticatable implements FilamentUser, HasName
     protected function email(): Attribute
     {
         return Attribute::make(
-            set: fn(string $value): string => Str::lower(mb_trim($value)),
+            set: fn (string $value): string => Str::lower(mb_trim($value)),
         );
     }
 }

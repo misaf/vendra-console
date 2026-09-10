@@ -41,14 +41,12 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Models\User;
+use Spatie\Permission\PermissionRegistrar;
 
 use function Pest\Laravel\actingAs;
-
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseMissing;
 use function Pest\Livewire\livewire;
-
-use Spatie\Permission\PermissionRegistrar;
 
 beforeEach(function (): void {
     Event::fake([TenantProvisioned::class]);
@@ -74,23 +72,23 @@ function actAsConsoleAdmin(): ConsoleUser
 function consoleStorefrontFormData(): array
 {
     return [
-        'storefront_image_id'             => StorefrontImage::factory()->create()->id,
-        'storefront_slug'                 => 'console-flowers',
-        'storefront_name_en'              => 'Console Flowers',
-        'storefront_name_fa'              => 'گل‌فروشی کنسول',
-        'storefront_business_type'        => 'Florist',
-        'storefront_price_currency'       => 'IRR',
-        'storefront_locality'             => 'Tehran',
-        'storefront_country'              => 'IR',
-        'storefront_mobile_phone'         => '09120000000',
-        'storefront_office_phone'         => '02100000000',
-        'storefront_contact_email'        => 'contact@console-flowers.test',
-        'storefront_hours_open'           => '08:00',
-        'storefront_hours_close'          => '21:00',
-        'storefront_map_query'            => '35.7,51.4',
-        'storefront_whatsapp_phone'       => '+989120000000',
-        'storefront_telegram_username'    => 'consoleflowers',
-        'storefront_instagram_username'   => 'consoleflowers',
+        'storefront_image_id' => StorefrontImage::factory()->create()->id,
+        'storefront_slug' => 'console-flowers',
+        'storefront_name_en' => 'Console Flowers',
+        'storefront_name_fa' => 'گل‌فروشی کنسول',
+        'storefront_business_type' => 'Florist',
+        'storefront_price_currency' => 'IRR',
+        'storefront_locality' => 'Tehran',
+        'storefront_country' => 'IR',
+        'storefront_mobile_phone' => '09120000000',
+        'storefront_office_phone' => '02100000000',
+        'storefront_contact_email' => 'contact@console-flowers.test',
+        'storefront_hours_open' => '08:00',
+        'storefront_hours_close' => '21:00',
+        'storefront_map_query' => '35.7,51.4',
+        'storefront_whatsapp_phone' => '+989120000000',
+        'storefront_telegram_username' => 'consoleflowers',
+        'storefront_instagram_username' => 'consoleflowers',
     ];
 }
 
@@ -108,8 +106,8 @@ it('lets console operators define storefront images', function (): void {
 
     livewire(CreateStorefrontImage::class)
         ->fillForm([
-            'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
-            'notes'  => 'Florist build used by demo stores.',
+            'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
+            'notes' => 'Florist build used by demo stores.',
             'active' => true,
         ])
         ->call('create')
@@ -118,8 +116,8 @@ it('lets console operators define storefront images', function (): void {
         ->assertRedirect();
 
     assertDatabaseHas('storefront_images', [
-        'image'  => 'ghcr.io/misaf/storefront@sha256:abc123',
-        'notes'  => 'Florist build used by demo stores.',
+        'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
+        'notes' => 'Florist build used by demo stores.',
         'active' => true,
     ]);
 });
@@ -129,12 +127,12 @@ it('globally searches console resources', function (): void {
 
     $plan = Plan::factory()->create(['name' => 'Enterprise Search Plan']);
     $reseller = Reseller::factory()->create([
-        'name'  => 'Search Partner',
+        'name' => 'Search Partner',
         'email' => 'partner-search@example.com',
     ]);
     $store = Store::factory()->create(['name' => 'Search Store']);
     StoreDomain::factory()->for($store)->create([
-        'name'   => 'global-search-store.test',
+        'name' => 'global-search-store.test',
         'active' => true,
     ]);
 
@@ -154,7 +152,7 @@ it('globally searches console resources', function (): void {
         ])
         ->and($storeAction->getLabel())->toBe(__('console.admin_url'))
         ->and($storeAction->getUrl())->toBe(
-            'https://' . $store->slug . '.' . Config::string('vendra-tenant.central_host'),
+            'https://'.$store->slug.'.'.Config::string('vendra-tenant.central_host'),
         )
         ->and($storeAction->shouldOpenUrlInNewTab())->toBeTrue();
 });
@@ -164,7 +162,7 @@ it('uses a reseller overview as the record landing page', function (): void {
 
     $plan = Plan::factory()->create(['name' => 'Growth']);
     $reseller = Reseller::factory()->create([
-        'name'  => 'Overview Partner',
+        'name' => 'Overview Partner',
         'email' => 'overview@example.com',
     ]);
     $owner = ResellerUser::factory()->forReseller($reseller)->create([
@@ -221,7 +219,7 @@ it('allows a verified console operator into the console panel', function (): voi
 it('seeds the initial console operator only from explicit credentials', function (): void {
     Config::set('console.operator', [
         'username' => 'console_owner',
-        'email'    => 'OWNER@EXAMPLE.TEST',
+        'email' => 'OWNER@EXAMPLE.TEST',
         'password' => 'a-secure-console-password',
     ]);
 
@@ -238,7 +236,7 @@ it('seeds the initial console operator only from explicit credentials', function
 it('does not seed a console operator when explicit credentials are absent', function (): void {
     Config::set('console.operator', [
         'username' => '',
-        'email'    => '',
+        'email' => '',
         'password' => '',
     ]);
 
@@ -252,19 +250,19 @@ it('lets a console admin create a plan', function (): void {
 
     livewire(CreatePlan::class)
         ->fillForm([
-            'name'          => 'Pro',
-            'max_units'     => 3,
-            'period_unit'   => 'month',
-            'period_count'  => 1,
-            'active'        => true,
+            'name' => 'Pro',
+            'max_units' => 3,
+            'period_unit' => 'month',
+            'period_count' => 1,
+            'active' => true,
         ])
         ->call('create')
         ->assertHasNoFormErrors();
 
     assertDatabaseHas('plans', [
-        'name'          => 'Pro',
-        'max_units'     => 3,
-        'period_unit'   => 'month',
+        'name' => 'Pro',
+        'max_units' => 3,
+        'period_unit' => 'month',
     ]);
 });
 
@@ -273,13 +271,13 @@ it('requires a currency for a paid plan', function (): void {
 
     livewire(CreatePlan::class)
         ->fillForm([
-            'name'           => 'Paid',
-            'max_units'      => 3,
-            'period_unit'    => 'month',
-            'period_count'   => 1,
-            'price'          => 1500,
-            'currency_code'  => null,
-            'active'         => true,
+            'name' => 'Paid',
+            'max_units' => 3,
+            'period_unit' => 'month',
+            'period_count' => 1,
+            'price' => 1500,
+            'currency_code' => null,
+            'active' => true,
         ])
         ->call('create')
         ->assertHasFormErrors(['currency_code' => 'required']);
@@ -290,12 +288,12 @@ it('honors a disabled state when creating a reseller', function (): void {
 
     livewire(CreateReseller::class)
         ->fillForm([
-            'plan_id'               => Plan::factory()->create()->getKey(),
-            'username'              => 'paused_owner',
-            'email'                 => 'owner@gmail.com',
-            'password'              => 'Secure123',
+            'plan_id' => Plan::factory()->create()->getKey(),
+            'username' => 'paused_owner',
+            'email' => 'owner@gmail.com',
+            'password' => 'Secure123',
             'password_confirmation' => 'Secure123',
-            'active'                => false,
+            'active' => false,
         ])
         ->call('create')
         ->assertHasNoFormErrors();
@@ -341,9 +339,9 @@ it('creates a store for a reseller within its plan limit', function (): void {
     livewire(CreateStore::class)
         ->fillForm([
             'reseller_id' => $reseller->getKey(),
-            'domain'      => 'acme.test',
-            'email'       => 'admin@gmail.com',
-            'active'      => true,
+            'domain' => 'acme.test',
+            'email' => 'admin@gmail.com',
+            'active' => true,
             ...consoleStorefrontFormData(),
             'storefront_slug' => 'acme',
         ])
@@ -351,12 +349,12 @@ it('creates a store for a reseller within its plan limit', function (): void {
         ->assertHasNoFormErrors();
 
     assertDatabaseHas('stores', [
-        'name'        => 'Acme',
+        'name' => 'Acme',
         'reseller_id' => $reseller->getKey(),
     ]);
     assertDatabaseHas('users', [
         'username' => 'admin',
-        'email'    => 'admin@gmail.com',
+        'email' => 'admin@gmail.com',
     ]);
     expect(StorefrontDeployment::query()->count())->toBe(1);
 });
@@ -380,18 +378,18 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
         ->assertFormFieldExists('reseller_id')
         ->call('create')
         ->assertHasFormErrors([
-            'domain'                    => 'required',
-            'email'                     => 'required',
-            'storefront_slug'           => 'required',
-            'storefront_name_en'        => 'required',
-            'storefront_name_fa'        => 'required',
-            'storefront_mobile_phone'   => 'required',
-            'storefront_office_phone'   => 'required',
-            'storefront_contact_email'  => 'required',
-            'storefront_hours_open'     => 'required',
-            'storefront_hours_close'    => 'required',
-            'storefront_locality'       => 'required',
-            'storefront_map_query'      => 'required',
+            'domain' => 'required',
+            'email' => 'required',
+            'storefront_slug' => 'required',
+            'storefront_name_en' => 'required',
+            'storefront_name_fa' => 'required',
+            'storefront_mobile_phone' => 'required',
+            'storefront_office_phone' => 'required',
+            'storefront_contact_email' => 'required',
+            'storefront_hours_open' => 'required',
+            'storefront_hours_close' => 'required',
+            'storefront_locality' => 'required',
+            'storefront_map_query' => 'required',
         ])
         ->assertHasNoFormErrors(['reseller_id']);
 });
@@ -401,9 +399,9 @@ it('lets a console admin create a store without a managed storefront', function 
 
     livewire(CreateStore::class)
         ->fillForm([
-            'domain'            => 'local-source.test',
-            'email'             => 'local-source@gmail.com',
-            'active'            => true,
+            'domain' => 'local-source.test',
+            'email' => 'local-source@gmail.com',
+            'active' => true,
             'create_storefront' => false,
         ])
         ->call('create')
@@ -420,7 +418,7 @@ it('suggests storefront identity from the store domain', function (): void {
         ->set('data.domain', 'Rose-Garden.Example')
         ->assertHasNoFormErrors(['domain'])
         ->assertFormSet([
-            'storefront_slug'    => 'rose-garden',
+            'storefront_slug' => 'rose-garden',
             'storefront_name_en' => 'Rose Garden',
         ]);
 });
@@ -433,16 +431,16 @@ it('requests a storefront when a console admin creates a store', function (): vo
     livewire(CreateStore::class)
         ->fillForm([
             'reseller_id' => $reseller->getKey(),
-            'domain'      => 'console-flowers.test',
-            'email'       => 'console.flowers@gmail.com',
-            'active'      => true,
+            'domain' => 'console-flowers.test',
+            'email' => 'console.flowers@gmail.com',
+            'active' => true,
             ...consoleStorefrontFormData(),
         ])
         ->call('create')
         ->assertHasNoFormErrors();
 
     assertDatabaseHas('storefront_deployments', [
-        'slug'   => 'console-flowers',
+        'slug' => 'console-flowers',
         'domain' => 'console-flowers.test',
         'status' => 'ready',
     ]);
@@ -457,10 +455,10 @@ it('blocks store creation once the reseller reaches its plan limit', function ()
 
     livewire(CreateStore::class)
         ->fillForm([
-            'reseller_id'    => $reseller->getKey(),
-            'domain'         => 'second.test',
-            'email'          => 'admin@second.test',
-            'active'         => true,
+            'reseller_id' => $reseller->getKey(),
+            'domain' => 'second.test',
+            'email' => 'admin@second.test',
+            'active' => true,
         ])
         ->call('create');
 
@@ -478,20 +476,20 @@ it('validates store domains during creation', function (): void {
 
     livewire(CreateStore::class)
         ->fillForm([
-            'reseller_id'    => $reseller->getKey(),
-            'domain'         => 'not a domain',
-            'email'          => 'invalid@example.test',
-            'active'         => true,
+            'reseller_id' => $reseller->getKey(),
+            'domain' => 'not a domain',
+            'email' => 'invalid@example.test',
+            'active' => true,
         ])
         ->call('create')
         ->assertHasFormErrors(['domain' => 'regex']);
 
     livewire(CreateStore::class)
         ->fillForm([
-            'reseller_id'    => $reseller->getKey(),
-            'domain'         => 'taken.test',
-            'email'          => 'duplicate@example.test',
-            'active'         => true,
+            'reseller_id' => $reseller->getKey(),
+            'domain' => 'taken.test',
+            'email' => 'duplicate@example.test',
+            'active' => true,
         ])
         ->call('create')
         ->assertHasFormErrors(['domain' => 'unique']);
@@ -507,12 +505,12 @@ it('lets a console admin replace a domain and shows the old one in trashed histo
         ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'new.test'])
         ->assertHasNoErrors();
 
-    $current = $store->execute(fn() => $store->storeDomains()->where('active', true)->value('name'));
+    $current = $store->execute(fn () => $store->storeDomains()->where('active', true)->value('name'));
     expect($current)->toBe('new.test');
 
     livewire(DomainsRelationManager::class, [
         'ownerRecord' => $store,
-        'pageClass'   => EditStore::class,
+        'pageClass' => EditStore::class,
     ])
         ->call('loadTable')
         ->filterTable('trashed', ['value' => '0'])
@@ -541,17 +539,17 @@ it('edits store details without directly mutating operational identity fields', 
     $otherReseller = Reseller::factory()->create();
     $store = Store::factory()->active()->create([
         'reseller_id' => $reseller->getKey(),
-        'name'        => 'Original store',
+        'name' => 'Original store',
     ]);
     $originalSlug = $store->slug;
 
     livewire(EditStore::class, ['record' => $store->getKey()])
         ->fillForm([
-            'name'        => 'Updated store',
+            'name' => 'Updated store',
             'description' => 'Operational description.',
-            'slug'        => 'protected-slug',
+            'slug' => 'protected-slug',
             'reseller_id' => $otherReseller->getKey(),
-            'active'      => false,
+            'active' => false,
         ])
         ->call('save')
         ->assertHasNoFormErrors()
@@ -571,27 +569,27 @@ it('adds a store administrator through the tenant membership action', function (
 
     $store = Store::factory()->create();
     $roleClass = app(PermissionRegistrar::class)->getRoleClass();
-    $store->execute(fn(): mixed => $roleClass::query()->firstOrCreate([
-        'name'       => Config::string('vendra-permission.admin_role'),
+    $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
+        'name' => Config::string('vendra-permission.admin_role'),
         'guard_name' => 'web',
     ]));
 
     livewire(AdministratorsRelationManager::class, [
         'ownerRecord' => $store,
-        'pageClass'   => EditStore::class,
+        'pageClass' => EditStore::class,
     ])
         ->callAction(TestAction::make('addAdministrator')->table(), [
-            'username'              => 'second_admin',
-            'email'                 => 'second-admin@example.com',
-            'password'              => 'SecurePassword123',
+            'username' => 'second_admin',
+            'email' => 'second-admin@example.com',
+            'password' => 'SecurePassword123',
             'password_confirmation' => 'SecurePassword123',
         ])
         ->assertHasNoActionErrors();
 
-    $administrator = $store->execute(fn(): User => User::query()->where('email', 'second-admin@example.com')->sole());
+    $administrator = $store->execute(fn (): User => User::query()->where('email', 'second-admin@example.com')->sole());
 
     expect($administrator->tenants()->whereKey($store->getKey())->exists())->toBeTrue()
-        ->and($store->execute(fn(): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
+        ->and($store->execute(fn (): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
 });
 
 it('lets a console admin offboard then restore a store', function (): void {
@@ -729,9 +727,9 @@ it('creates a store the platform owns directly, with no reseller', function (): 
     livewire(CreateStore::class)
         ->fillForm([
             'reseller_id' => null,
-            'domain'      => 'direct.test',
-            'email'       => 'owner@gmail.com',
-            'active'      => true,
+            'domain' => 'direct.test',
+            'email' => 'owner@gmail.com',
+            'active' => true,
             ...consoleStorefrontFormData(),
             'storefront_slug' => 'direct',
         ])
@@ -739,7 +737,7 @@ it('creates a store the platform owns directly, with no reseller', function (): 
         ->assertHasNoFormErrors();
 
     assertDatabaseHas('stores', [
-        'name'        => 'Direct',
+        'name' => 'Direct',
         'reseller_id' => null,
     ]);
 

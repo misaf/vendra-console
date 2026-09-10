@@ -170,36 +170,36 @@ describe('operating store lifecycles', function (): void {
         expect($store->fresh()?->provisioning_status)->toBe(TenantProvisioningStatus::Pending);
         Queue::assertPushed(
             CompleteStoreProvisioningJob::class,
-            fn(CompleteStoreProvisioningJob $job): bool => $job->tenantId === $store->getKey(),
+            fn (CompleteStoreProvisioningJob $job): bool => $job->tenantId === $store->getKey(),
         );
     });
 
     it('stops and starts a storefront through its domain lifecycle actions', function (): void {
         $store = Store::factory()->active()->create();
         $deployment = StorefrontDeployment::factory()->for($store)->create([
-            'status'        => StorefrontDeploymentStatus::Ready,
+            'status' => StorefrontDeploymentStatus::Ready,
             'desired_state' => StorefrontDesiredState::Running,
-            'slug'          => 'acme-flowers',
-            'domain'        => 'acme.test',
+            'slug' => 'acme-flowers',
+            'domain' => 'acme.test',
             'configuration' => [
-                'slug'          => 'acme-flowers',
-                'domain'        => 'acme.test',
-                'siteUrl'       => 'https://acme.test',
-                'businessType'  => 'Florist',
+                'slug' => 'acme-flowers',
+                'domain' => 'acme.test',
+                'siteUrl' => 'https://acme.test',
+                'businessType' => 'Florist',
                 'priceCurrency' => 'IRR',
-                'name'          => ['en' => 'Acme Flowers'],
-                'address'       => ['locality' => 'Tehran', 'country' => 'IR'],
-                'contact'       => [
+                'name' => ['en' => 'Acme Flowers'],
+                'address' => ['locality' => 'Tehran', 'country' => 'IR'],
+                'contact' => [
                     'mobilePhone' => '09120000000',
                     'officePhone' => '02100000000',
-                    'email'       => 'contact@acme.test',
-                    'hoursOpen'   => '08:00',
-                    'hoursClose'  => '21:00',
-                    'mapQuery'    => '35.7,51.4',
+                    'email' => 'contact@acme.test',
+                    'hoursOpen' => '08:00',
+                    'hoursClose' => '21:00',
+                    'mapQuery' => '35.7,51.4',
                 ],
                 'social' => [
-                    'whatsappPhone'     => '+989120000000',
-                    'telegramUsername'  => 'acmeflowers',
+                    'whatsappPhone' => '+989120000000',
+                    'telegramUsername' => 'acmeflowers',
                     'instagramUsername' => 'acmeflowers',
                 ],
             ],
@@ -300,7 +300,7 @@ describe('platform dashboard', function (): void {
             ->assertSee(__('console.stores_needing_attention'))
             ->assertSee(__('console.stores_needing_attention_description'))
             ->assertSee(__('console.storefronts_ready'))
-            ->assertSee(__('console.deployments_processing') . ': 0')
+            ->assertSee(__('console.deployments_processing').': 0')
             ->assertSee(__('console.stores_active_suspended', ['active' => 2, 'suspended' => 1]))
             ->assertSee(__('console.failed_deployments'));
     });
@@ -312,16 +312,16 @@ describe('activity visibility', function (): void {
         $storeB = Store::factory()->active()->create(['name' => 'Beta Store']);
 
         $forA = ActivityLog::query()->create([
-            'tenant_id'   => $storeA->getKey(),
-            'log_name'    => 'default',
+            'tenant_id' => $storeA->getKey(),
+            'log_name' => 'default',
             'description' => 'Alpha changed a product',
-            'event'       => 'updated',
+            'event' => 'updated',
         ]);
         $forB = ActivityLog::query()->create([
-            'tenant_id'   => $storeB->getKey(),
-            'log_name'    => 'default',
+            'tenant_id' => $storeB->getKey(),
+            'log_name' => 'default',
             'description' => 'Beta changed a product',
-            'event'       => 'updated',
+            'event' => 'updated',
         ]);
 
         actAsPlatformOperator();
@@ -341,8 +341,8 @@ describe('activity visibility', function (): void {
     it('is read-only', function (): void {
         $store = Store::factory()->active()->create();
         $entry = ActivityLog::query()->create([
-            'tenant_id'   => $store->getKey(),
-            'log_name'    => 'default',
+            'tenant_id' => $store->getKey(),
+            'log_name' => 'default',
             'description' => 'Something happened',
         ]);
 

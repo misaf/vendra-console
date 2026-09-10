@@ -36,27 +36,27 @@ final class ConsolePanelServiceProvider extends PanelProvider
     {
         return $panel
             ->id('console')
-            ->brandLogo(fn(): string => asset('images/vendra-logo.svg'))
+            ->brandLogo(fn (): string => asset('images/vendra-logo.svg'))
             ->brandLogoHeight('2rem')
             /*
              | Resolved per request rather than at boot: the brand is an
              | operator-editable setting, and reading it here means a rename
              | shows up on the next page load instead of the next deploy.
              */
-            ->brandName(fn(): string => Config::string('console.platform.name'))
-            ->darkModeBrandLogo(fn(): string => asset('images/vendra-logo-dark.svg'))
+            ->brandName(fn (): string => Config::string('console.platform.name'))
+            ->darkModeBrandLogo(fn (): string => asset('images/vendra-logo-dark.svg'))
             ->databaseNotifications()
             ->databaseTransactions()
-            ->discoverResources(__DIR__ . '/../Filament/Resources', 'Misaf\\VendraConsole\\Filament\\Resources')
-            ->discoverPages(__DIR__ . '/../Filament/Pages', 'Misaf\\VendraConsole\\Filament\\Pages')
-            ->discoverWidgets(__DIR__ . '/../Filament/Widgets', 'Misaf\\VendraConsole\\Filament\\Widgets')
+            ->discoverResources(__DIR__.'/../Filament/Resources', 'Misaf\\VendraConsole\\Filament\\Resources')
+            ->discoverPages(__DIR__.'/../Filament/Pages', 'Misaf\\VendraConsole\\Filament\\Pages')
+            ->discoverWidgets(__DIR__.'/../Filament/Widgets', 'Misaf\\VendraConsole\\Filament\\Widgets')
             ->pages([Dashboard::class])
             ->globalSearchFieldKeyBindingSuffix()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->homeUrl('/')
             ->authGuard('console')
             ->authPasswordBroker('console_users')
-            ->domain('console.' . Uri::of(config()->string('app.url'))->host())
+            ->domain('console.'.Uri::of(config()->string('app.url'))->host())
             ->login()
             ->passwordReset()
             ->emailVerification(isRequired: true)
@@ -78,7 +78,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->font(
-                fn(): string => app()->isLocale('fa') ? 'Vazirmatn' : 'Google',
+                fn (): string => app()->isLocale('fa') ? 'Vazirmatn' : 'Google',
                 provider: SpatieGoogleFontProvider::class,
             )
             ->path('')

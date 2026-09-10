@@ -56,11 +56,11 @@ final class CreateStore extends CreateStorePage
                 StorefrontConfigurationFields::creationToggle(default: true),
             ]),
             $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: true))
-                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
+                ->visible(fn (Get $get): bool => $get('create_storefront') === true),
             $this->step(__('console.storefront_contact'), __('console.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: true))
-                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
+                ->visible(fn (Get $get): bool => $get('create_storefront') === true),
             $this->step(__('console.storefront_location_social'), __('console.storefront_location_social_description'), Heroicon::MapPin, StorefrontConfigurationFields::locationAndSocialFields(optional: true))
-                ->visible(fn(Get $get): bool => true === $get('create_storefront')),
+                ->visible(fn (Get $get): bool => $get('create_storefront') === true),
         ];
     }
 
@@ -68,17 +68,17 @@ final class CreateStore extends CreateStorePage
      * The console picks the billing reseller on the form. Leaving it empty
      * creates a store the platform owns directly.
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     protected function resolveOwner(array $data): ?SubscriptionSubscriber
     {
         $resellerId = $data['reseller_id'] ?? null;
 
-        if (null === $resellerId || '' === $resellerId) {
+        if ($resellerId === null || $resellerId === '') {
             return null;
         }
 
-        if ( ! is_numeric($resellerId)) {
+        if (! is_numeric($resellerId)) {
             throw new InvalidArgumentException('Invalid reseller provided.');
         }
 
@@ -88,7 +88,7 @@ final class CreateStore extends CreateStorePage
     /**
      * Every wizard step is laid out the same way, so the shape is written once.
      *
-     * @param array<int, Htmlable|string> $schema
+     * @param  array<int, Htmlable|string>  $schema
      */
     private function step(string $label, string $description, Heroicon $icon, array $schema): Step
     {

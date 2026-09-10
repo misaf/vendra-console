@@ -77,7 +77,7 @@ final class StoreOperatorActions
         return Action::make('viewDeployment')
             ->label(__('console.view_deployment'))
             ->icon(Heroicon::OutlinedEye)
-            ->visible(fn(Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
             ->url(function (Store $record): ?string {
                 $deployment = self::deployment($record);
 
@@ -92,8 +92,8 @@ final class StoreOperatorActions
         return Action::make('viewStorefrontLogs')
             ->label(__('console.view_logs'))
             ->icon(Heroicon::OutlinedDocumentText)
-            ->visible(fn(Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
-            ->fillForm(fn(Store $record, StorefrontProvisioner $provisioner): array => [
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->fillForm(fn (Store $record, StorefrontProvisioner $provisioner): array => [
                 'logs' => self::logsFor($record, $provisioner),
             ])
             ->schema([
@@ -106,7 +106,7 @@ final class StoreOperatorActions
                     ->columnSpanFull(),
             ])
             ->modalHeading(__('console.recent_storefront_logs'))
-            ->action(static fn(): null => null)
+            ->action(static fn (): null => null)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel(__('console.close'));
     }
@@ -118,7 +118,7 @@ final class StoreOperatorActions
             ->icon(Heroicon::OutlinedPauseCircle)
             ->color('warning')
             ->requiresConfirmation()
-            ->visible(fn(Store $record): bool => ! $record->trashed() && $record->active)
+            ->visible(fn (Store $record): bool => ! $record->trashed() && $record->active)
             ->action(function (Store $record, SuspendStoreAction $suspendStore): void {
                 $suspendStore->execute($record);
                 self::notify(__('console.store_suspended'));
@@ -130,9 +130,9 @@ final class StoreOperatorActions
         return Action::make('reactivateStore')
             ->label(__('console.reactivate_store'))
             ->icon(Heroicon::OutlinedPlayCircle)
-            ->visible(fn(Store $record): bool => ! $record->trashed()
+            ->visible(fn (Store $record): bool => ! $record->trashed()
                 && ! $record->active
-                && TenantProvisioningStatus::Ready === $record->provisioning_status)
+                && $record->provisioning_status === TenantProvisioningStatus::Ready)
             ->action(function (Store $record, ReactivateStoreAction $reactivateStore): void {
                 $reactivateStore->execute($record);
                 self::notify(__('console.store_reactivated'));
@@ -144,8 +144,8 @@ final class StoreOperatorActions
         return Action::make('retryStoreProvisioning')
             ->label(__('console.retry_store_provisioning'))
             ->icon(Heroicon::OutlinedArrowPath)
-            ->visible(fn(Store $record): bool => ! $record->trashed()
-                && TenantProvisioningStatus::Ready !== $record->provisioning_status)
+            ->visible(fn (Store $record): bool => ! $record->trashed()
+                && $record->provisioning_status !== TenantProvisioningStatus::Ready)
             ->action(function (Store $record, RetryStoreProvisioningAction $retryStoreProvisioning): void {
                 $retryStoreProvisioning->execute($record);
                 self::notify(__('console.store_provisioning_queued'));
@@ -157,13 +157,13 @@ final class StoreOperatorActions
         return Action::make('startStorefront')
             ->label(__('console.start_storefront'))
             ->icon(Heroicon::OutlinedPlay)
-            ->visible(fn(Store $record): bool => StorefrontDesiredState::Stopped === self::deployment($record)?->desired_state)
+            ->visible(fn (Store $record): bool => self::deployment($record)?->desired_state === StorefrontDesiredState::Stopped)
             ->action(function (Store $record, StartStoreStorefrontAction $startStorefront): void {
                 $deployment = self::deployment($record);
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(
-                        fn(): mixed => $startStorefront->execute($deployment),
+                        fn (): mixed => $startStorefront->execute($deployment),
                         __('console.storefront_started'),
                     );
                 }
@@ -177,13 +177,13 @@ final class StoreOperatorActions
             ->icon(Heroicon::OutlinedStop)
             ->color('warning')
             ->requiresConfirmation()
-            ->visible(fn(Store $record): bool => StorefrontDesiredState::Running === self::deployment($record)?->desired_state)
+            ->visible(fn (Store $record): bool => self::deployment($record)?->desired_state === StorefrontDesiredState::Running)
             ->action(function (Store $record, StopStoreStorefrontAction $stopStorefront): void {
                 $deployment = self::deployment($record);
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(
-                        fn(): mixed => $stopStorefront->execute($deployment),
+                        fn (): mixed => $stopStorefront->execute($deployment),
                         __('console.storefront_stopped'),
                     );
                 }
@@ -196,13 +196,13 @@ final class StoreOperatorActions
             ->label(__('console.restart_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
-            ->visible(fn(Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
             ->action(function (Store $record, RestartStoreStorefrontAction $restartStorefront): void {
                 $deployment = self::deployment($record);
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(
-                        fn(): mixed => $restartStorefront->execute($deployment),
+                        fn (): mixed => $restartStorefront->execute($deployment),
                         __('console.storefront_restarted'),
                     );
                 }
@@ -215,13 +215,13 @@ final class StoreOperatorActions
             ->label(__('console.reconcile_storefront'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->requiresConfirmation()
-            ->visible(fn(Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
             ->action(function (Store $record, ReconcileStoreStorefrontAction $reconcileStorefront): void {
                 $deployment = self::deployment($record);
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(
-                        fn(): mixed => $reconcileStorefront->execute($deployment),
+                        fn (): mixed => $reconcileStorefront->execute($deployment),
                         __('console.storefront_reconciled'),
                     );
                 }
@@ -234,7 +234,7 @@ final class StoreOperatorActions
             ->label(__('console.redeploy_storefront'))
             ->icon(Heroicon::OutlinedCloudArrowUp)
             ->requiresConfirmation()
-            ->visible(fn(Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
             ->action(function (Store $record, RedeployStoreStorefrontAction $redeployStorefront): void {
                 $deployment = self::deployment($record);
 
@@ -250,7 +250,7 @@ final class StoreOperatorActions
         return Action::make('retryStorefront')
             ->label(__('console.retry_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
-            ->visible(fn(Store $record): bool => StorefrontDeploymentStatus::Failed === self::deployment($record)?->status)
+            ->visible(fn (Store $record): bool => self::deployment($record)?->status === StorefrontDeploymentStatus::Failed)
             ->action(function (Store $record, RetryFailedStorefrontDeploymentAction $retryStorefront): void {
                 $deployment = self::deployment($record);
 
@@ -267,7 +267,7 @@ final class StoreOperatorActions
             ->label(__('console.offboard_store'))
             ->icon(Heroicon::OutlinedArchiveBox)
             ->color('danger')
-            ->visible(fn(Store $record): bool => ! $record->trashed())
+            ->visible(fn (Store $record): bool => ! $record->trashed())
             ->schema([
                 Textarea::make('reason')
                     ->label(__('console.offboarding_reason'))
@@ -285,7 +285,7 @@ final class StoreOperatorActions
         return Action::make('restoreOffboardedStore')
             ->label(__('console.restore_store'))
             ->icon(Heroicon::OutlinedArrowUturnLeft)
-            ->visible(fn(Store $record): bool => $record->trashed())
+            ->visible(fn (Store $record): bool => $record->trashed())
             ->action(function (Store $record, RestoreOffboardedStoreAction $restoreOffboardedStore): void {
                 $restoreOffboardedStore->execute($record);
                 self::notify(__('console.store_restored'));
@@ -303,14 +303,14 @@ final class StoreOperatorActions
     {
         $deployment = self::deployment($store);
 
-        if ( ! $deployment instanceof StorefrontDeployment) {
+        if (! $deployment instanceof StorefrontDeployment) {
             return __('console.no_recent_logs');
         }
 
         try {
             $logs = $provisioner->logs(StorefrontReference::for($deployment));
 
-            return '' === mb_trim($logs) ? __('console.no_recent_logs') : $logs;
+            return mb_trim($logs) === '' ? __('console.no_recent_logs') : $logs;
         } catch (Throwable $exception) {
             report($exception);
 

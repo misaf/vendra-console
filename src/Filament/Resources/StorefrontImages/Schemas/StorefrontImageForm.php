@@ -18,7 +18,7 @@ final class StorefrontImageForm
         return $schema
             ->components([
                 TextInput::make('image')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.image'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.image'))
                     ->label(__('console.storefront_image_reference'))
                     ->helperText(__('console.storefront_image_reference_hint'))
                     ->extraAttributes(['dir' => 'ltr'])

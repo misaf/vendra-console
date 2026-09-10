@@ -28,7 +28,7 @@ final class ResellerForm
         return $schema
             ->components([
                 TextInput::make('username')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.username'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.username'))
                     ->label(__('console.username'))
                     ->live(onBlur: true)
                     ->minLength(3)
@@ -38,24 +38,24 @@ final class ResellerForm
                     ->unique(
                         table: ResellerUser::class,
                         column: 'username',
-                        modifyRuleUsing: fn(Unique $rule): Unique => $rule
+                        modifyRuleUsing: fn (Unique $rule): Unique => $rule
                             ->withoutTrashed(),
                     )
                     ->visibleOn('create'),
 
                 TextInput::make('email')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.email'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.email'))
                     ->label(__('console.email'))
                     ->email()
                     ->extraAttributes(['dir' => 'ltr'])
                     ->live(onBlur: true)
                     ->maxLength(255)
-                    ->required(fn(string $operation): bool => 'create' === $operation)
-                    ->rules(fn(string $operation): array => 'create' === $operation
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->rules(fn (string $operation): array => $operation === 'create'
                         ? [
                             'bail',
                             'email:rfc,strict,spoof,filter,filter_unicode',
-                            new EmailValidation(),
+                            new EmailValidation,
                             Rule::unique(ResellerUser::class, 'email')->withoutTrashed(),
                         ]
                         : [])
@@ -83,14 +83,14 @@ final class ResellerForm
                     ->visibleOn('create'),
 
                 Select::make('plan_id')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.plan_id'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.plan_id'))
                     ->label(__('console.subscription_plan'))
                     ->live()
-                    ->options(fn(): array => Plan::query()
+                    ->options(fn (): array => Plan::query()
                         ->active()
                         ->get()
-                        ->mapWithKeys(fn(Plan $plan): array => [
-                            $plan->id => "{$plan->name} — " . ($plan->isFree()
+                        ->mapWithKeys(fn (Plan $plan): array => [
+                            $plan->id => "{$plan->name} — ".($plan->isFree()
                                 ? __('console.free')
                                 : $plan->formattedPrice()),
                         ])
@@ -100,7 +100,7 @@ final class ResellerForm
                     ->visibleOn('create'),
 
                 Toggle::make('active')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.active'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
                     ->label(__('console.active'))
                     ->columnSpanFull()
                     ->default(true)
@@ -115,15 +115,15 @@ final class ResellerForm
                     ->schema([
                         TextEntry::make('current_plan')
                             ->label(__('console.plan'))
-                            ->state(fn(?Reseller $record): string => $record?->activeSubscription()?->plan->name ?? '—'),
+                            ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->plan->name ?? '—'),
 
                         TextEntry::make('current_status')
                             ->label(__('console.status'))
-                            ->state(fn(?Reseller $record): string => $record?->activeSubscription()?->status->value ?? '—'),
+                            ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->status->value ?? '—'),
 
                         TextEntry::make('current_ends_at')
                             ->label(__('console.ends_at'))
-                            ->state(fn(?Reseller $record): string => $record?->activeSubscription()?->ends_at?->toDayDateTimeString() ?? '—'),
+                            ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->ends_at?->toDayDateTimeString() ?? '—'),
                     ]),
             ])
             ->columns(2);

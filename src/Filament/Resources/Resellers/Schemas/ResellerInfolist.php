@@ -46,11 +46,11 @@ final class ResellerInfolist
                     Grid::make(2)->schema([
                         TextEntry::make('owner_username')
                             ->label(__('console.username'))
-                            ->state(fn(Reseller $record): ?string => $record->ownerUser?->username)
+                            ->state(fn (Reseller $record): ?string => $record->ownerUser?->username)
                             ->placeholder('—'),
                         TextEntry::make('owner_email')
                             ->label(__('console.email'))
-                            ->state(fn(Reseller $record): ?string => $record->ownerUser?->email)
+                            ->state(fn (Reseller $record): ?string => $record->ownerUser?->email)
                             ->placeholder('—')
                             ->copyable(),
                     ]),
@@ -61,17 +61,17 @@ final class ResellerInfolist
                     Grid::make(3)->schema([
                         TextEntry::make('current_plan')
                             ->label(__('console.plan'))
-                            ->state(fn(Reseller $record): ?string => self::subscription($record)?->plan?->name)
+                            ->state(fn (Reseller $record): ?string => self::subscription($record)?->plan?->name)
                             ->placeholder('—'),
                         TextEntry::make('current_status')
                             ->label(__('console.subscription_status'))
                             ->badge()
-                            ->state(fn(Reseller $record): ?string => self::subscription($record)?->status->value)
-                            ->formatStateUsing(fn(string $state): string => __("console.status_{$state}"))
+                            ->state(fn (Reseller $record): ?string => self::subscription($record)?->status->value)
+                            ->formatStateUsing(fn (string $state): string => __("console.status_{$state}"))
                             ->placeholder('—'),
                         TextEntry::make('current_ends_at')
                             ->label(__('console.ends_at'))
-                            ->state(fn(Reseller $record): ?string => self::subscription($record)?->ends_at?->toDayDateTimeString())
+                            ->state(fn (Reseller $record): ?string => self::subscription($record)?->ends_at?->toDayDateTimeString())
                             ->placeholder('—'),
                     ]),
                 ])

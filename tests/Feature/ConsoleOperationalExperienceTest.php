@@ -56,11 +56,11 @@ it('keeps deployment operations behind the console guard', function (): void {
 it('lists and filters storefront deployments by status, store, and requested date', function (): void {
     $store = Store::factory()->active()->create();
     $failed = StorefrontDeployment::factory()->for($store)->create([
-        'status'       => StorefrontDeploymentStatus::Failed,
+        'status' => StorefrontDeploymentStatus::Failed,
         'requested_at' => '2026-08-20 10:00:00',
     ]);
     $ready = StorefrontDeployment::factory()->create([
-        'status'       => StorefrontDeploymentStatus::Ready,
+        'status' => StorefrontDeploymentStatus::Ready,
         'requested_at' => '2026-07-01 10:00:00',
     ]);
 
@@ -78,7 +78,7 @@ it('lists and filters storefront deployments by status, store, and requested dat
         ->assertCanNotSeeTableRecords([$ready])
         ->resetTableFilters()
         ->filterTable('requested_at', [
-            'from'  => '2026-08-01',
+            'from' => '2026-08-01',
             'until' => '2026-08-31',
         ])
         ->assertCanSeeTableRecords([$failed])
@@ -100,14 +100,14 @@ it('retries only failed deployments through the existing provisioning job', func
 
     Queue::assertPushed(
         ProvisionStorefrontJob::class,
-        fn(ProvisionStorefrontJob $job): bool => $job->deploymentId === $failed->id && ! $job->force,
+        fn (ProvisionStorefrontJob $job): bool => $job->deploymentId === $failed->id && ! $job->force,
     );
 });
 
 it('reconciles, restarts, and reads logs through storefront and runtime contracts', function (): void {
     $deployment = StorefrontDeployment::factory()->create([
         'status' => StorefrontDeploymentStatus::Ready,
-        'slug'   => 'contract-operated',
+        'slug' => 'contract-operated',
     ]);
     $runtime = fakeExistingStorefront(logs: "booted\nready");
 
@@ -134,9 +134,9 @@ it('reconciles, restarts, and reads logs through storefront and runtime contract
 it('degrades deployment inspection and actions when the runtime is unavailable', function (): void {
     $deployment = StorefrontDeployment::factory()->create([
         'status' => StorefrontDeploymentStatus::Ready,
-        'slug'   => 'unavailable-runtime',
+        'slug' => 'unavailable-runtime',
     ]);
-    bindFakeDockerEngine(fn($request, bool $stream) => $stream
+    bindFakeDockerEngine(fn ($request, bool $stream) => $stream
         ? dockerStreamResponse('', 500)
         : dockerResponse(['message' => 'The fake runtime is configured as unreachable.'], 500));
 
@@ -163,7 +163,7 @@ it('shows runtime and required network health without runtime-specific console l
         ->assertSee(__('console.network_available', ['driver' => 'bridge']));
 
     expect(collect($runtime->transport->requests)->contains(
-        fn($request): bool => str_ends_with($request->path, '/_ping'),
+        fn ($request): bool => str_ends_with($request->path, '/_ping'),
     ))->toBeTrue();
 });
 
@@ -187,6 +187,6 @@ it('links operational dashboard stats to resource filters', function (): void {
 
     livewire(ConsoleOverview::class)
         ->assertOk()
-        ->assertSeeHtml('href="' . e($failedDeploymentsUrl) . '"')
-        ->assertSeeHtml('href="' . e($failedStoresUrl) . '"');
+        ->assertSeeHtml('href="'.e($failedDeploymentsUrl).'"')
+        ->assertSeeHtml('href="'.e($failedStoresUrl).'"');
 });

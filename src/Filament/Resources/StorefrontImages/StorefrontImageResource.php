@@ -64,9 +64,9 @@ final class StorefrontImageResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListStorefrontImages::route('/'),
+            'index' => ListStorefrontImages::route('/'),
             'create' => CreateStorefrontImage::route('/create'),
-            'edit'   => EditStorefrontImage::route('/{record}/edit'),
+            'edit' => EditStorefrontImage::route('/{record}/edit'),
         ];
     }
 }

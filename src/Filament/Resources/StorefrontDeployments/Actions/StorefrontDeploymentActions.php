@@ -24,7 +24,7 @@ final class StorefrontDeploymentActions
         return Action::make('viewLogs')
             ->label(__('console.view_logs'))
             ->icon(Heroicon::OutlinedDocumentText)
-            ->fillForm(fn(StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => [
+            ->fillForm(fn (StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => [
                 'logs' => self::logsFor($record, $provisioner),
             ])
             ->schema([
@@ -37,7 +37,7 @@ final class StorefrontDeploymentActions
                     ->columnSpanFull(),
             ])
             ->modalHeading(__('console.recent_storefront_logs'))
-            ->action(static fn(): null => null)
+            ->action(static fn (): null => null)
             ->modalSubmitAction(false)
             ->modalCancelActionLabel(__('console.close'));
     }
@@ -47,12 +47,12 @@ final class StorefrontDeploymentActions
         return Action::make('retryDeployment')
             ->label(__('console.retry_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
-            ->visible(fn(StorefrontDeployment $record): bool => StorefrontDeploymentStatus::Failed === $record->status)
-            ->action(fn(
+            ->visible(fn (StorefrontDeployment $record): bool => $record->status === StorefrontDeploymentStatus::Failed)
+            ->action(fn (
                 StorefrontDeployment $record,
                 RetryFailedStorefrontDeploymentAction $retry,
             ): mixed => self::run(
-                fn(): mixed => $retry->execute($record),
+                fn (): mixed => $retry->execute($record),
                 __('console.storefront_retry_queued'),
             ));
     }
@@ -63,11 +63,11 @@ final class StorefrontDeploymentActions
             ->label(__('console.reconcile_storefront'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->requiresConfirmation()
-            ->action(fn(
+            ->action(fn (
                 StorefrontDeployment $record,
                 ReconcileStoreStorefrontAction $reconcile,
             ): mixed => self::run(
-                fn(): mixed => $reconcile->execute($record),
+                fn (): mixed => $reconcile->execute($record),
                 __('console.storefront_reconciled'),
             ));
     }
@@ -78,11 +78,11 @@ final class StorefrontDeploymentActions
             ->label(__('console.restart_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
-            ->action(fn(
+            ->action(fn (
                 StorefrontDeployment $record,
                 RestartStoreStorefrontAction $restart,
             ): mixed => self::run(
-                fn(): mixed => $restart->execute($record),
+                fn (): mixed => $restart->execute($record),
                 __('console.storefront_restarted'),
             ));
     }
@@ -94,7 +94,7 @@ final class StorefrontDeploymentActions
         try {
             $logs = $provisioner->logs(StorefrontReference::for($deployment));
 
-            return '' === mb_trim($logs) ? __('console.no_recent_logs') : $logs;
+            return mb_trim($logs) === '' ? __('console.no_recent_logs') : $logs;
         } catch (Throwable $exception) {
             report($exception);
 

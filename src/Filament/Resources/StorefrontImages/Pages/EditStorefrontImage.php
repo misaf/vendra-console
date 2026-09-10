@@ -17,7 +17,7 @@ final class EditStorefrontImage extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->hidden(fn(StorefrontImage $record): bool => $record->isInUse()),
+                ->hidden(fn (StorefrontImage $record): bool => $record->isInUse()),
         ];
     }
 }

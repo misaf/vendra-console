@@ -64,16 +64,16 @@ final class StorefrontImagesTable
                     ->trueLabel(__('console.active'))
                     ->falseLabel(__('console.inactive'))
                     ->queries(
-                        true: fn(Builder $query): Builder => $query->where('active', true),
-                        false: fn(Builder $query): Builder => $query->where('active', false),
-                        blank: fn(Builder $query): Builder => $query,
+                        true: fn (Builder $query): Builder => $query->where('active', true),
+                        false: fn (Builder $query): Builder => $query->where('active', false),
+                        blank: fn (Builder $query): Builder => $query,
                     ),
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
                     DeleteAction::make()
-                        ->hidden(fn(StorefrontImage $record): bool => $record->isInUse()),
+                        ->hidden(fn (StorefrontImage $record): bool => $record->isInUse()),
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');

@@ -100,7 +100,7 @@ it('changes a reseller owner password through the table row action', function ()
         ->assertActionVisible(TestAction::make('changeOwnerPassword')->table($reseller))
         ->assertActionEnabled(TestAction::make('changeOwnerPassword')->table($reseller))
         ->callAction(TestAction::make('changeOwnerPassword')->table($reseller), [
-            'password'              => 'NewSecure123',
+            'password' => 'NewSecure123',
             'password_confirmation' => 'NewSecure123',
         ])
         ->assertHasNoActionErrors()
@@ -116,7 +116,7 @@ it('changes a reseller owner password through the table row action', function ()
 
     livewire(Login::class)
         ->fillForm([
-            'email'    => $owner->email,
+            'email' => $owner->email,
             'password' => 'NewSecure123',
         ])
         ->call('authenticate')
@@ -136,7 +136,7 @@ it('requires confirmation when changing a reseller owner password', function ():
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('changeOwnerPassword')->table($reseller), [
-            'password'              => 'NewSecure123',
+            'password' => 'NewSecure123',
             'password_confirmation' => 'Different123',
         ])
         ->assertHasActionErrors(['password' => 'confirmed']);
@@ -162,9 +162,9 @@ it('creates an owner login for an existing reseller', function (): void {
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('createOwnerAccount')->table($reseller), [
-            'username'              => 'owner_login',
-            'email'                 => 'owner@existing.test',
-            'password'              => 'Secure123',
+            'username' => 'owner_login',
+            'email' => 'owner@existing.test',
+            'password' => 'Secure123',
             'password_confirmation' => 'Secure123',
         ])
         ->assertHasNoActionErrors()
@@ -211,9 +211,9 @@ it('replaces a reseller owner while preserving the old account as history', func
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('replaceOwnerAccount')->table($reseller), [
-            'username'              => 'replacement',
-            'email'                 => 'replacement@example.com',
-            'password'              => 'NewSecure123',
+            'username' => 'replacement',
+            'email' => 'replacement@example.com',
+            'password' => 'NewSecure123',
             'password_confirmation' => 'NewSecure123',
         ])
         ->assertHasNoActionErrors();

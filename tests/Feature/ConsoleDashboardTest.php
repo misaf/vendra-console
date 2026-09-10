@@ -42,7 +42,7 @@ describe('console dashboard intervention tracking', function (): void {
         $failed = Store::factory()->provisioningFailed()->active()->create();
         $pending = Store::factory()->create([
             'provisioning_status' => TenantProvisioningStatus::Pending,
-            'active'              => false,
+            'active' => false,
         ]);
 
         actAsConsoleOperator();
@@ -88,7 +88,7 @@ describe('console dashboard fleet totals', function (): void {
             ->assertOk()
             ->assertSee(__('console.fleet_totals'))
             ->assertSee(__('console.stores_active_suspended', [
-                'active'    => 3,
+                'active' => 3,
                 'suspended' => 1,
             ]));
     });
@@ -138,7 +138,7 @@ describe('console dashboard storefront tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.deployments_processing') . ': 1');
+            ->assertSee(__('console.deployments_processing').': 1');
     });
 });
 

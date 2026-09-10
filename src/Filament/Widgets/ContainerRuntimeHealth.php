@@ -45,13 +45,13 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
     private function runtimeStat(StorefrontRuntimeStatus $status): Stat
     {
         $description = match (true) {
-            ! $status->reachable      => $status->message ?? __('console.runtime_unavailable'),
+            ! $status->reachable => $status->message ?? __('console.runtime_unavailable'),
             $status->engineMismatch() => __('console.runtime_engine_mismatch', [
                 'configured' => $status->driver,
-                'reported'   => $status->reportedEngine() ?? __('console.unknown'),
+                'reported' => $status->reportedEngine() ?? __('console.unknown'),
             ]),
             default => __('console.runtime_connected', [
-                'api'     => $status->apiVersion,
+                'api' => $status->apiVersion,
                 'version' => $status->server ?? __('console.unknown'),
             ]),
         };
@@ -60,8 +60,8 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
             ->description($description)
             ->icon(Heroicon::OutlinedServerStack)
             ->color(match (true) {
-                ! $status->reachable, $status->engineMismatch()  => 'danger',
-                default                                          => 'success',
+                ! $status->reachable, $status->engineMismatch() => 'danger',
+                default => 'success',
             });
     }
 
@@ -88,15 +88,15 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
 
     private function networkDescription(StorefrontRuntimeStatus $status, ?StorefrontNetwork $network, ?string $error): string
     {
-        if ( ! $status->reachable) {
+        if (! $status->reachable) {
             return __('console.network_not_checked');
         }
 
-        if (null !== $error) {
+        if ($error !== null) {
             return $error;
         }
 
-        if ( ! $network instanceof StorefrontNetwork) {
+        if (! $network instanceof StorefrontNetwork) {
             return __('console.network_unavailable');
         }
 

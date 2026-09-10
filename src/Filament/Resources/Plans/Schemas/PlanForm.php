@@ -22,14 +22,14 @@ final class PlanForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.name'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.name'))
                     ->label(__('console.name'))
                     ->live(onBlur: true)
                     ->maxLength(255)
                     ->required(),
 
                 TextInput::make('max_units')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.max_units'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.max_units'))
                     ->label(__('console.max_units'))
                     ->integer()
                     ->live(onBlur: true)
@@ -37,7 +37,7 @@ final class PlanForm
                     ->required(),
 
                 Select::make('period_unit')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.period_unit'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.period_unit'))
                     ->label(__('console.period_unit'))
                     ->live()
                     ->native(false)
@@ -45,7 +45,7 @@ final class PlanForm
                     ->required(),
 
                 TextInput::make('period_count')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.period_count'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.period_count'))
                     ->label(__('console.period_count'))
                     ->integer()
                     ->live(onBlur: true)
@@ -53,7 +53,7 @@ final class PlanForm
                     ->required(),
 
                 TextInput::make('grace_days')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.grace_days'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.grace_days'))
                     ->label(__('console.grace_days'))
                     ->integer()
                     ->live(onBlur: true)
@@ -62,7 +62,7 @@ final class PlanForm
                     ->required(),
 
                 TextInput::make('price')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.price'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.price'))
                     ->label(__('console.price'))
                     ->helperText(__('console.price_hint'))
                     ->integer()
@@ -72,7 +72,7 @@ final class PlanForm
                     ->required(),
 
                 TextInput::make('currency_code')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.currency_code'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.currency_code'))
                     ->label(__('console.currency'))
                     ->length(3)
                     ->alpha()
@@ -86,11 +86,11 @@ final class PlanForm
 
                         return is_string($price) && (int) $price > 0;
                     })
-                    ->dehydrateStateUsing(fn(?string $state): ?string => filled($state) ? Str::upper($state) : null)
+                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper($state) : null)
                     ->placeholder('USD'),
 
                 TextInput::make('trial_days')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.trial_days'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.trial_days'))
                     ->label(__('console.trial_days'))
                     ->integer()
                     ->live(onBlur: true)
@@ -99,14 +99,14 @@ final class PlanForm
                     ->required(),
 
                 Textarea::make('description')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.description'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.description'))
                     ->label(__('console.description'))
                     ->columnSpanFull()
                     ->live(onBlur: true)
                     ->maxLength(1000),
 
                 Toggle::make('active')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.active'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
                     ->label(__('console.active'))
                     ->columnSpanFull()
                     ->default(true)
@@ -115,13 +115,13 @@ final class PlanForm
                     ->required(),
 
                 Toggle::make('is_default')
-                    ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.is_default'))
+                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.is_default'))
                     ->label(__('console.is_default'))
                     ->helperText(__('console.is_default_hint'))
                     ->columnSpanFull()
                     ->default(false)
                     ->onIcon(Heroicon::Bolt)
-                    ->visible(fn(Get $get): bool => (bool) $get('active'))
+                    ->visible(fn (Get $get): bool => (bool) $get('active'))
                     ->live()
                     ->required(),
             ])
@@ -134,7 +134,7 @@ final class PlanForm
     private static function periodUnitOptions(): array
     {
         return collect(PeriodUnit::cases())
-            ->mapWithKeys(fn(PeriodUnit $unit): array => [$unit->value => ucfirst($unit->value)])
+            ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => ucfirst($unit->value)])
             ->all();
     }
 }

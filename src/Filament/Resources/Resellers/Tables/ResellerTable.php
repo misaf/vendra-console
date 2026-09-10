@@ -28,7 +28,7 @@ final class ResellerTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query): Builder => $query->withCount('stores'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('stores'))
             ->columns([
                 TextColumn::make('row')
                     ->label('#')
@@ -57,8 +57,8 @@ final class ResellerTable
                     ->sortable()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
 
                 TextColumn::make('updated_at')
@@ -67,8 +67,8 @@ final class ResellerTable
                     ->sinceTooltip()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
             ->description(__('console.tables.description.resellers'))
@@ -82,31 +82,31 @@ final class ResellerTable
                         ->trueLabel(__('console.active'))
                         ->falseLabel(__('console.inactive'))
                         ->queries(
-                            true: fn(Builder $query): Builder => $query->where('active', true),
-                            false: fn(Builder $query): Builder => $query->where('active', false),
-                            blank: fn(Builder $query): Builder => $query,
+                            true: fn (Builder $query): Builder => $query->where('active', true),
+                            false: fn (Builder $query): Builder => $query->where('active', false),
+                            blank: fn (Builder $query): Builder => $query,
                         ),
 
                     SelectFilter::make('subscription_health')
                         ->label(__('console.subscription_status'))
                         ->options([
-                            'active'        => __('console.status_active'),
+                            'active' => __('console.status_active'),
                             'expiring_soon' => __('console.expiring_soon'),
-                            'none'          => __('console.no_active_subscription'),
+                            'none' => __('console.no_active_subscription'),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return match ($data['value'] ?? null) {
                                 'active' => $query->whereHas(
                                     'subscriptions',
-                                    fn(Builder $query): Builder => $query->active(),
+                                    fn (Builder $query): Builder => $query->active(),
                                 ),
                                 'expiring_soon' => $query->whereHas(
                                     'subscriptions',
-                                    fn(Builder $query): Builder => $query->expiringWithin(7),
+                                    fn (Builder $query): Builder => $query->expiringWithin(7),
                                 ),
                                 'none' => $query->whereDoesntHave(
                                     'subscriptions',
-                                    fn(Builder $query): Builder => $query->active(),
+                                    fn (Builder $query): Builder => $query->active(),
                                 ),
                                 default => $query,
                             };
@@ -125,7 +125,7 @@ final class ResellerTable
                     ActionGroup::make([OffboardResellerAction::make()])->dropdown(false),
                 ]),
             ])
-            ->recordUrl(fn(Reseller $record): string => ResellerResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (Reseller $record): string => ResellerResource::getUrl('view', ['record' => $record]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     OffboardResellerBulkAction::make(),

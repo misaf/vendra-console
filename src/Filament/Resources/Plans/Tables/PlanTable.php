@@ -43,7 +43,7 @@ final class PlanTable
                             ->label(__('console.is_default'))
                             ->color('success')
                             ->size(Size::ExtraSmall)
-                            ->hidden(fn(Plan $record): bool => ! $record->is_default),
+                            ->hidden(fn (Plan $record): bool => ! $record->is_default),
                     ]),
 
                 TextColumn::make('max_units')
@@ -53,13 +53,13 @@ final class PlanTable
 
                 TextColumn::make('period')
                     ->label(__('console.period'))
-                    ->state(fn(Plan $record): string => "{$record->period_count} {$record->period_unit->value}"),
+                    ->state(fn (Plan $record): string => "{$record->period_count} {$record->period_unit->value}"),
 
                 TextColumn::make('price')
                     ->label(__('console.price'))
-                    ->state(fn(Plan $record): string => $record->isFree()
+                    ->state(fn (Plan $record): string => $record->isFree()
                         ? __('console.free')
-                        : $record->price . ' ' . ($record->currency_code ?? '')),
+                        : $record->price.' '.($record->currency_code ?? '')),
 
                 ToggleColumn::make('active')
                     ->label(__('console.active'))
@@ -72,8 +72,8 @@ final class PlanTable
                     ->sortable()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
 
                 TextColumn::make('updated_at')
@@ -82,8 +82,8 @@ final class PlanTable
                     ->sinceTooltip()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
             ->description(__('console.tables.description.plans'))
@@ -97,26 +97,26 @@ final class PlanTable
                         ->trueLabel(__('console.active'))
                         ->falseLabel(__('console.inactive'))
                         ->queries(
-                            true: fn(Builder $query): Builder => $query->where('active', true),
-                            false: fn(Builder $query): Builder => $query->where('active', false),
-                            blank: fn(Builder $query): Builder => $query,
+                            true: fn (Builder $query): Builder => $query->where('active', true),
+                            false: fn (Builder $query): Builder => $query->where('active', false),
+                            blank: fn (Builder $query): Builder => $query,
                         ),
 
                     TernaryFilter::make('is_default')
                         ->label(__('console.is_default'))
                         ->queries(
-                            true: fn(Builder $query): Builder => $query->where('is_default', true),
-                            false: fn(Builder $query): Builder => $query->where('is_default', false),
-                            blank: fn(Builder $query): Builder => $query,
+                            true: fn (Builder $query): Builder => $query->where('is_default', true),
+                            false: fn (Builder $query): Builder => $query->where('is_default', false),
+                            blank: fn (Builder $query): Builder => $query,
                         ),
 
                     SelectFilter::make('period_unit')
                         ->label(__('console.period_unit'))
                         ->options([
-                            PeriodUnit::Day->value   => __('console.period_day'),
-                            PeriodUnit::Week->value  => __('console.period_week'),
+                            PeriodUnit::Day->value => __('console.period_day'),
+                            PeriodUnit::Week->value => __('console.period_week'),
                             PeriodUnit::Month->value => __('console.period_month'),
-                            PeriodUnit::Year->value  => __('console.period_year'),
+                            PeriodUnit::Year->value => __('console.period_year'),
                         ]),
 
                     TrashedFilter::make(),
@@ -128,7 +128,7 @@ final class PlanTable
                     EditAction::make(),
 
                     DeleteAction::make()
-                        ->hidden(fn(Plan $record): bool => $record->isInUse()),
+                        ->hidden(fn (Plan $record): bool => $record->isInUse()),
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');

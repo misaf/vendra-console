@@ -102,7 +102,7 @@ final class StorefrontDeploymentResource extends Resource
     {
         return [
             'index' => ListStorefrontDeployments::route('/'),
-            'view'  => ViewStorefrontDeployment::route('/{record}'),
+            'view' => ViewStorefrontDeployment::route('/{record}'),
         ];
     }
 }

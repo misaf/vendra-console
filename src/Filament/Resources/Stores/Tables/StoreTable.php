@@ -45,7 +45,7 @@ final class StoreTable
 
                 TextColumn::make('reseller')
                     ->label(__('console.reseller'))
-                    ->state(fn(Store $record): ?string => null === $record->reseller_id
+                    ->state(fn (Store $record): ?string => $record->reseller_id === null
                         ? null
                         : self::resellerNames()->get($record->reseller_id))
                     ->placeholder('—'),
@@ -53,20 +53,20 @@ final class StoreTable
                 TextColumn::make('domain')
                     ->label(__('console.domain'))
                     ->icon(Heroicon::GlobeAlt)
-                    ->state(fn(Store $record): ?string => $record->domains->first()?->name)
+                    ->state(fn (Store $record): ?string => $record->domains->first()?->name)
                     ->placeholder('—'),
 
                 TextColumn::make('storefront_status')
                     ->label(__('console.storefront_status'))
                     ->badge()
-                    ->state(fn(Store $record): ?string => self::deployment($record)?->status->value)
+                    ->state(fn (Store $record): ?string => self::deployment($record)?->status->value)
                     ->placeholder(__('console.storefront_not_requested')),
 
                 TextColumn::make('admin_url')
                     ->label(__('console.admin_url'))
                     ->icon(Heroicon::OutlinedBuildingOffice2)
-                    ->state(fn(Store $record): string => 'https://' . $record->slug . '.' . Config::string('vendra-tenant.central_host'))
-                    ->url(fn(Store $record): string => 'https://' . $record->slug . '.' . Config::string('vendra-tenant.central_host'))
+                    ->state(fn (Store $record): string => 'https://'.$record->slug.'.'.Config::string('vendra-tenant.central_host'))
+                    ->url(fn (Store $record): string => 'https://'.$record->slug.'.'.Config::string('vendra-tenant.central_host'))
                     ->openUrlInNewTab()
                     ->copyable()
                     ->copyMessage(__('console.url_copied')),
@@ -74,11 +74,11 @@ final class StoreTable
                 TextColumn::make('storefront_url')
                     ->label(__('console.storefront_url'))
                     ->icon(Heroicon::OutlinedShoppingBag)
-                    ->state(fn(Store $record): ?string => self::deployment($record)?->domain)
+                    ->state(fn (Store $record): ?string => self::deployment($record)?->domain)
                     ->placeholder('—')
-                    ->url(fn(Store $record): ?string => null === self::deployment($record)?->domain
+                    ->url(fn (Store $record): ?string => self::deployment($record)?->domain === null
                         ? null
-                        : 'https://' . self::deployment($record)?->domain)
+                        : 'https://'.self::deployment($record)?->domain)
                     ->openUrlInNewTab()
                     ->copyable()
                     ->copyMessage(__('console.url_copied')),
@@ -86,7 +86,7 @@ final class StoreTable
                 TextColumn::make('status')
                     ->label(__('console.status'))
                     ->badge()
-                    ->state(fn(Store $record): string => $record->status()->value),
+                    ->state(fn (Store $record): string => $record->status()->value),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
@@ -95,8 +95,8 @@ final class StoreTable
                     ->sortable()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
 
                 TextColumn::make('updated_at')
@@ -105,8 +105,8 @@ final class StoreTable
                     ->sinceTooltip()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
             ->description(__('console.tables.description.stores'))
@@ -120,14 +120,14 @@ final class StoreTable
                         ->trueLabel(__('console.active'))
                         ->falseLabel(__('console.inactive'))
                         ->queries(
-                            true: fn(Builder $query): Builder => $query->where('active', true),
-                            false: fn(Builder $query): Builder => $query->where('active', false),
-                            blank: fn(Builder $query): Builder => $query,
+                            true: fn (Builder $query): Builder => $query->where('active', true),
+                            false: fn (Builder $query): Builder => $query->where('active', false),
+                            blank: fn (Builder $query): Builder => $query,
                         ),
 
                     SelectFilter::make('reseller_id')
                         ->label(__('console.reseller'))
-                        ->options(fn(): array => self::resellerNames()->all()),
+                        ->options(fn (): array => self::resellerNames()->all()),
 
                     SelectFilter::make('status')
                         ->label(__('console.operational_status'))
@@ -142,13 +142,13 @@ final class StoreTable
                                 }
                             }
 
-                            if ([] === $statuses) {
+                            if ($statuses === []) {
                                 return $query;
                             }
 
                             return $query->where(function (Builder $query) use ($statuses): void {
                                 foreach ($statuses as $status) {
-                                    $query->orWhere(fn(Builder $query): Builder => $query->withStatus($status));
+                                    $query->orWhere(fn (Builder $query): Builder => $query->withStatus($status));
                                 }
                             });
                         }),
@@ -171,7 +171,7 @@ final class StoreTable
                     ActionGroup::make(StoreOperatorActions::destructive())->dropdown(false),
                 ]),
             ])
-            ->recordUrl(fn(Store $record): string => StoreResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (Store $record): string => StoreResource::getUrl('view', ['record' => $record]))
             ->defaultSort(column: 'id', direction: 'desc');
     }
 
@@ -183,9 +183,9 @@ final class StoreTable
      */
     private static function resellerNames(): Collection
     {
-        return once(fn(): Collection => Reseller::query()
+        return once(fn (): Collection => Reseller::query()
             ->get(['id', 'name'])
-            ->mapWithKeys(fn(Reseller $reseller): array => [$reseller->id => $reseller->name]));
+            ->mapWithKeys(fn (Reseller $reseller): array => [$reseller->id => $reseller->name]));
     }
 
     private static function deployment(Store $store): ?StorefrontDeployment
@@ -199,7 +199,7 @@ final class StoreTable
     private static function statusOptions(): array
     {
         return collect(StoreStatus::cases())
-            ->mapWithKeys(fn(StoreStatus $status): array => [
+            ->mapWithKeys(fn (StoreStatus $status): array => [
                 $status->value => __("console.store_status_{$status->value}"),
             ])
             ->all();

@@ -57,10 +57,10 @@ final class StoreForm
              | this empty is the second case, not a mistake.
              */
             Select::make('reseller_id')
-                ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.reseller_id'))
+                ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.reseller_id'))
                 ->label(__('console.reseller'))
                 ->live()
-                ->options(fn(): array => Reseller::query()->active()->pluck('name', 'id')->all())
+                ->options(fn (): array => Reseller::query()->active()->pluck('name', 'id')->all())
                 ->placeholder(__('console.platform_owned_store'))
                 ->searchable()
                 ->preload()
@@ -94,7 +94,7 @@ final class StoreForm
                 ->maxLength(255)
                 ->required()
                 ->rules(StoreDomain::activeDomainRules())
-                ->dehydrateStateUsing(fn(?string $state): ?string => null === $state
+                ->dehydrateStateUsing(fn (?string $state): ?string => $state === null
                     ? null
                     : StoreDomain::normalizeDomain($state))
                 ->visibleOn('create'),
@@ -118,7 +118,7 @@ final class StoreForm
                 ->rules([
                     'bail',
                     'email:rfc,strict,spoof,filter,filter_unicode',
-                    new EmailValidation(),
+                    new EmailValidation,
                 ])
                 ->visibleOn('create'),
         ];
@@ -127,7 +127,7 @@ final class StoreForm
     public static function activeField(): Toggle
     {
         return Toggle::make('active')
-            ->afterStateUpdated(fn(Livewire $livewire) => $livewire->validateOnly('data.active'))
+            ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
             ->label(__('console.active'))
             ->columnSpanFull()
             ->default(true)

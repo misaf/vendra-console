@@ -26,11 +26,11 @@ final class CreateReseller extends CreateRecord
         $password = $data['password'] ?? null;
         $active = $data['active'] ?? true;
 
-        if ( ! is_numeric($planId)) {
+        if (! is_numeric($planId)) {
             throw new InvalidArgumentException('Invalid plan provided.');
         }
 
-        if ( ! is_string($email) || ! is_string($username) || ! is_string($password)) {
+        if (! is_string($email) || ! is_string($username) || ! is_string($password)) {
             throw new InvalidArgumentException('Invalid reseller owner credentials provided.');
         }
 

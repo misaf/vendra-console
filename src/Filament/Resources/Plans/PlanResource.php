@@ -79,23 +79,23 @@ final class PlanResource extends Resource
         $plan = self::plan($record);
 
         return [
-            __('console.period') => "{$plan->period_count} " . __("console.period_{$plan->period_unit->value}"),
-            __('console.price')  => $plan->isFree() ? __('console.free') : $plan->formattedPrice(),
+            __('console.period') => "{$plan->period_count} ".__("console.period_{$plan->period_unit->value}"),
+            __('console.price') => $plan->isFree() ? __('console.free') : $plan->formattedPrice(),
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => ListPlans::route('/'),
+            'index' => ListPlans::route('/'),
             'create' => CreatePlan::route('/create'),
-            'edit'   => EditPlan::route('/{record}/edit'),
+            'edit' => EditPlan::route('/{record}/edit'),
         ];
     }
 
     private static function plan(Model $record): Plan
     {
-        if ( ! $record instanceof Plan) {
+        if (! $record instanceof Plan) {
             throw new InvalidArgumentException('Plan resources require a Plan record.');
         }
 

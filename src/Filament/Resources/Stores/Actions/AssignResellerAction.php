@@ -35,11 +35,11 @@ final class AssignResellerAction extends Action
             ->label(__('console.assign_reseller'))
             ->icon(Heroicon::OutlinedBuildingOffice2)
             ->modalDescription(__('console.assign_reseller_description'))
-            ->fillForm(fn(Store $record): array => ['reseller_id' => $record->reseller_id])
+            ->fillForm(fn (Store $record): array => ['reseller_id' => $record->reseller_id])
             ->schema([
                 Select::make('reseller_id')
                     ->label(__('console.reseller'))
-                    ->options(fn(): array => Reseller::query()->active()->pluck('name', 'id')->all())
+                    ->options(fn (): array => Reseller::query()->active()->pluck('name', 'id')->all())
                     ->placeholder(__('console.platform_owned_store'))
                     ->searchable()
                     ->preload()

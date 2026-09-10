@@ -86,8 +86,8 @@ final class StoreResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with([
-            'storefrontDeployments' => fn(Relation $relation): Relation => $relation->orderByDesc('id'),
-            'domains'               => fn(Relation $relation): Relation => $relation->where('active', true),
+            'storefrontDeployments' => fn (Relation $relation): Relation => $relation->orderByDesc('id'),
+            'domains' => fn (Relation $relation): Relation => $relation->where('active', true),
         ]);
     }
 
@@ -102,7 +102,7 @@ final class StoreResource extends Resource
     public static function getGlobalSearchEloquentQuery(): Builder
     {
         return parent::getGlobalSearchEloquentQuery()->with([
-            'domains' => fn(Relation $relation): Relation => $relation->where('active', true),
+            'domains' => fn (Relation $relation): Relation => $relation->where('active', true),
         ]);
     }
 
@@ -130,7 +130,7 @@ final class StoreResource extends Resource
             Action::make('openAdmin')
                 ->label(__('console.admin_url'))
                 ->url(
-                    'https://' . $store->slug . '.' . Config::string('vendra-tenant.central_host'),
+                    'https://'.$store->slug.'.'.Config::string('vendra-tenant.central_host'),
                     shouldOpenInNewTab: true,
                 ),
         ];
@@ -160,16 +160,16 @@ final class StoreResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListStores::route('/'),
+            'index' => ListStores::route('/'),
             'create' => CreateStore::route('/create'),
-            'view'   => ViewStore::route('/{record}'),
-            'edit'   => EditStore::route('/{record}/edit'),
+            'view' => ViewStore::route('/{record}'),
+            'edit' => EditStore::route('/{record}/edit'),
         ];
     }
 
     private static function store(Model $record): Store
     {
-        if ( ! $record instanceof Store) {
+        if (! $record instanceof Store) {
             throw new InvalidArgumentException('Store resources require a Store record.');
         }
 

@@ -79,7 +79,7 @@ final class ResellerResource extends Resource
             ->withCount('stores')
             ->with([
                 'ownerUser',
-                'subscriptions' => fn(MorphMany $relation): MorphMany => $relation
+                'subscriptions' => fn (MorphMany $relation): MorphMany => $relation
                     ->with('plan')
                     ->orderByDesc('starts_at'),
             ]);
@@ -113,16 +113,16 @@ final class ResellerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListResellers::route('/'),
+            'index' => ListResellers::route('/'),
             'create' => CreateReseller::route('/create'),
-            'view'   => ViewReseller::route('/{record}'),
-            'edit'   => EditReseller::route('/{record}/edit'),
+            'view' => ViewReseller::route('/{record}'),
+            'edit' => EditReseller::route('/{record}/edit'),
         ];
     }
 
     private static function reseller(Model $record): Reseller
     {
-        if ( ! $record instanceof Reseller) {
+        if (! $record instanceof Reseller) {
             throw new InvalidArgumentException('Reseller resources require a Reseller record.');
         }
 

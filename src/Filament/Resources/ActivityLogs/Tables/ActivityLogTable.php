@@ -32,7 +32,7 @@ final class ActivityLogTable
                 TextColumn::make('store')
                     ->label(__('console.store'))
                     ->icon(Heroicon::GlobeAlt)
-                    ->state(fn(ActivityLog $record): ?string => self::storeNames()->get($record->getAttribute(TenantSchema::column())))
+                    ->state(fn (ActivityLog $record): ?string => self::storeNames()->get($record->getAttribute(TenantSchema::column())))
                     ->placeholder(__('console.platform_owned_store')),
 
                 TextColumn::make('description')
@@ -47,10 +47,10 @@ final class ActivityLogTable
 
                 TextColumn::make('subject_type')
                     ->label(__('console.subject'))
-                    ->formatStateUsing(fn(?string $state): string => null === $state ? '—' : class_basename($state))
-                    ->description(fn(ActivityLog $record): ?string => null === $record->subject_id
+                    ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : class_basename($state))
+                    ->description(fn (ActivityLog $record): ?string => $record->subject_id === null
                         ? null
-                        : '#' . $record->subject_id)
+                        : '#'.$record->subject_id)
                     ->placeholder('—'),
 
                 TextColumn::make('created_at')
@@ -60,8 +60,8 @@ final class ActivityLogTable
                     ->sortable()
                     ->when(
                         app()->isLocale('fa'),
-                        fn(TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn(TextColumn $column) => $column->dateTime('Y-m-d H:i')
+                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
+                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
             ->description(__('console.tables.description.activity_logs'))
@@ -72,11 +72,11 @@ final class ActivityLogTable
                 [
                     SelectFilter::make($tenantColumn)
                         ->label(__('console.store'))
-                        ->options(fn(): array => self::storeNames()->all()),
+                        ->options(fn (): array => self::storeNames()->all()),
 
                     SelectFilter::make('event')
                         ->label(__('console.event'))
-                        ->options(fn(): array => ActivityLog::query()
+                        ->options(fn (): array => ActivityLog::query()
                             ->whereNotNull('event')
                             ->distinct()
                             ->pluck('event', 'event')
@@ -84,7 +84,7 @@ final class ActivityLogTable
 
                     Filter::make('platform')
                         ->label(__('console.platform_activity'))
-                        ->query(fn(Builder $query): Builder => $query->whereNull(TenantSchema::column())),
+                        ->query(fn (Builder $query): Builder => $query->whereNull(TenantSchema::column())),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
             )
@@ -102,9 +102,9 @@ final class ActivityLogTable
      */
     private static function storeNames(): Collection
     {
-        return once(fn(): Collection => Store::query()
+        return once(fn (): Collection => Store::query()
             ->withTrashed()
             ->get(['id', 'name'])
-            ->mapWithKeys(fn(Store $store): array => [$store->id => $store->name]));
+            ->mapWithKeys(fn (Store $store): array => [$store->id => $store->name]));
     }
 }
