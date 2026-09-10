@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Tables;
 
-use Illuminate\Support\Arr;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
@@ -18,6 +17,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ResellerOperatorActions;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerAction;
@@ -95,7 +95,7 @@ final class ResellerTable
                             'expiring_soon' => __('console.expiring_soon'),
                             'none' => __('console.no_active_subscription'),
                         ])
-                        ->query(fn(Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
+                        ->query(fn (Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
                             'active' => $query->whereHas(
                                 'subscriptions',
                                 fn (Builder $query): Builder => $query->active(),

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Tables;
 
-use Illuminate\Support\Arr;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -16,6 +15,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerAction;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Pages;
 
-use Illuminate\Support\Arr;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Actions\CreateResellerAction;

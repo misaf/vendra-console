@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Actions;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Date;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Misaf\VendraReseller\Actions\CreateResellerOwnerAction;
@@ -186,6 +186,7 @@ final class ResellerOperatorActions
 
                     return;
                 }
+
                 self::success(__('console.plan_changed'));
             });
     }
@@ -201,6 +202,7 @@ final class ResellerOperatorActions
 
                     return;
                 }
+
                 resolve(SubscribeAction::class)->execute($record, $plan);
                 self::success(__('console.subscription_renewed'));
             });

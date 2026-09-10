@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Database\Seeders;
 
-use Illuminate\Support\Facades\Date;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Str;
 use Misaf\VendraConsole\Models\ConsoleUser;
 

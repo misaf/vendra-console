@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
-use Illuminate\Support\Arr;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\TextInput;
@@ -16,6 +15,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use LogicException;
