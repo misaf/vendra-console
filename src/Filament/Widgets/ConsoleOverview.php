@@ -25,35 +25,46 @@ final class ConsoleOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $expiringSoon = Reseller::query()
-            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->expiringWithin(7))
-            ->count();
-
-        $activeSubscriptions = Reseller::query()
-            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->active())
-            ->count();
-
         $activeStores = Store::query()->withStatus(StoreStatus::Active)->count();
         $suspendedStores = Store::query()->withStatus(StoreStatus::Suspended)->count();
         $failedStores = Store::query()->withStatus(StoreStatus::Failed)->count();
         $provisioningStores = Store::query()->withStatus(StoreStatus::Pending)->count()
             + Store::query()->withStatus(StoreStatus::Provisioning)->count();
+        $needsAttention = $failedStores + $provisioningStores;
 
         $failedDeployments = StorefrontDeployment::query()
             ->where('status', StorefrontDeploymentStatus::Failed)
             ->count();
-        $liveDeployments = StorefrontDeployment::query()
+        $readyDeployments = StorefrontDeployment::query()
             ->where('status', StorefrontDeploymentStatus::Ready)
+            ->count();
+        $processingDeployments = StorefrontDeployment::query()
+            ->where('status', StorefrontDeploymentStatus::Processing)
+            ->count();
+
+        $expiringSoon = Reseller::query()
+            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->expiringWithin(7))
+            ->count();
+        $activeSubscriptions = Reseller::query()
+            ->whereHas('subscriptions', fn(Builder $query): Builder => $query->active())
             ->count();
 
         return [
-            Stat::make(__('console.resellers'), Reseller::query()->count())
-                ->description(__('console.active_resellers') . ': ' . Reseller::query()->active()->count())
-                ->icon(Heroicon::OutlinedBuildingOffice2)
-                ->url(ResellerResource::getUrl('index'))
-                ->chart($this->dailyTrend(Reseller::query())),
+            Stat::make(__('console.stores_needing_attention'), $needsAttention)
+                ->description(__('console.stores_needing_attention_description'))
+                ->icon(Heroicon::OutlinedExclamationTriangle)
+                ->color($needsAttention > 0 ? 'danger' : 'success')
+                ->url(StoreResource::getUrl('index', [
+                    'tableFilters' => [
+                        'status' => ['values' => [
+                            StoreStatus::Failed->value,
+                            StoreStatus::Pending->value,
+                            StoreStatus::Provisioning->value,
+                        ]],
+                    ],
+                ])),
 
-            Stat::make(__('console.stores'), Store::query()->count())
+            Stat::make(__('console.fleet_totals'), Store::query()->count())
                 ->description(__('console.stores_active_suspended', [
                     'active'    => $activeStores,
                     'suspended' => $suspendedStores,
@@ -62,27 +73,14 @@ final class ConsoleOverview extends StatsOverviewWidget
                 ->url(StoreResource::getUrl('index'))
                 ->chart($this->dailyTrend(Store::query())),
 
-            Stat::make(__('console.provisioning'), $provisioningStores)
-                ->description(__('console.failed_stores') . ': ' . $failedStores)
-                ->icon(Heroicon::OutlinedArrowPath)
-                ->color($failedStores > 0 ? 'danger' : ($provisioningStores > 0 ? 'warning' : 'gray'))
-                ->url(StoreResource::getUrl('index', [
-                    'tableFilters' => [
-                        'status' => ['values' => [StoreStatus::Pending->value, StoreStatus::Provisioning->value]],
-                    ],
-                ])),
+            Stat::make(__('console.resellers'), Reseller::query()->count())
+                ->description(__('console.active_resellers') . ': ' . Reseller::query()->active()->count())
+                ->icon(Heroicon::OutlinedBuildingOffice2)
+                ->url(ResellerResource::getUrl('index'))
+                ->chart($this->dailyTrend(Reseller::query())),
 
-            Stat::make(__('console.failed_stores'), $failedStores)
-                ->icon(Heroicon::OutlinedExclamationCircle)
-                ->color($failedStores > 0 ? 'danger' : 'gray')
-                ->url(StoreResource::getUrl('index', [
-                    'tableFilters' => [
-                        'status' => ['values' => [StoreStatus::Failed->value]],
-                    ],
-                ])),
-
-            Stat::make(__('console.storefronts_live'), $liveDeployments)
-                ->description(__('console.failed_deployments') . ': ' . $failedDeployments)
+            Stat::make(__('console.storefronts_ready'), $readyDeployments)
+                ->description(__('console.deployments_processing') . ': ' . $processingDeployments)
                 ->icon(Heroicon::OutlinedRocketLaunch)
                 ->color('success')
                 ->url(StorefrontDeploymentResource::getUrl('index', [
@@ -92,7 +90,7 @@ final class ConsoleOverview extends StatsOverviewWidget
                 ])),
 
             Stat::make(__('console.failed_deployments'), $failedDeployments)
-                ->icon(Heroicon::OutlinedExclamationTriangle)
+                ->icon(Heroicon::OutlinedExclamationCircle)
                 ->color($failedDeployments > 0 ? 'danger' : 'gray')
                 ->url(StorefrontDeploymentResource::getUrl('index', [
                     'tableFilters' => [
