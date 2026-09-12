@@ -6,6 +6,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraActivityLog\Models\ActivityLog;
@@ -16,7 +17,6 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
-use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StorefrontDesiredState;
@@ -29,6 +29,7 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
+use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
@@ -41,12 +42,19 @@ beforeEach(function (): void {
 });
 
 /**
- * The console operator this file acts as. Named apart from ConsolePanelTest's
+ * The console user this file acts as. Named apart from ConsolePanelTest's
  * helper so each file stands on its own when run alone.
  */
-function actAsPlatformOperator(): ConsoleUser
+function actAsPlatformUser(): User
 {
-    $admin = ConsoleUser::factory()->create();
+    $admin = User::factory()->create(['tenant_id' => null]);
+
+    DB::table('console_users')->insert([
+        'user_id' => $admin->getKey(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
 
@@ -60,7 +68,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -75,7 +83,7 @@ describe('assigning stores to resellers', function (): void {
         $reseller = Reseller::factory()->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), ['reseller_id' => null])
@@ -95,7 +103,7 @@ describe('assigning stores to resellers', function (): void {
 
         $store = Store::factory()->create(['reseller_id' => null]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -111,7 +119,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(1))->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -128,7 +136,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(EditStore::class, ['record' => $store->getKey()])
             ->callAction('assignReseller', ['reseller_id' => $to->getKey()])
@@ -142,7 +150,7 @@ describe('operating store lifecycles', function (): void {
     it('suspends and reactivates a store through domain-backed table actions', function (): void {
         $store = Store::factory()->active()->create();
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('suspendStore')->table($store))
@@ -161,7 +169,7 @@ describe('operating store lifecycles', function (): void {
         Queue::fake();
         $store = Store::factory()->provisioningFailed()->create();
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('retryStoreProvisioning')->table($store))
@@ -206,7 +214,7 @@ describe('operating store lifecycles', function (): void {
         ]);
         app()->call([new ProvisionStorefrontJob($deployment->id, force: true), 'handle']);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('stopStorefront')->table($store))
@@ -244,8 +252,8 @@ describe('platform settings', function (): void {
      | migration is what keeps this from throwing `MissingSettings`, and there
      | is no tenant in this panel to fall back on.
      */
-    it('lets an operator close store creation from the platform settings page', function (): void {
-        actAsPlatformOperator();
+    it('lets a console user close store creation from the platform settings page', function (): void {
+        actAsPlatformUser();
 
         livewire(ManagePlatformSettings::class)
             ->assertFormSet(['open' => true])
@@ -257,7 +265,7 @@ describe('platform settings', function (): void {
     });
 
     it('rejects a non-boolean store creation state', function (): void {
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ManagePlatformSettings::class)
             ->fillForm(['open' => 'maybe'])
@@ -272,7 +280,7 @@ describe('platform settings', function (): void {
 
         $this->get($url)->assertRedirect();
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         $this->get($url)->assertOk();
     });
@@ -293,7 +301,7 @@ describe('platform dashboard', function (): void {
         StorefrontDeployment::factory()->for($active->first())->create(['status' => StorefrontDeploymentStatus::Ready]);
         StorefrontDeployment::factory()->for($active->last())->create(['status' => StorefrontDeploymentStatus::Failed]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -307,7 +315,7 @@ describe('platform dashboard', function (): void {
 });
 
 describe('activity visibility', function (): void {
-    it('shows a console operator activity from every store', function (): void {
+    it('shows a console user activity from every store', function (): void {
         $storeA = Store::factory()->active()->create(['name' => 'Alpha Store']);
         $storeB = Store::factory()->active()->create(['name' => 'Beta Store']);
 
@@ -324,7 +332,7 @@ describe('activity visibility', function (): void {
             'event' => 'updated',
         ]);
 
-        actAsPlatformOperator();
+        actAsPlatformUser();
 
         livewire(ListActivityLogs::class)
             ->call('loadTable')
@@ -334,7 +342,7 @@ describe('activity visibility', function (): void {
     });
 
     /*
-     | The audit trail is a record of what happened. A console operator holds no
+     | The audit trail is a record of what happened. A console user holds no
      | tenant permissions, so the read is granted by panel access — and every
      | write stays closed regardless.
      */

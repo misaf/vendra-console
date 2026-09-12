@@ -6,6 +6,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ListStorefrontDeployments;
@@ -14,13 +15,13 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeplo
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
-use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
+use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
@@ -32,13 +33,20 @@ beforeEach(function (): void {
     Config::set('vendra-store.storefront.network', 'traefik-public');
 });
 
-function actAsOperationalConsoleOperator(): ConsoleUser
+function actAsOperationalConsoleUser(): User
 {
-    $operator = ConsoleUser::factory()->create();
-    actingAs($operator, 'console');
+    $consoleUser = User::factory()->create(['tenant_id' => null]);
+
+    DB::table('console_users')->insert([
+        'user_id' => $consoleUser->getKey(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
 
-    return $operator;
+    return $consoleUser;
 }
 
 it('keeps deployment operations behind the console guard', function (): void {
@@ -47,7 +55,7 @@ it('keeps deployment operations behind the console guard', function (): void {
 
     $this->get($url)->assertRedirect();
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     $this->get($url)->assertOk();
     expect(StorefrontDeploymentResource::canCreate())->toBeFalse();
@@ -64,7 +72,7 @@ it('lists and filters storefront deployments by status, store, and requested dat
         'requested_at' => '2026-07-01 10:00:00',
     ]);
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     livewire(ListStorefrontDeployments::class)
         ->call('loadTable')
@@ -90,7 +98,7 @@ it('retries only failed deployments through the existing provisioning job', func
     $failed = StorefrontDeployment::factory()->create(['status' => StorefrontDeploymentStatus::Failed]);
     $ready = StorefrontDeployment::factory()->create(['status' => StorefrontDeploymentStatus::Ready]);
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     livewire(ListStorefrontDeployments::class)
         ->assertActionVisible(TestAction::make('retryDeployment')->table($failed))
@@ -111,7 +119,7 @@ it('reconciles, restarts, and reads logs through storefront and runtime contract
     ]);
     $runtime = fakeExistingStorefront(logs: "booted\nready");
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     livewire(ListStorefrontDeployments::class)
         ->call('loadTable')
@@ -140,7 +148,7 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
         ? dockerStreamResponse('', 500)
         : dockerResponse(['message' => 'The fake runtime is configured as unreachable.'], 500));
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     livewire(ViewStorefrontDeployment::class, ['record' => $deployment->id])
         ->assertOk()
@@ -154,7 +162,7 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
 it('shows runtime and required network health without runtime-specific console logic', function (): void {
     $runtime = fakeExistingStorefront();
 
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     livewire(ContainerRuntimeHealth::class)
         ->assertOk()
@@ -168,7 +176,7 @@ it('shows runtime and required network health without runtime-specific console l
 });
 
 it('links operational dashboard stats to resource filters', function (): void {
-    actAsOperationalConsoleOperator();
+    actAsOperationalConsoleUser();
 
     $failedDeploymentsUrl = StorefrontDeploymentResource::getUrl('index', [
         'tableFilters' => [

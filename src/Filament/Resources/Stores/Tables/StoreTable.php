@@ -19,8 +19,20 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\OffboardStoreTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReactivateStoreTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReconcileStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RedeployStorefrontTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReplaceDomainAction;
-use Misaf\VendraConsole\Filament\Resources\Stores\Actions\StoreOperatorActions;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RestartStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RestoreStoreTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RetryStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RetryStoreProvisioningTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\StartStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\StopStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\SuspendStoreTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ViewDeploymentTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ViewStorefrontLogsTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StoreStatus;
@@ -166,10 +178,27 @@ final class StoreTable
                         AssignResellerAction::make(),
                         ReplaceDomainAction::make(),
                     ])->dropdown(false),
-                    ActionGroup::make(StoreOperatorActions::inspection())->dropdown(false),
-                    ActionGroup::make(StoreOperatorActions::storeLifecycle())->dropdown(false),
-                    ActionGroup::make(StoreOperatorActions::storefrontLifecycle())->dropdown(false),
-                    ActionGroup::make(StoreOperatorActions::destructive())->dropdown(false),
+                    ActionGroup::make([
+                        ViewDeploymentTableAction::make(),
+                        ViewStorefrontLogsTableAction::make(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        SuspendStoreTableAction::make(),
+                        ReactivateStoreTableAction::make(),
+                        RetryStoreProvisioningTableAction::make(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        StartStorefrontTableAction::make(),
+                        StopStorefrontTableAction::make(),
+                        RestartStorefrontTableAction::make(),
+                        ReconcileStorefrontTableAction::make(),
+                        RedeployStorefrontTableAction::make(),
+                        RetryStorefrontTableAction::make(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        OffboardStoreTableAction::make(),
+                        RestoreStoreTableAction::make(),
+                    ])->dropdown(false),
                 ]),
             ])
             ->recordUrl(fn (Store $record): string => StoreResource::getUrl('view', ['record' => $record]))

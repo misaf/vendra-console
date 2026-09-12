@@ -5,9 +5,9 @@ declare(strict_types=1);
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
-use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Models\Store;
@@ -16,6 +16,7 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
+use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
@@ -28,9 +29,16 @@ beforeEach(function (): void {
     fakeDockerEngine();
 });
 
-function actAsConsoleOperator(): ConsoleUser
+function actAsConsoleUser(): User
 {
-    $admin = ConsoleUser::factory()->create();
+    $admin = User::factory()->create(['tenant_id' => null]);
+
+    DB::table('console_users')->insert([
+        'user_id' => $admin->getKey(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
 
@@ -45,7 +53,7 @@ describe('console dashboard intervention tracking', function (): void {
             'active' => false,
         ]);
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -56,7 +64,7 @@ describe('console dashboard intervention tracking', function (): void {
     it('shows zero intervention when all stores are active', function (): void {
         Store::factory()->count(3)->active()->create();
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -69,7 +77,7 @@ describe('console dashboard intervention tracking', function (): void {
         Store::factory()->provisioning()->active()->create();
         Store::factory()->active()->create();
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -82,7 +90,7 @@ describe('console dashboard fleet totals', function (): void {
         Store::factory()->count(3)->active()->create();
         Store::factory()->active()->suspended()->create();
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -100,7 +108,7 @@ describe('console dashboard reseller tracking', function (): void {
         Subscription::factory()->forSubscriber($active)->for(Plan::factory()->create())->create();
         Reseller::factory()->create(['active' => false]);
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -117,7 +125,7 @@ describe('console dashboard storefront tracking', function (): void {
         $failedStore = Store::factory()->active()->create();
         StorefrontDeployment::factory()->for($failedStore)->create(['status' => StorefrontDeploymentStatus::Failed]);
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -134,7 +142,7 @@ describe('console dashboard storefront tracking', function (): void {
         $processingStore = Store::factory()->active()->create();
         StorefrontDeployment::factory()->for($processingStore)->create(['status' => StorefrontDeploymentStatus::Processing]);
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -151,7 +159,7 @@ describe('console dashboard subscription health', function (): void {
         Subscription::factory()->forSubscriber($resellerB)->for(Plan::factory()->create())
             ->create(['ends_at' => now()->addDays(5)]);
 
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
@@ -162,7 +170,7 @@ describe('console dashboard subscription health', function (): void {
 
 describe('console dashboard empty state', function (): void {
     it('shows zeros for all stats when no data exists', function (): void {
-        actAsConsoleOperator();
+        actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()

@@ -78,7 +78,7 @@ final class ResellerResource extends Resource
         return parent::getEloquentQuery()
             ->withCount('stores')
             ->with([
-                'ownerUser',
+                'users',
                 'subscriptions' => fn (MorphMany $relation): MorphMany => $relation
                     ->with('plan')
                     ->latest('starts_at'),

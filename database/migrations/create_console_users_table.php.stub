@@ -10,26 +10,25 @@ return new class extends Migration
 {
     public function up(): void
     {
+        /*
+        | Console user grants link the canonical `users` identity to the
+        | console panel. A console user needs no tenant or reseller
+        | relationship: presence of a row authorizes panel access, its
+        | absence revokes it while leaving the identity itself intact.
+        */
         Schema::create('console_users', function (Blueprint $table): void {
             $table->id();
-            $table->string('email')->unique();
-            $table->timestampTz('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
             $table->timestampsTz();
-            $table->softDeletesTz();
-        });
 
-        Schema::create('console_password_reset_tokens', function (Blueprint $table): void {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestampTz('created_at')->nullable();
+            $table->unique('user_id', 'console_users_user_unique');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('console_password_reset_tokens');
         Schema::dropIfExists('console_users');
     }
 };

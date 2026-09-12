@@ -41,16 +41,16 @@ final class ResellerInfolist
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
-            Section::make(__('console.owner_account'))
+            Section::make(__('console.user_account'))
                 ->schema([
                     Grid::make(2)->schema([
-                        TextEntry::make('owner_username')
+                        TextEntry::make('user_username')
                             ->label(__('console.username'))
-                            ->state(fn (Reseller $record): ?string => $record->ownerUser?->username)
+                            ->state(fn (Reseller $record): ?string => $record->user()?->username)
                             ->placeholder('—'),
-                        TextEntry::make('owner_email')
+                        TextEntry::make('user_email')
                             ->label(__('console.email'))
-                            ->state(fn (Reseller $record): ?string => $record->ownerUser?->email)
+                            ->state(fn (Reseller $record): ?string => $record->user()?->email)
                             ->placeholder('—')
                             ->copyable(),
                     ]),

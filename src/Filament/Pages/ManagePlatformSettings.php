@@ -12,13 +12,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 
-/**
- * Operator-editable platform settings.
- *
- * Platform settings carry no tenant, so this page works without any tenant
- * context — the console panel runs outside the tenant middleware stack. Only
- * settings that already exist and are acted on belong here.
- */
 final class ManagePlatformSettings extends SettingsPage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;

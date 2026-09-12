@@ -6,18 +6,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Console Operator Credentials
+    | Console User Credentials
     |--------------------------------------------------------------------------
     |
-    | The default credentials used to seed the initial console operator.
-    | These values are only used when the application is freshly installed
-    | or when the operator does not yet exist in the database.
+    | The default credentials used to seed the initial console user. These
+    | values are only used when the application is freshly installed or
+    | when the console user does not yet exist in the database.
     |
     */
 
-    'operator' => [
-        'email' => env('CONSOLE_OPERATOR_EMAIL', ''),
-        'password' => env('CONSOLE_OPERATOR_PASSWORD', ''),
+    'user' => [
+        'email' => env('CONSOLE_USER_EMAIL', ''),
+        'password' => env('CONSOLE_USER_PASSWORD', ''),
     ],
 
     /*
@@ -28,9 +28,9 @@ return [
     | Deployment-level console settings. Everything here is scoped to the
     | console panel and fixed for the deployment; a rule the reseller or store
     | layer would have to honour cannot live here, because those packages sit
-    | below the console and cannot read it. Operator-editable platform rules —
-    | store creation, for one — are settings rows instead, owned by the layer
-    | that enforces them.
+    | below the console and cannot read it. Platform rules a console user can
+    | edit — store creation, for one — are settings rows instead, owned by the
+    | layer that enforces them.
     |
     */
 

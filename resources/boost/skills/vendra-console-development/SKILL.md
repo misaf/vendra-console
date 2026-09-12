@@ -1,6 +1,6 @@
 ---
 name: vendra-console-development
-description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and stores across every tenant. Use for ConsolePanelServiceProvider, ConsoleUser, ConsoleOverview, StoreResource, StoreForm, StoreTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the console_users password broker, and the console.<host> panel domain."
+description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and stores across every tenant. Use for ConsolePanelServiceProvider, ConsoleUserSeeder, ConsoleOverview, StoreResource, StoreForm, StoreTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the console_users authorization table, and the console.<host> panel domain."
 ---
 
 # Vendra Console
@@ -28,36 +28,36 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Module Boundary
 
 - This is the topmost layer: `vendra-console` → `vendra-reseller` → `vendra-store` → `laravel-docker-engine`. Nothing depends on this package, so anything another panel also needs belongs one layer down.
-- The panel is presentation. Business operations live in the domain packages' actions — including store/storefront lifecycle and offboarding, administrator membership, reseller-owner accounts, and subscriptions. A page or table action that mutates state directly is in the wrong place.
+- The panel is presentation. Business operations live in the domain packages' actions — including store/storefront lifecycle and offboarding, administrator membership, reseller-user accounts, and subscriptions. A page or table action that mutates state directly is in the wrong place.
 
 ## Tenancy
 
-- The console panel runs **outside** the tenant middleware stack; an operator works across all tenants.
+- The console panel runs **outside** the tenant middleware stack; a console user works across all tenants.
 - Never assume a current tenant, and never scope console queries with tenant-aware helpers. Where a listing must be per-tenant, join explicitly.
 
 ## Panel Wiring
 
-- `Providers\ConsolePanelServiceProvider` owns the panel: `console` auth guard, `console_users` password broker, `console.<app host>` domain derived from `app.url`, top navigation, and the `AddPanelToRequestJobContext` / `SetLocale` middleware.
-- Authentication is against `Models\ConsoleUser`, not the tenant user model. Email verification is required.
+- `Providers\ConsolePanelServiceProvider` owns the panel: `console` auth guard against the canonical `User` (the `console` provider and broker), `console.<app host>` domain derived from `app.url`, top navigation, and the `AddPanelToRequestJobContext` / `SetLocale` middleware.
+- Authentication is against the canonical user model, not a separate console model; panel access is the `console_users` row. Email verification is required.
 - Do not hard-code the panel host; it is derived from configuration.
 
 ## Resources
 
 - `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
-- `StorefrontDeploymentResource` is read-only history and operator inspection. Read live state and logs through `StorefrontProvisioner`; invoke `vendra-store` retry, reconcile, and restart actions for mutations. Do not import runtime-specific clients into Filament.
+- `StorefrontDeploymentResource` is read-only history and console inspection. Read live state and logs through `StorefrontProvisioner`; invoke `vendra-store` retry, reconcile, and restart actions for mutations. Do not import runtime-specific clients into Filament.
 - `ContainerRuntimeHealth` reports connection and configured-network health through `ContainerRuntime::ping()` and the runtime-neutral network contract. Never perform runtime calls while rendering large tables.
 - Keep `ConsoleOverview` stat counts aligned with their destination resource filters.
-- Never expose direct active/domain toggle columns or raw store delete/force-delete actions. Invoke `vendra-store` lifecycle/offboarding actions, `vendra-user` administrator actions, `vendra-reseller` owner actions, and `vendra-subscription` lifecycle actions.
+- Never expose direct active/domain toggle columns or raw store delete/force-delete actions. Invoke `vendra-store` lifecycle/offboarding actions, `vendra-user` administrator actions, `vendra-reseller` user actions, and `vendra-subscription` lifecycle actions.
 - The console store wizard picks the optional billing reseller and exposes a `create_storefront` toggle that defaults on. Pass `optional: true` to its shared storefront field groups so an explicit off can create only the store and domain; the reseller panel keeps storefront creation mandatory.
 
 ## Platform Settings
 
-- `config/console.php` under `platform` holds only deployment-fixed values (`Config::string('console.platform.name')`). Anything an operator flips at runtime is a settings row.
+- `config/console.php` under `platform` holds only deployment-fixed values (`Config::string('console.platform.name')`). Anything a console user flips at runtime is a settings row.
 - `Filament\Pages\ManagePlatformSettings` edits `Misaf\VendraStore\Settings\StoreCreationSettings`; `StoreResource::canCreate()` reads it through `Misaf\VendraStore\Support\StoreCreationPolicy`. A rule the reseller or store layer must honour belongs to the layer that enforces it.
 
 ## Testing
 
-- Act as a `ConsoleUser` on the `console` guard and assert against the panel's own pages; a test that sets up a current tenant is testing the wrong panel.
+- Act as a canonical user with a `console_users` row on the `console` guard and assert against the panel's own pages; a test that sets up a current tenant is testing the wrong panel.
 - Cover delegation: assert the domain action ran, rather than re-asserting the domain package's own behaviour.
 
 ## Filament

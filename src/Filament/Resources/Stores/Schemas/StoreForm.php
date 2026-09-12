@@ -110,7 +110,7 @@ final class StoreForm
                 ->label(__('console.email'))
                 ->email()
                 ->autocomplete('email')
-                ->placeholder('owner@example.com')
+                ->placeholder('admin@example.com')
                 ->extraAttributes(['dir' => 'ltr'])
                 ->live(onBlur: true)
                 ->maxLength(255)

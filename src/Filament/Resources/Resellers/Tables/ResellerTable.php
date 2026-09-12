@@ -18,7 +18,17 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ResellerOperatorActions;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CancelSubscriptionTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangePlanTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserEmailTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserPasswordTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CreateUserAccountTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\DisableUserAccountTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\EnableUserAccountTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ExtendSubscriptionTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscriptionTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
@@ -119,8 +129,21 @@ final class ResellerTable
                 ActionGroup::make([
                     ViewAction::make(),
                     EditAction::make(),
-                    ActionGroup::make(ResellerOperatorActions::owner())->dropdown(false),
-                    ActionGroup::make(ResellerOperatorActions::subscription())->dropdown(false),
+                    ActionGroup::make([
+                        CreateUserAccountTableAction::make(),
+                        ChangeUserPasswordTableAction::make(),
+                        ChangeUserEmailTableAction::make(),
+                        DisableUserAccountTableAction::make(),
+                        EnableUserAccountTableAction::make(),
+                        ReplaceUserAccountTableAction::make(),
+                    ])->dropdown(false),
+                    ActionGroup::make([
+                        ChangePlanTableAction::make(),
+                        RenewSubscriptionTableAction::make(),
+                        ExtendSubscriptionTableAction::make(),
+                        CancelSubscriptionTableAction::make(),
+                        ReactivateSubscriptionTableAction::make(),
+                    ])->dropdown(false),
                     ActionGroup::make([OffboardResellerAction::make()])->dropdown(false),
                 ]),
             ])

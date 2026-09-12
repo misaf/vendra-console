@@ -35,17 +35,13 @@
         "misaf/vendra-subscription": "self.version",
         "misaf/vendra-support": "self.version",
         "misaf/vendra-tenant": "self.version",
+        "misaf/vendra-user": "self.version",
         "spatie/laravel-package-tools": "^1.93.1"
     },
     "autoload": {
         "psr-4": {
             "Misaf\\VendraConsole\\": "src/",
             "Misaf\\VendraConsole\\Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Misaf\\VendraConsole\\Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {

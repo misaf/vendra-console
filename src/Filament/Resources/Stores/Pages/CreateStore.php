@@ -71,7 +71,7 @@ final class CreateStore extends CreateStorePage
      *
      * @param  array<string, mixed>  $data
      */
-    protected function resolveOwner(array $data): ?SubscriptionSubscriber
+    protected function resolveReseller(array $data): ?SubscriptionSubscriber
     {
         $resellerId = Arr::get($data, 'reseller_id', null);
 

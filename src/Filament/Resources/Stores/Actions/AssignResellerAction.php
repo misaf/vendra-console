@@ -10,7 +10,7 @@ use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraStore\Actions\AssignStoreOwnerAction;
+use Misaf\VendraStore\Actions\AssignStoreResellerAction;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
 
@@ -53,7 +53,7 @@ final class AssignResellerAction extends Action
                     : null;
 
                 try {
-                    resolve(AssignStoreOwnerAction::class)->execute($record, $reseller);
+                    resolve(AssignStoreResellerAction::class)->execute($record, $reseller);
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()
                         ->danger()

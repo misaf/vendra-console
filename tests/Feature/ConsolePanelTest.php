@@ -10,8 +10,10 @@ use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
 use Misaf\VendraConsole\Database\Seeders\ConsoleUserSeeder;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
@@ -30,9 +32,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ViewStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
-use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraReseller\Models\ResellerUser;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StoreDomain;
 use Misaf\VendraStore\Models\StorefrontDeployment;
@@ -56,12 +56,20 @@ beforeEach(function (): void {
     fakeDockerEngine();
 });
 
-function consoleAdmin(): ConsoleUser
+function consoleAdmin(): User
 {
-    return ConsoleUser::factory()->create();
+    $admin = User::factory()->create(['tenant_id' => null]);
+
+    DB::table('console_users')->insert([
+        'user_id' => $admin->getKey(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return $admin;
 }
 
-function actAsConsoleAdmin(): ConsoleUser
+function actAsConsoleAdmin(): User
 {
     $admin = consoleAdmin();
     actingAs($admin, 'console');
@@ -102,7 +110,7 @@ it('uses the Vendra logo in light and dark modes', function (): void {
         ->and($panel->getBrandLogoHeight())->toBe('2rem');
 });
 
-it('lets console operators define storefront images', function (): void {
+it('lets console users define storefront images', function (): void {
     actAsConsoleAdmin();
 
     livewire(CreateStorefrontImage::class)
@@ -166,9 +174,11 @@ it('uses a reseller overview as the record landing page', function (): void {
         'name' => 'Overview Partner',
         'email' => 'overview@example.com',
     ]);
-    $owner = ResellerUser::factory()->forReseller($reseller)->create([
+    $user = User::factory()->create([
+        'tenant_id' => null,
         'username' => 'overview_owner',
     ]);
+    $reseller->users()->attach($user->getKey());
     Subscription::factory()->forSubscriber($reseller)->for($plan)->create();
     Store::factory()->count(2)->create(['reseller_id' => $reseller->getKey()]);
 
@@ -178,23 +188,27 @@ it('uses a reseller overview as the record landing page', function (): void {
     livewire(ViewReseller::class, ['record' => $reseller->getKey()])
         ->assertOk()
         ->assertSee('Overview Partner')
-        ->assertSee($owner->username)
+        ->assertSee($user->username)
         ->assertSee('Growth');
 });
 
-it('isolates console operators from application users', function (): void {
+it('isolates console users from application users', function (): void {
     $tenant = createTestTenant();
-    $admin = ConsoleUser::factory()->create();
+    $admin = consoleAdmin();
     $regular = User::factory()->forTenant($tenant)->create();
 
     $panel = Filament::getPanel('console');
 
-    expect($admin->canAccessPanel($panel))->toBeTrue()
+    expect($admin->tenant_id)->toBeNull()
+        ->and($admin->canAccessPanel($panel))->toBeTrue()
+        ->and($admin->canAccessPanel(Filament::getPanel('admin')))->toBeFalse()
+        ->and($admin->canAccessPanel(Filament::getPanel('reseller')))->toBeFalse()
+        ->and($admin->canAccessTenant($tenant))->toBeFalse()
         ->and($regular->canAccessPanel($panel))->toBeFalse()
         ->and($panel->getAuthGuard())->toBe('console')
-        ->and($panel->getAuthPasswordBroker())->toBe('console_users')
-        ->and(config('auth.guards.console.provider'))->toBe('console_users')
-        ->and(config('auth.providers.console_users.model'))->toBe(ConsoleUser::class)
+        ->and($panel->getAuthPasswordBroker())->toBe('console')
+        ->and(config('auth.guards.console.provider'))->toBe('console')
+        ->and(config('auth.providers.console.model'))->toBe(User::class)
         ->and(Filament::getPanel('reseller')->getAuthGuard())->toBe('reseller')
         ->and(Filament::getPanel('admin')->getAuthGuard())->toBe('web');
 
@@ -211,36 +225,40 @@ it('redirects an application user away from the console panel', function (): voi
         ->assertRedirect('https://console.vendra.test/login');
 });
 
-it('allows a verified console operator into the console panel', function (): void {
-    actingAs(ConsoleUser::factory()->create(), 'console');
+it('allows a verified console user into the console panel', function (): void {
+    actingAs(consoleAdmin(), 'console');
 
     $this->get('https://console.vendra.test')->assertOk();
 });
 
-it('seeds the initial console operator only from explicit credentials', function (): void {
-    Config::set('console.operator', [
-        'email' => 'OWNER@EXAMPLE.TEST',
+it('seeds the initial console user only from explicit credentials', function (): void {
+    Config::set('console.user', [
+        'email' => 'CONSOLE@EXAMPLE.TEST',
         'password' => 'a-secure-console-password',
     ]);
 
     resolve(ConsoleUserSeeder::class)->run();
 
-    $operator = ConsoleUser::query()->sole();
+    $consoleUser = User::query()->sole();
 
-    expect($operator->email)->toBe('owner@example.test')
-        ->and($operator->hasVerifiedEmail())->toBeTrue()
-        ->and(Hash::check('a-secure-console-password', $operator->password))->toBeTrue();
+    expect($consoleUser->email)->toBe('console@example.test')
+        ->and($consoleUser->tenant_id)->toBeNull()
+        ->and($consoleUser->username)->not->toBeEmpty()
+        ->and($consoleUser->hasVerifiedEmail())->toBeTrue()
+        ->and(resolve(ConsolePanelAccessResolver::class)->canAccess($consoleUser))->toBeTrue()
+        ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
+        ->and(Hash::check('a-secure-console-password', $consoleUser->password))->toBeTrue();
 });
 
-it('does not seed a console operator when explicit credentials are absent', function (): void {
-    Config::set('console.operator', [
+it('does not seed a console user when explicit credentials are absent', function (): void {
+    Config::set('console.user', [
         'email' => '',
         'password' => '',
     ]);
 
     resolve(ConsoleUserSeeder::class)->run();
 
-    expect(ConsoleUser::query()->count())->toBe(0);
+    expect(User::query()->count())->toBe(0);
 });
 
 it('lets a console admin create a plan', function (): void {
@@ -288,7 +306,7 @@ it('honors a disabled state when creating a reseller', function (): void {
         ->fillForm([
             'plan_id' => Plan::factory()->create()->getKey(),
             'username' => 'paused_owner',
-            'email' => 'owner@gmail.com',
+            'email' => 'reseller@gmail.com',
             'password' => 'Secure123',
             'password_confirmation' => 'Secure123',
             'active' => false,
@@ -299,8 +317,8 @@ it('honors a disabled state when creating a reseller', function (): void {
     $reseller = Reseller::query()->where('name', 'paused_owner')->sole();
 
     expect($reseller->active)->toBeFalse()
-        ->and($reseller->ownerUser()->sole())->toBeInstanceOf(ResellerUser::class)
-        ->and(Hash::check('Secure123', $reseller->ownerUser()->sole()->password))->toBeTrue();
+        ->and($reseller->user())->toBeInstanceOf(User::class)
+        ->and(Hash::check('Secure123', $reseller->user()?->password))->toBeTrue();
 });
 
 it('prevents deleting a plan used by subscriptions from list and edit pages', function (): void {
@@ -726,7 +744,7 @@ it('creates a store the platform owns directly, with no reseller', function (): 
         ->fillForm([
             'reseller_id' => null,
             'domain' => 'direct.test',
-            'email' => 'owner@gmail.com',
+            'email' => 'reseller@gmail.com',
             'active' => true,
             ...consoleStorefrontFormData(),
             'storefront_slug' => 'direct',

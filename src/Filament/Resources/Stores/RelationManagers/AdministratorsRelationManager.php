@@ -248,7 +248,7 @@ final class AdministratorsRelationManager extends RelationManager
     {
         $store = $this->getOwnerRecord();
 
-        throw_unless($store instanceof Store, LogicException::class, 'Administrator membership requires a Store owner record.');
+        throw_unless($store instanceof Store, LogicException::class, 'Administrator membership requires a Store parent record.');
 
         return $store;
     }

@@ -15,7 +15,10 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\StorefrontDeploymentActions;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\ReconcileDeploymentTableAction;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\RestartDeploymentTableAction;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\RetryDeploymentTableAction;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\ViewLogsTableAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 
 final class StorefrontDeploymentTable
@@ -122,12 +125,12 @@ final class StorefrontDeploymentTable
                 ActionGroup::make([
                     ActionGroup::make([
                         ViewAction::make(),
-                        StorefrontDeploymentActions::logs(),
+                        ViewLogsTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
-                        StorefrontDeploymentActions::retry(),
-                        StorefrontDeploymentActions::reconcile(),
-                        StorefrontDeploymentActions::restart(),
+                        RetryDeploymentTableAction::make(),
+                        ReconcileDeploymentTableAction::make(),
+                        RestartDeploymentTableAction::make(),
                     ])->dropdown(false),
                 ]),
             ])

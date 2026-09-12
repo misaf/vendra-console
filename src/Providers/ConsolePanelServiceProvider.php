@@ -43,7 +43,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->homeUrl('/')
             ->authGuard('console')
-            ->authPasswordBroker('console_users')
+            ->authPasswordBroker('console')
             ->domain('console.'.Uri::of(config()->string('app.url'))->host())
             ->login()
             ->passwordReset()

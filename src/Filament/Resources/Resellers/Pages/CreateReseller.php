@@ -29,7 +29,7 @@ final class CreateReseller extends CreateRecord
 
         throw_unless(is_numeric($planId), InvalidArgumentException::class, 'Invalid plan provided.');
 
-        throw_if(! is_string($email) || ! is_string($username) || ! is_string($password), InvalidArgumentException::class, 'Invalid reseller owner credentials provided.');
+        throw_if(! is_string($email) || ! is_string($username) || ! is_string($password), InvalidArgumentException::class, 'Invalid reseller user credentials provided.');
 
         $plan = Plan::query()->findOrFail((int) $planId);
 

@@ -17,9 +17,9 @@ use Illuminate\Validation\Rules\Unique;
 use Livewire\Component as Livewire;
 use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraReseller\Models\ResellerUser;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
+use Misaf\VendraUser\Models\User;
 
 final class ResellerForm
 {
@@ -36,7 +36,7 @@ final class ResellerForm
                     ->rules(['alpha_dash'])
                     ->required()
                     ->unique(
-                        table: ResellerUser::class,
+                        table: User::class,
                         column: 'username',
                         modifyRuleUsing: fn (Unique $rule): Unique => $rule
                             ->withoutTrashed(),
@@ -56,7 +56,7 @@ final class ResellerForm
                             'bail',
                             'email:rfc,strict,spoof,filter,filter_unicode',
                             new EmailValidation,
-                            Rule::unique(ResellerUser::class, 'email')->withoutTrashed(),
+                            Rule::unique(User::class, 'email')->withoutTrashed(),
                         ]
                         : [])
                     ->visibleOn('create'),
