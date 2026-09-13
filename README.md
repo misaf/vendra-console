@@ -27,9 +27,16 @@ The `console_users` table records which canonical users
 (`misaf/vendra-user`) may enter the panel; the host application's
 `config/auth.php` points the `console` guard at the platform-scoped
 `console` provider and the `console` password broker, whose
-reset tokens live in `console_password_reset_tokens`. Console users are seeded from
-`config/console.php` (`CONSOLE_USER_EMAIL`/`CONSOLE_USER_PASSWORD`)
-and hold no tenant or reseller relationship.
+reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. Nothing is
+configured for the first one: on a fresh install `ConsoleUserSeeder` creates
+`console@<app host>` with a generated password and prints it once to the seed
+output (the container's first-boot log). `php artisan console:user` creates a
+console user or issues a new password, generating one unless `--password` is given.
+It asks before granting console access to an existing user who does not already have it
+(the default `console@<app host>` address included), and before replacing a console
+user's password with a generated one; passing `--password` skips that second prompt.
+`php artisan console:user --revoke --email=…` revokes console access while keeping the
+user, and refuses to remove the last console user.
 
 ## The panel
 

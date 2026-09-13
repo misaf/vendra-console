@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Actions\UpdateResellerUserEmailAction;
 use Misaf\VendraReseller\Models\Reseller;
@@ -31,7 +32,12 @@ final class ChangeUserEmailTableAction extends Action
             ->disabled(fn (Reseller $record): bool => $record->user() === null)
             ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('console.user_account_required') : null)
             ->fillForm(fn (Reseller $record): array => ['email' => self::currentUser($record)?->email])
-            ->schema([TextInput::make('email')->label(__('console.email'))->email()->required()])
+            ->schema([
+                TextInput::make('email')->label(__('console.email'))->email()->required()
+                    ->rule(fn (Reseller $record): mixed => Rule::unique(User::class, 'email')
+                        ->withoutTrashed()
+                        ->ignore(self::currentUser($record)?->getKey())),
+            ])
             ->action(function (Reseller $record, array $data): void {
                 $user = self::currentUser($record);
                 if ($user instanceof User) {

@@ -10,11 +10,8 @@ use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
-use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
-use Misaf\VendraConsole\Database\Seeders\ConsoleUserSeeder;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
@@ -32,6 +29,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ViewStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
+use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StoreDomain;
@@ -41,6 +39,7 @@ use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
+use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
 use Misaf\VendraUser\Models\User;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -60,11 +59,7 @@ function consoleAdmin(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    DB::table('console_users')->insert([
-        'user_id' => $admin->getKey(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ConsoleUser::factory()->for($admin)->create();
 
     return $admin;
 }
@@ -229,36 +224,6 @@ it('allows a verified console user into the console panel', function (): void {
     actingAs(consoleAdmin(), 'console');
 
     $this->get('https://console.vendra.test')->assertOk();
-});
-
-it('seeds the initial console user only from explicit credentials', function (): void {
-    Config::set('console.user', [
-        'email' => 'CONSOLE@EXAMPLE.TEST',
-        'password' => 'a-secure-console-password',
-    ]);
-
-    resolve(ConsoleUserSeeder::class)->run();
-
-    $consoleUser = User::query()->sole();
-
-    expect($consoleUser->email)->toBe('console@example.test')
-        ->and($consoleUser->tenant_id)->toBeNull()
-        ->and($consoleUser->username)->not->toBeEmpty()
-        ->and($consoleUser->hasVerifiedEmail())->toBeTrue()
-        ->and(resolve(ConsolePanelAccessResolver::class)->canAccess($consoleUser))->toBeTrue()
-        ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
-        ->and(Hash::check('a-secure-console-password', $consoleUser->password))->toBeTrue();
-});
-
-it('does not seed a console user when explicit credentials are absent', function (): void {
-    Config::set('console.user', [
-        'email' => '',
-        'password' => '',
-    ]);
-
-    resolve(ConsoleUserSeeder::class)->run();
-
-    expect(User::query()->count())->toBe(0);
 });
 
 it('lets a console admin create a plan', function (): void {
@@ -608,6 +573,94 @@ it('adds a store administrator through the tenant membership action', function (
         ->and($store->execute(fn (): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
 });
 
+it('rejects a replacement domain already active on another store', function (): void {
+    actAsConsoleAdmin();
+
+    $store = Store::factory()->create(['active' => true]);
+    StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
+    StoreDomain::factory()->for(Store::factory()->create())->create(['name' => 'taken.test', 'active' => true]);
+
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])
+        ->assertHasFormErrors(['domain' => 'unique']);
+
+    expect($store->execute(fn () => $store->storeDomains()->where('active', true)->value('name')))->toBe('old.test');
+});
+
+it('rejects a replacement domain another store runs its storefront on', function (): void {
+    actAsConsoleAdmin();
+
+    StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'taken.test']);
+    $store = Store::factory()->create(['active' => true]);
+    StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
+
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])
+        ->assertHasFormErrors(['domain' => 'unique']);
+
+    expect($store->execute(fn () => $store->storeDomains()->where('active', true)->value('name')))->toBe('old.test');
+});
+
+it('rejects an incomplete storefront before provisioning the store', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateStore::class)
+        ->fillForm([
+            'domain' => 'incomplete.test',
+            'email' => 'admin@incomplete.test',
+            'active' => true,
+            ...consoleStorefrontFormData(),
+            'storefront_locality' => '',
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['storefront_locality' => 'required']);
+
+    assertDatabaseMissing('store_domains', ['name' => 'incomplete.test']);
+    expect(StorefrontDeployment::query()->count())->toBe(0);
+});
+
+it('rejects an inactive storefront image before provisioning the store', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreateStore::class)
+        ->fillForm([
+            'domain' => 'inactive-image.test',
+            'email' => 'admin@inactive-image.test',
+            'active' => true,
+            ...consoleStorefrontFormData(),
+            'storefront_image_id' => StorefrontImage::factory()->create(['active' => false])->id,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['storefront_image_id']);
+
+    assertDatabaseMissing('store_domains', ['name' => 'inactive-image.test']);
+    expect(StorefrontDeployment::query()->count())->toBe(0);
+});
+
+it('rejects a store administrator email another user of the store already holds', function (): void {
+    actAsConsoleAdmin();
+
+    $store = Store::factory()->create();
+    $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
+    $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
+        'name' => Config::string('vendra-permission.admin_role'),
+        'guard_name' => 'web',
+    ]));
+    $administrator = resolve(AddTenantAdministratorAction::class)->execute($store, 'first_admin', 'first-admin@example.com', 'SecurePassword123');
+    resolve(AddTenantAdministratorAction::class)->execute($store, 'second_admin', 'second-admin@example.com', 'SecurePassword123');
+
+    livewire(AdministratorsRelationManager::class, [
+        'ownerRecord' => $store,
+        'pageClass' => EditStore::class,
+    ])
+        ->callAction(TestAction::make('changeAdministratorEmail')->table($administrator), [
+            'email' => 'second-admin@example.com',
+        ])
+        ->assertHasFormErrors(['email' => 'unique']);
+
+    expect($store->execute(fn (): ?string => User::query()->find($administrator->getKey())?->email))->toBe('first-admin@example.com');
+});
+
 it('lets a console admin offboard then restore a store', function (): void {
     actAsConsoleAdmin();
 
@@ -615,11 +668,12 @@ it('lets a console admin offboard then restore a store', function (): void {
 
     livewire(ListStores::class)
         ->callAction(TestAction::make('offboardStore')->table($store), [
-            'reason' => 'Customer requested account closure.',
+            'reason' => '  Customer requested account closure.  ',
         ])
         ->assertHasNoErrors();
 
-    expect($store->fresh()?->trashed())->toBeTrue();
+    expect($store->fresh()?->trashed())->toBeTrue()
+        ->and(Arr::get($store->fresh()?->metadata ?? [], 'offboarding.reason'))->toBe('Customer requested account closure.');
 
     livewire(ListStores::class)
         ->loadTable()

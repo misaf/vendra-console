@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Uri;
+use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -24,11 +25,7 @@ function consolePlatformUser(array $attributes = []): User
         ...$attributes,
     ]);
 
-    DB::table('console_users')->insert([
-        'user_id' => $consoleUser->getKey(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ConsoleUser::factory()->for($consoleUser)->create();
 
     return $consoleUser;
 }
@@ -158,7 +155,7 @@ it('removes console access when the console user grant is revoked', function ():
 
     expect($consoleUser->canAccessPanel($panel))->toBeTrue();
 
-    DB::table('console_users')->where('user_id', $consoleUser->getKey())->delete();
+    ConsoleUser::query()->forUser($consoleUser)->delete();
 
     expect($consoleUser->canAccessPanel($panel))->toBeFalse()
         ->and(User::query()->find($consoleUser->getKey()))->not->toBeNull();
@@ -195,7 +192,7 @@ it('routes the console password reset flow to the platform identity and store', 
     | container hands the page rather than naming the host class here. The
     | plain token only survives on the signed reset URL.
     */
-    $notificationClass = app(ResetPasswordNotification::class)::class;
+    $notificationClass = resolve(ResetPasswordNotification::class)::class;
 
     $token = null;
 

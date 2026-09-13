@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
+use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Filament\Pages\Auth\Login;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
@@ -22,11 +23,7 @@ function actingConsoleAdmin(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    DB::table('console_users')->insert([
-        'user_id' => $admin->getKey(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ConsoleUser::factory()->for($admin)->create();
 
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
@@ -105,7 +102,7 @@ it('offboards a reseller through the table row action with an audit reason', fun
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('delete')->table($reseller), [
-            'offboarding_reason' => 'Contract terminated by the platform.',
+            'offboarding_reason' => '  Contract terminated by the platform.  ',
         ])
         ->assertHasNoActionErrors();
 
@@ -200,6 +197,20 @@ it('creates a user login for an existing reseller', function (): void {
         ->and($user->email)->toBe('user@existing.test')
         ->and($user->tenant_id)->toBeNull()
         ->and(Hash::check('Secure123', $user->password))->toBeTrue();
+});
+
+it('rejects a reseller user email another active user already holds', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $user = consoleResellerUserFor($reseller);
+    User::factory()->create(['tenant_id' => null, 'email' => 'taken@example.com']);
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('changeUserEmail')->table($reseller), ['email' => 'taken@example.com'])
+        ->assertHasFormErrors(['email' => 'unique']);
+
+    expect($user->fresh()?->email)->not->toBe('taken@example.com');
 });
 
 it('updates disables and re-enables a reseller user through domain actions', function (): void {

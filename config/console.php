@@ -6,22 +6,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Console User Credentials
-    |--------------------------------------------------------------------------
-    |
-    | The default credentials used to seed the initial console user. These
-    | values are only used when the application is freshly installed or
-    | when the console user does not yet exist in the database.
-    |
-    */
-
-    'user' => [
-        'email' => env('CONSOLE_USER_EMAIL', ''),
-        'password' => env('CONSOLE_USER_PASSWORD', ''),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Console Platform Settings
     |--------------------------------------------------------------------------
     |

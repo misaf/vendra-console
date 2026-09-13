@@ -11,8 +11,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Validation\Rules\Password;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
-use Misaf\VendraReseller\Actions\UpdateResellerUserPasswordAction;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
 
 final class ChangeUserPasswordTableAction extends Action
 {
@@ -38,7 +38,7 @@ final class ChangeUserPasswordTableAction extends Action
                     ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
             ])
             ->action(function (Reseller $record, array $data): void {
-                resolve(UpdateResellerUserPasswordAction::class)->execute(
+                resolve(UpdateUserPasswordAction::class)->execute(
                     $record->user() ?? throw new InvalidArgumentException('Reseller user account is required.'),
                     (string) Arr::get($data, 'password'),
                 );

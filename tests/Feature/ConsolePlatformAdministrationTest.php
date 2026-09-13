@@ -6,7 +6,6 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraActivityLog\Models\ActivityLog;
@@ -17,6 +16,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
+use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StorefrontDesiredState;
@@ -49,11 +49,7 @@ function actAsPlatformUser(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    DB::table('console_users')->insert([
-        'user_id' => $admin->getKey(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ConsoleUser::factory()->for($admin)->create();
 
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));

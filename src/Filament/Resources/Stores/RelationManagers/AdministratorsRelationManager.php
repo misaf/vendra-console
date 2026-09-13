@@ -99,13 +99,13 @@ final class AdministratorsRelationManager extends RelationManager
                     ->maxLength(12)
                     ->rules(['alpha_dash'])
                     ->rule(fn (): mixed => Rule::unique(User::class, 'username')
-                        ->where(TenantSchema::column(), $this->store()->getKey())),
+                        ->where(TenantSchema::column(), $this->store()->id)),
                 TextInput::make('email')
                     ->label(__('console.email'))
                     ->required()
                     ->email()
                     ->rule(fn (): mixed => Rule::unique(User::class, 'email')
-                        ->where(TenantSchema::column(), $this->store()->getKey())
+                        ->where(TenantSchema::column(), $this->store()->id)
                         ->withoutTrashed()),
                 TextInput::make('password')
                     ->label(__('console.new_password'))
@@ -160,7 +160,13 @@ final class AdministratorsRelationManager extends RelationManager
             ->label(__('console.change_administrator_email'))
             ->fillForm(fn (User $record): array => ['email' => $record->email])
             ->schema([
-                TextInput::make('email')->label(__('console.email'))->email()->required(),
+                TextInput::make('email')
+                    ->label(__('console.email'))
+                    ->email()
+                    ->required()
+                    ->rule(fn (User $record): mixed => Rule::unique(User::class, 'email')
+                        ->where(TenantSchema::column(), $this->store()->id)
+                        ->ignore($record->getKey())),
             ])
             ->action(function (User $record, array $data, UpdateUserEmailAction $updateEmail): void {
                 $updateEmail->execute($record, (string) Arr::get($data, 'email'));

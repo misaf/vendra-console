@@ -6,7 +6,6 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ListStorefrontDeployments;
@@ -15,6 +14,7 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeplo
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
+use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
@@ -37,11 +37,7 @@ function actAsOperationalConsoleUser(): User
 {
     $consoleUser = User::factory()->create(['tenant_id' => null]);
 
-    DB::table('console_users')->insert([
-        'user_id' => $consoleUser->getKey(),
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+    ConsoleUser::factory()->for($consoleUser)->create();
 
     actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));

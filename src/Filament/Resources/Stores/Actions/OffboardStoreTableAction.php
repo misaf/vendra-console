@@ -37,7 +37,7 @@ final class OffboardStoreTableAction extends Action
                     ->maxLength(OffboardStoreAction::MAX_REASON_LENGTH),
             ])
             ->action(function (Store $record, array $data, OffboardStoreAction $offboardStore): void {
-                $offboardStore->execute($record, (string) Arr::get($data, 'reason'));
+                $offboardStore->execute($record, mb_trim((string) Arr::get($data, 'reason')));
                 self::notify(__('console.store_offboarded'));
             });
     }

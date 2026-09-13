@@ -44,6 +44,11 @@
             "Misaf\\VendraConsole\\Database\\Seeders\\": "database/seeders/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Misaf\\VendraConsole\\Database\\Factories\\": "database/factories/"
+        }
+    },
     "extra": {
         "laravel": {
             "providers": [

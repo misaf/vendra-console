@@ -8,6 +8,7 @@ use Composer\InstalledVersions;
 use Illuminate\Foundation\Console\AboutCommand;
 use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
+use Misaf\VendraConsole\Console\Commands\ConsoleUserCommand;
 use Misaf\VendraUser\Support\PanelAccessRegistry;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -23,6 +24,7 @@ final class ConsoleServiceProvider extends PackageServiceProvider
             ->hasMigrations([
                 'create_console_users_table',
             ])
+            ->hasCommand(ConsoleUserCommand::class)
             ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
                     ->publishConfigFile()
