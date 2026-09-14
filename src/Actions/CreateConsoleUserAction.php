@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Actions;
 
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Misaf\VendraConsole\Models\ConsoleUser;
@@ -12,35 +13,50 @@ use Misaf\VendraUser\Models\User;
 
 final readonly class CreateConsoleUserAction
 {
+    private const int MAX_USERNAME_ATTEMPTS = 5;
+
     public function __construct(private CreateUserAction $createUserAction) {}
 
     /**
-     * Create a platform-level user and its console grant together.
+     * A concurrent create can claim the chosen username between the check and
+     * the insert; that attempt is rolled back and retried with a fresh suffix.
+     * Any other unique violation, such as a taken email, is rethrown.
      *
-     * The caller validates and normalizes the email; the users table's unique
-     * guard still rejects an address another platform user already holds.
+     * @throws UniqueConstraintViolationException
      */
     public function execute(string $email, string $password): User
     {
-        return DB::transaction(function () use ($email, $password): User {
-            $user = $this->createUserAction->execute(
-                tenant: null,
-                username: self::usernameFor($email),
-                email: $email,
-                password: $password,
-            );
+        for ($attempt = 1; ; $attempt++) {
+            $username = self::usernameFor($email);
 
-            ConsoleUser::query()->create(['user_id' => $user->getKey()]);
+            try {
+                return DB::transaction(function () use ($username, $email, $password): User {
+                    $user = $this->createUserAction->execute(
+                        tenant: null,
+                        username: $username,
+                        email: $email,
+                        password: $password,
+                    );
 
-            return $user;
-        });
+                    ConsoleUser::query()->create(['user_id' => $user->getKey()]);
+
+                    return $user;
+                });
+            } catch (UniqueConstraintViolationException $exception) {
+                $usernameWasTaken = DB::table('users')->where('username', $username)->exists();
+
+                if (! $usernameWasTaken || $attempt >= self::MAX_USERNAME_ATTEMPTS) {
+                    throw $exception;
+                }
+            }
+        }
     }
 
     /**
-     * Usernames are unique among platform users, so a local part already
-     * taken (another console or reseller user) gets a numeric suffix. Every
-     * row is checked, trashed and tenant-scoped ones included, because which
-     * unique index applies depends on whether tenancy is enabled.
+     * Usernames are unique among platform users, so a taken local part gets a
+     * numeric suffix. Every row is checked, trashed and tenant-scoped ones
+     * included, because which unique index applies depends on whether tenancy
+     * is enabled.
      */
     private static function usernameFor(string $email): string
     {

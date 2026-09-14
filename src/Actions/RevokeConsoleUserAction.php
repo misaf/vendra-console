@@ -12,10 +12,6 @@ use Misaf\VendraUser\Models\User;
 final readonly class RevokeConsoleUserAction
 {
     /**
-     * Remove the user's console grant while the canonical identity survives.
-     * Every grant is locked so two concurrent revocations cannot leave the
-     * console without a user.
-     *
      * @return bool Whether a grant was removed; false when the user held none.
      *
      * @throws LastConsoleUserException

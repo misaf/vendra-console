@@ -51,6 +51,15 @@ it('does not seed a console user when a console grant already exists', function 
         ->and(User::query()->sole()->is($existingConsoleUser))->toBeTrue();
 });
 
+it('fails the seed when the default console email belongs to an existing user', function (): void {
+    Config::set('app.url', 'https://vendra.test');
+    User::factory()->create(['tenant_id' => null, 'email' => 'console@vendra.test']);
+
+    expect(fn (): int => Artisan::call('db:seed', ['--class' => ConsoleUserSeeder::class, '--force' => true, '--no-interaction' => true]))
+        ->toThrow(RuntimeException::class, 'No console user was seeded.')
+        ->and(ConsoleUser::query()->count())->toBe(0);
+});
+
 it('creates a console user with a generated password and prints it', function (): void {
     Config::set('app.url', 'https://vendra.test');
 
@@ -96,6 +105,37 @@ it('rejects an invalid email without creating a console user', function (): void
 
     expect(User::query()->count())->toBe(0)
         ->and(ConsoleUser::query()->count())->toBe(0);
+});
+
+it('rejects a password that fails the password rules without creating a console user', function (): void {
+    $this->artisan('console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
+        ->expectsOutputToContain('at least 8 characters')
+        ->assertFailed();
+
+    expect(User::query()->count())->toBe(0)
+        ->and(ConsoleUser::query()->count())->toBe(0);
+});
+
+it('keeps an existing console user password when the given password fails the password rules', function (): void {
+    $consoleUser = User::factory()->create([
+        'tenant_id' => null,
+        'email' => 'ops@vendra.test',
+        'password' => Hash::make('the-old-password'),
+    ]);
+    grantConsoleAccess($consoleUser);
+
+    $this->artisan('console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
+        ->assertFailed();
+
+    expect(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeTrue();
+});
+
+it('falls back to localhost for the email and console url when the app url has no host', function (): void {
+    Config::set('app.url', '');
+
+    expect(Artisan::call('console:user'))->toBe(0)
+        ->and(Artisan::output())->toContain('console@localhost')
+        ->toContain('https://console.localhost');
 });
 
 it('suffixes the username when another platform user already holds it', function (): void {

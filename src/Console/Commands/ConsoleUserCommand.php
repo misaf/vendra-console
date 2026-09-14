@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
+use Illuminate\Validation\Rules\Password;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Actions\GrantConsoleAccessAction;
 use Misaf\VendraConsole\Actions\RevokeConsoleUserAction;
@@ -48,7 +49,13 @@ final class ConsoleUserCommand extends Command
 
         $email = $emailOption ?? $this->defaultEmail();
 
-        $validator = Validator::make(['email' => $email], ['email' => ['required', 'email']]);
+        $passwordOption = $this->option('password');
+        $passwordOption = is_string($passwordOption) && $passwordOption !== '' ? $passwordOption : null;
+
+        $validator = Validator::make(
+            ['email' => $email, 'password' => $passwordOption],
+            ['email' => ['required', 'email'], 'password' => ['nullable', 'string', Password::default()]],
+        );
 
         if ($validator->fails()) {
             $this->components->error($validator->errors()->first());
@@ -56,8 +63,6 @@ final class ConsoleUserCommand extends Command
             return self::FAILURE;
         }
 
-        $passwordOption = $this->option('password');
-        $passwordOption = is_string($passwordOption) && $passwordOption !== '' ? $passwordOption : null;
         $password = $passwordOption ?? Str::password(32, symbols: false);
 
         $user = $this->findPlatformUser($email);
@@ -171,15 +176,18 @@ final class ConsoleUserCommand extends Command
      */
     private function defaultEmail(): string
     {
-        $host = (string) Uri::of(Config::string('app.url'))->host();
-
-        return 'console@'.($host === '' ? 'localhost' : $host);
+        return 'console@'.$this->appHost();
     }
 
     private function consoleUrl(): string
     {
-        $appUrl = Uri::of(Config::string('app.url'));
+        return sprintf('%s://console.%s', Uri::of(Config::string('app.url'))->scheme() ?? 'https', $this->appHost());
+    }
 
-        return sprintf('%s://console.%s', $appUrl->scheme() ?? 'https', $appUrl->host());
+    private function appHost(): string
+    {
+        $host = (string) Uri::of(Config::string('app.url'))->host();
+
+        return $host === '' ? 'localhost' : $host;
     }
 }

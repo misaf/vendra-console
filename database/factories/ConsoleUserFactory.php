@@ -10,9 +10,6 @@ use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraUser\Database\Factories\UserFactory;
 
 /**
- * A console grant for a fresh platform-level user. Pass an existing user with
- * `ConsoleUser::factory()->for($user)->create()`.
- *
  * @extends Factory<ConsoleUser>
  */
 #[UseModel(ConsoleUser::class)]

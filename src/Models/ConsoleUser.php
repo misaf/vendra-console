@@ -16,14 +16,6 @@ use Misaf\VendraConsole\Database\Factories\ConsoleUserFactory;
 use Misaf\VendraUser\Models\User;
 
 /**
- * A console panel grant, not an identity.
- *
- * A row gives the canonical `User` access to the console panel; deleting it
- * revokes access while the identity survives. Never authenticate against this
- * model — the `console` guard resolves the canonical user. Grants are written
- * through `Actions\CreateConsoleUserAction` and `Actions\GrantConsoleAccessAction`,
- * and removed through `Actions\RevokeConsoleUserAction`.
- *
  * @property int $id
  * @property int $user_id
  * @property Carbon $created_at
