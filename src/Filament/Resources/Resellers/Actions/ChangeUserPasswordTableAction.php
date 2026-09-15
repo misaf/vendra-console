@@ -28,13 +28,13 @@ final class ChangeUserPasswordTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.change_user_password'))->icon(Heroicon::OutlinedKey)
+            ->label(__('vendra-console::actions.change_user_password'))->icon(Heroicon::OutlinedKey)
             ->disabled(fn (Reseller $record): bool => $record->user() === null)
-            ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('console.user_account_required') : null)
+            ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('vendra-console::messages.user_account_required') : null)
             ->schema([
-                TextInput::make('password')->label(__('console.new_password'))->password()
+                TextInput::make('password')->label(__('vendra-console::attributes.new_password'))->password()
                     ->revealable(filament()->arePasswordsRevealable())->required()->confirmed()->rule(Password::default()),
-                TextInput::make('password_confirmation')->label(__('console.confirm_password'))->password()
+                TextInput::make('password_confirmation')->label(__('vendra-console::attributes.confirm_password'))->password()
                     ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
             ])
             ->action(function (Reseller $record, array $data): void {
@@ -42,7 +42,7 @@ final class ChangeUserPasswordTableAction extends Action
                     $record->user() ?? throw new InvalidArgumentException('Reseller user account is required.'),
                     (string) Arr::get($data, 'password'),
                 );
-                self::notifySuccess(__('console.user_password_updated'));
+                self::notifySuccess(__('vendra-console::messages.user_password_updated'));
             });
     }
 }

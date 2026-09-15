@@ -25,14 +25,14 @@ final class ReactivateStoreTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.reactivate_store'))
+            ->label(__('vendra-console::actions.reactivate_store'))
             ->icon(Heroicon::OutlinedPlayCircle)
             ->visible(fn (Store $record): bool => ! $record->trashed()
                 && ! $record->active
                 && $record->provisioning_status === TenantProvisioningStatus::Ready)
             ->action(function (Store $record, ReactivateStoreAction $reactivateStore): void {
                 $reactivateStore->execute($record);
-                self::notify(__('console.store_reactivated'));
+                self::notify(__('vendra-console::messages.store_reactivated'));
             });
     }
 }

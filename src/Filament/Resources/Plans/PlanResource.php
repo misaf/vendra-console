@@ -30,22 +30,22 @@ final class PlanResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('console.plan');
+        return __('vendra-console::navigation.plan');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.plans');
+        return __('vendra-console::navigation.plans');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.plans');
+        return __('vendra-console::navigation.plans');
     }
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group_resellers');
+        return __('vendra-console::navigation.navigation_group_resellers');
     }
 
     public static function getNavigationSort(): int
@@ -79,8 +79,8 @@ final class PlanResource extends Resource
         $plan = self::plan($record);
 
         return [
-            __('console.period') => "{$plan->period_count} ".__("console.period_{$plan->period_unit->value}"),
-            __('console.price') => $plan->isFree() ? __('console.free') : $plan->formattedPrice(),
+            __('vendra-console::attributes.period') => "{$plan->period_count} ".__("vendra-console::attributes.period_{$plan->period_unit->value}"),
+            __('vendra-console::attributes.price') => $plan->isFree() ? __('vendra-console::attributes.free') : $plan->formattedPrice(),
         ];
     }
 

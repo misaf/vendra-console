@@ -30,8 +30,8 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscript
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
-use Misaf\VendraReseller\Filament\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
+use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
 
 final class ResellerTable
@@ -39,7 +39,6 @@ final class ResellerTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('stores'))
             ->columns([
                 TextColumn::make('row')
                     ->label('#')
@@ -47,23 +46,23 @@ final class ResellerTable
                     ->sortable(['id']),
 
                 TextColumn::make('name')
-                    ->label(__('console.username'))
+                    ->label(__('vendra-console::attributes.name'))
                     ->icon(Heroicon::Tag)
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('stores_count')
-                    ->label(__('console.stores_count'))
+                    ->label(__('vendra-console::attributes.stores_count'))
                     ->alignCenter(),
 
                 IconColumn::make('active')
-                    ->label(__('console.active'))
+                    ->label(__('vendra-console::attributes.active'))
                     ->boolean()
                     ->trueIcon(Heroicon::Bolt),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('console.created_at'))
+                    ->label(__('vendra-console::attributes.created_at'))
                     ->sinceTooltip()
                     ->sortable()
                     ->when(
@@ -74,7 +73,7 @@ final class ResellerTable
 
                 TextColumn::make('updated_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('console.updated_at'))
+                    ->label(__('vendra-console::attributes.updated_at'))
                     ->sinceTooltip()
                     ->when(
                         app()->isLocale('fa'),
@@ -82,16 +81,16 @@ final class ResellerTable
                         fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
-            ->description(__('console.tables.description.resellers'))
-            ->emptyStateHeading(__('console.tables.empty_state.heading.resellers'))
-            ->emptyStateDescription(__('console.tables.empty_state.description.resellers'))
+            ->description(__('vendra-console::tables.description.resellers'))
+            ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.resellers'))
+            ->emptyStateDescription(__('vendra-console::tables.empty_state.description.resellers'))
             ->emptyStateIcon(Heroicon::OutlinedBuildingOffice2)
             ->filters(
                 [
                     TernaryFilter::make('active')
-                        ->label(__('console.active'))
-                        ->trueLabel(__('console.active'))
-                        ->falseLabel(__('console.inactive'))
+                        ->label(__('vendra-console::attributes.active'))
+                        ->trueLabel(__('vendra-console::attributes.active'))
+                        ->falseLabel(__('vendra-console::attributes.inactive'))
                         ->queries(
                             true: fn (Builder $query): Builder => $query->where('active', true),
                             false: fn (Builder $query): Builder => $query->where('active', false),
@@ -99,11 +98,11 @@ final class ResellerTable
                         ),
 
                     SelectFilter::make('subscription_health')
-                        ->label(__('console.subscription_status'))
+                        ->label(__('vendra-console::attributes.subscription_status'))
                         ->options([
-                            'active' => __('console.status_active'),
-                            'expiring_soon' => __('console.expiring_soon'),
-                            'none' => __('console.no_active_subscription'),
+                            'active' => __('vendra-console::attributes.status_active'),
+                            'expiring_soon' => __('vendra-console::attributes.expiring_soon'),
+                            'none' => __('vendra-console::attributes.no_active_subscription'),
                         ])
                         ->query(fn (Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
                             'active' => $query->whereHas(
@@ -144,7 +143,7 @@ final class ResellerTable
                         CancelSubscriptionTableAction::make(),
                         ReactivateSubscriptionTableAction::make(),
                     ])->dropdown(false),
-                    ActionGroup::make([OffboardResellerAction::make()])->dropdown(false),
+                    ActionGroup::make([OffboardResellerTableAction::make()])->dropdown(false),
                 ]),
             ])
             ->recordUrl(fn (Reseller $record): string => ResellerResource::getUrl('view', ['record' => $record]))

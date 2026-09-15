@@ -32,18 +32,18 @@ final class CreateStore extends CreateStorePage
 
     public function getTitle(): string
     {
-        return __('console.create_florist_storefront');
+        return __('vendra-console::attributes.create_florist_storefront');
     }
 
     public function getSubheading(): string
     {
-        return __('console.create_florist_storefront_description');
+        return __('vendra-console::attributes.create_florist_storefront_description');
     }
 
     protected function getCreateFormAction(): Action
     {
         return parent::getCreateFormAction()
-            ->label(__('console.create_storefront_action'));
+            ->label(__('vendra-console::actions.create_storefront_action'));
     }
 
     /**
@@ -52,15 +52,15 @@ final class CreateStore extends CreateStorePage
     protected function getSteps(): array
     {
         return [
-            $this->step(__('console.store_details'), __('console.store_details_description'), Heroicon::BuildingStorefront, [
+            $this->step(__('vendra-console::attributes.store_details'), __('vendra-console::attributes.store_details_description'), Heroicon::BuildingStorefront, [
                 ...StoreForm::storeFields(),
                 StorefrontConfigurationFields::creationToggle(default: true),
             ]),
-            $this->step(__('console.storefront_identity'), __('console.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: true))
+            $this->step(__('vendra-console::attributes.storefront_identity'), __('vendra-console::attributes.storefront_identity_description'), Heroicon::Sparkles, StorefrontConfigurationFields::identityFields(optional: true))
                 ->visible(fn (Get $get): bool => $get('create_storefront') === true),
-            $this->step(__('console.storefront_contact'), __('console.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: true))
+            $this->step(__('vendra-console::attributes.storefront_contact'), __('vendra-console::attributes.storefront_contact_description'), Heroicon::Phone, StorefrontConfigurationFields::contactFields(optional: true))
                 ->visible(fn (Get $get): bool => $get('create_storefront') === true),
-            $this->step(__('console.storefront_location_social'), __('console.storefront_location_social_description'), Heroicon::MapPin, StorefrontConfigurationFields::locationAndSocialFields(optional: true))
+            $this->step(__('vendra-console::attributes.storefront_location_social'), __('vendra-console::attributes.storefront_location_social_description'), Heroicon::MapPin, StorefrontConfigurationFields::locationAndSocialFields(optional: true))
                 ->visible(fn (Get $get): bool => $get('create_storefront') === true),
         ];
     }

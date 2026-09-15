@@ -30,23 +30,23 @@ final class ActivityLogTable
                     ->sortable(['id']),
 
                 TextColumn::make('store')
-                    ->label(__('console.store'))
+                    ->label(__('vendra-console::navigation.store'))
                     ->icon(Heroicon::GlobeAlt)
                     ->state(fn (ActivityLog $record): ?string => self::storeNames()->get($record->getAttribute(TenantSchema::column())))
-                    ->placeholder(__('console.platform_owned_store')),
+                    ->placeholder(__('vendra-console::attributes.platform_owned_store')),
 
                 TextColumn::make('description')
-                    ->label(__('console.description'))
+                    ->label(__('vendra-console::attributes.description'))
                     ->searchable()
                     ->wrap(),
 
                 TextColumn::make('event')
-                    ->label(__('console.event'))
+                    ->label(__('vendra-console::attributes.event'))
                     ->badge()
                     ->placeholder('—'),
 
                 TextColumn::make('subject_type')
-                    ->label(__('console.subject'))
+                    ->label(__('vendra-console::attributes.subject'))
                     ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : class_basename($state))
                     ->description(fn (ActivityLog $record): ?string => $record->subject_id === null
                         ? null
@@ -55,7 +55,7 @@ final class ActivityLogTable
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('console.created_at'))
+                    ->label(__('vendra-console::attributes.created_at'))
                     ->sinceTooltip()
                     ->sortable()
                     ->when(
@@ -64,18 +64,18 @@ final class ActivityLogTable
                         fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
                     ),
             ])
-            ->description(__('console.tables.description.activity_logs'))
-            ->emptyStateHeading(__('console.tables.empty_state.heading.activity_logs'))
-            ->emptyStateDescription(__('console.tables.empty_state.description.activity_logs'))
+            ->description(__('vendra-console::tables.description.activity_logs'))
+            ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.activity_logs'))
+            ->emptyStateDescription(__('vendra-console::tables.empty_state.description.activity_logs'))
             ->emptyStateIcon(Heroicon::OutlinedClipboardDocumentList)
             ->filters(
                 [
                     SelectFilter::make($tenantColumn)
-                        ->label(__('console.store'))
+                        ->label(__('vendra-console::navigation.store'))
                         ->options(fn (): array => self::storeNames()->all()),
 
                     SelectFilter::make('event')
-                        ->label(__('console.event'))
+                        ->label(__('vendra-console::attributes.event'))
                         ->options(fn (): array => ActivityLog::query()
                             ->whereNotNull('event')
                             ->distinct()
@@ -83,7 +83,7 @@ final class ActivityLogTable
                             ->all()),
 
                     Filter::make('platform')
-                        ->label(__('console.platform_activity'))
+                        ->label(__('vendra-console::attributes.platform_activity'))
                         ->query(fn (Builder $query): Builder => $query->whereNull(TenantSchema::column())),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,

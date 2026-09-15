@@ -33,51 +33,51 @@ final class StorefrontDeploymentTable
                     ->sortable(['id']),
 
                 TextColumn::make('store.name')
-                    ->label(__('console.store'))
+                    ->label(__('vendra-console::navigation.store'))
                     ->icon(Heroicon::GlobeAlt)
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('status')
-                    ->label(__('console.status'))
+                    ->label(__('vendra-console::attributes.status'))
                     ->badge()
-                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}"))
+                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("vendra-console::attributes.deployment_status_{$state->value}"))
                     ->sortable(),
 
-                TextColumn::make('storefrontImage.name')
-                    ->label(__('console.storefront_image'))
+                TextColumn::make('storefrontImage.image')
+                    ->label(__('vendra-console::navigation.storefront_image'))
                     ->placeholder('—')
                     ->toggleable(),
 
                 TextColumn::make('image')
-                    ->label(__('console.storefront_image_reference'))
+                    ->label(__('vendra-console::attributes.storefront_image_reference'))
                     ->limit(40)
                     ->tooltip(fn (?string $state): ?string => $state)
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('container_name')
-                    ->label(__('console.container_name'))
+                    ->label(__('vendra-console::attributes.container_name'))
                     ->searchable()
                     ->copyable()
                     ->placeholder('—'),
 
                 TextColumn::make('requested_at')
-                    ->label(__('console.requested_at'))
+                    ->label(__('vendra-console::attributes.requested_at'))
                     ->dateTime('Y-m-d H:i')
                     ->sinceTooltip()
                     ->sortable()
                     ->placeholder('—'),
 
                 TextColumn::make('deployed_at')
-                    ->label(__('console.deployed_at'))
+                    ->label(__('vendra-console::attributes.deployed_at'))
                     ->dateTime('Y-m-d H:i')
                     ->sinceTooltip()
                     ->sortable()
                     ->placeholder('—'),
 
                 TextColumn::make('failed_at')
-                    ->label(__('console.failed_at'))
+                    ->label(__('vendra-console::attributes.failed_at'))
                     ->dateTime('Y-m-d H:i')
                     ->sinceTooltip()
                     ->sortable()
@@ -85,35 +85,35 @@ final class StorefrontDeploymentTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('error')
-                    ->label(__('console.failure_information'))
+                    ->label(__('vendra-console::attributes.failure_information'))
                     ->limit(60)
                     ->tooltip(fn (?string $state): ?string => $state)
                     ->placeholder('—')
                     ->wrap(),
             ])
-            ->description(__('console.tables.description.storefront_deployments'))
-            ->emptyStateHeading(__('console.tables.empty_state.heading.storefront_deployments'))
-            ->emptyStateDescription(__('console.tables.empty_state.description.storefront_deployments'))
+            ->description(__('vendra-console::tables.description.storefront_deployments'))
+            ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.storefront_deployments'))
+            ->emptyStateDescription(__('vendra-console::tables.empty_state.description.storefront_deployments'))
             ->emptyStateIcon(Heroicon::OutlinedRocketLaunch)
             ->filters(
                 [
                     SelectFilter::make('status')
-                        ->label(__('console.status'))
+                        ->label(__('vendra-console::attributes.status'))
                         ->options(self::statusOptions()),
 
                     SelectFilter::make('store_id')
-                        ->label(__('console.store'))
+                        ->label(__('vendra-console::navigation.store'))
                         ->relationship('store', 'name')
                         ->searchable()
                         ->preload(),
 
                     Filter::make('requested_at')
-                        ->label(__('console.requested_at'))
+                        ->label(__('vendra-console::attributes.requested_at'))
                         ->schema([
                             DatePicker::make('from')
-                                ->label(__('console.from_date')),
+                                ->label(__('vendra-console::attributes.from_date')),
                             DatePicker::make('until')
-                                ->label(__('console.until_date')),
+                                ->label(__('vendra-console::attributes.until_date')),
                         ])
                         ->query(fn (Builder $query, array $data): Builder => $query
                             ->when(Arr::get($data, 'from', null), fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
@@ -142,7 +142,7 @@ final class StorefrontDeploymentTable
     {
         return collect(StorefrontDeploymentStatus::cases())
             ->mapWithKeys(fn (StorefrontDeploymentStatus $status): array => [
-                $status->value => __("console.deployment_status_{$status->value}"),
+                $status->value => __("vendra-console::attributes.deployment_status_{$status->value}"),
             ])
             ->all();
     }

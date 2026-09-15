@@ -26,7 +26,7 @@ final class RetryStorefrontTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.retry_storefront'))
+            ->label(__('vendra-console::actions.retry_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->visible(fn (Store $record): bool => self::deployment($record)?->status === StorefrontDeploymentStatus::Failed)
             ->action(function (Store $record, RetryFailedStorefrontDeploymentAction $retryStorefront): void {
@@ -34,7 +34,7 @@ final class RetryStorefrontTableAction extends Action
 
                 if ($deployment instanceof StorefrontDeployment) {
                     $retryStorefront->execute($deployment);
-                    self::notify(__('console.storefront_retry_queued'));
+                    self::notify(__('vendra-console::messages.storefront_retry_queued'));
                 }
             });
     }

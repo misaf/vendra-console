@@ -21,7 +21,7 @@ use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
  * consumes a slot in the receiving reseller's plan, and a plain `reseller_id`
  * select would write the column straight past that check.
  */
-final class AssignResellerAction extends Action
+final class AssignResellerTableAction extends Action
 {
     public static function getDefaultName(): string
     {
@@ -33,15 +33,15 @@ final class AssignResellerAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.assign_reseller'))
+            ->label(__('vendra-console::actions.assign_reseller'))
             ->icon(Heroicon::OutlinedBuildingOffice2)
-            ->modalDescription(__('console.assign_reseller_description'))
+            ->modalDescription(__('vendra-console::messages.assign_reseller_description'))
             ->fillForm(fn (Store $record): array => ['reseller_id' => $record->reseller_id])
             ->schema([
                 Select::make('reseller_id')
-                    ->label(__('console.reseller'))
+                    ->label(__('vendra-console::navigation.reseller'))
                     ->options(fn (): array => Reseller::query()->active()->pluck('name', 'id')->all())
-                    ->placeholder(__('console.platform_owned_store'))
+                    ->placeholder(__('vendra-console::attributes.platform_owned_store'))
                     ->searchable()
                     ->preload()
                     ->native(false),
@@ -57,7 +57,7 @@ final class AssignResellerAction extends Action
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()
                         ->danger()
-                        ->title(__('console.assign_reseller_failed'))
+                        ->title(__('vendra-console::messages.assign_reseller_failed'))
                         ->body($exception->getMessage())
                         ->send();
 
@@ -66,7 +66,7 @@ final class AssignResellerAction extends Action
 
                 Notification::make()
                     ->success()
-                    ->title(__('console.reseller_assigned'))
+                    ->title(__('vendra-console::messages.reseller_assigned'))
                     ->send();
             });
     }

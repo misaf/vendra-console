@@ -11,8 +11,6 @@ use Misaf\VendraUser\Models\User;
 final readonly class GrantConsoleAccessAction
 {
     /**
-     * @return bool
-     *
      * @throws InvalidArgumentException
      */
     public function execute(User $user): bool

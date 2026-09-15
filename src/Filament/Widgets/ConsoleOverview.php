@@ -50,8 +50,8 @@ final class ConsoleOverview extends StatsOverviewWidget
             ->count();
 
         return [
-            Stat::make(__('console.stores_needing_attention'), $needsAttention)
-                ->description(__('console.stores_needing_attention_description'))
+            Stat::make(__('vendra-console::attributes.stores_needing_attention'), $needsAttention)
+                ->description(__('vendra-console::attributes.stores_needing_attention_description'))
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->color($needsAttention > 0 ? 'danger' : 'success')
                 ->url(StoreResource::getUrl('index', [
@@ -64,8 +64,8 @@ final class ConsoleOverview extends StatsOverviewWidget
                     ],
                 ])),
 
-            Stat::make(__('console.fleet_totals'), Store::query()->count())
-                ->description(__('console.stores_active_suspended', [
+            Stat::make(__('vendra-console::attributes.fleet_totals'), Store::query()->count())
+                ->description(__('vendra-console::attributes.stores_active_suspended', [
                     'active' => $activeStores,
                     'suspended' => $suspendedStores,
                 ]))
@@ -73,14 +73,14 @@ final class ConsoleOverview extends StatsOverviewWidget
                 ->url(StoreResource::getUrl('index'))
                 ->chart($this->dailyTrend(Store::query())),
 
-            Stat::make(__('console.resellers'), Reseller::query()->count())
-                ->description(__('console.active_resellers').': '.Reseller::query()->active()->count())
+            Stat::make(__('vendra-console::navigation.resellers'), Reseller::query()->count())
+                ->description(__('vendra-console::attributes.active_resellers').': '.Reseller::query()->active()->count())
                 ->icon(Heroicon::OutlinedBuildingOffice2)
                 ->url(ResellerResource::getUrl('index'))
                 ->chart($this->dailyTrend(Reseller::query())),
 
-            Stat::make(__('console.storefronts_ready'), $readyDeployments)
-                ->description(__('console.deployments_processing').': '.$processingDeployments)
+            Stat::make(__('vendra-console::attributes.storefronts_ready'), $readyDeployments)
+                ->description(__('vendra-console::attributes.deployments_processing').': '.$processingDeployments)
                 ->icon(Heroicon::OutlinedRocketLaunch)
                 ->color('success')
                 ->url(StorefrontDeploymentResource::getUrl('index', [
@@ -89,7 +89,7 @@ final class ConsoleOverview extends StatsOverviewWidget
                     ],
                 ])),
 
-            Stat::make(__('console.failed_deployments'), $failedDeployments)
+            Stat::make(__('vendra-console::attributes.failed_deployments'), $failedDeployments)
                 ->icon(Heroicon::OutlinedExclamationCircle)
                 ->color($failedDeployments > 0 ? 'danger' : 'gray')
                 ->url(StorefrontDeploymentResource::getUrl('index', [
@@ -98,7 +98,7 @@ final class ConsoleOverview extends StatsOverviewWidget
                     ],
                 ])),
 
-            Stat::make(__('console.active_subscriptions'), $activeSubscriptions)
+            Stat::make(__('vendra-console::attributes.active_subscriptions'), $activeSubscriptions)
                 ->icon(Heroicon::OutlinedCheckBadge)
                 ->color('success')
                 ->url(ResellerResource::getUrl('index', [
@@ -106,7 +106,7 @@ final class ConsoleOverview extends StatsOverviewWidget
                 ]))
                 ->chart($this->dailyTrend(Subscription::query(), 'starts_at')),
 
-            Stat::make(__('console.expiring_soon'), $expiringSoon)
+            Stat::make(__('vendra-console::attributes.expiring_soon'), $expiringSoon)
                 ->icon(Heroicon::OutlinedClock)
                 ->color($expiringSoon > 0 ? 'warning' : 'gray')
                 ->url(ResellerResource::getUrl('index', [

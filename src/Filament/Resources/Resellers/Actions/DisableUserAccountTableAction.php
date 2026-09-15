@@ -25,14 +25,14 @@ final class DisableUserAccountTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.disable_user_account'))
+            ->label(__('vendra-console::actions.disable_user_account'))
             ->icon(Heroicon::OutlinedNoSymbol)->color('warning')->requiresConfirmation()
             ->visible(fn (Reseller $record): bool => self::currentUser($record) instanceof User)
             ->action(function (Reseller $record): void {
                 $user = self::currentUser($record);
                 if ($user instanceof User) {
                     resolve(SetResellerUserAccountEnabledAction::class)->execute($record, $user, false);
-                    self::notifySuccess(__('console.user_account_disabled'));
+                    self::notifySuccess(__('vendra-console::messages.user_account_disabled'));
                 }
             });
     }

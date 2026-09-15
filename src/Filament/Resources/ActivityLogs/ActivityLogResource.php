@@ -25,22 +25,22 @@ final class ActivityLogResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('console.activity_log');
+        return __('vendra-console::navigation.activity_log');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.activity_logs');
+        return __('vendra-console::navigation.activity_logs');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.activity_logs');
+        return __('vendra-console::navigation.activity_logs');
     }
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('vendra-console::navigation.navigation_group');
     }
 
     public static function getNavigationSort(): int

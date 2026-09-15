@@ -26,7 +26,7 @@ final class StopStorefrontTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.stop_storefront'))
+            ->label(__('vendra-console::actions.stop_storefront'))
             ->icon(Heroicon::OutlinedStop)
             ->color('warning')
             ->requiresConfirmation()
@@ -37,7 +37,7 @@ final class StopStorefrontTableAction extends Action
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(
                         fn (): mixed => $stopStorefront->execute($deployment),
-                        __('console.storefront_stopped'),
+                        __('vendra-console::messages.storefront_stopped'),
                     );
                 }
             });

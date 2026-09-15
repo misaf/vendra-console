@@ -28,12 +28,12 @@ final class ChangeUserEmailTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.change_user_email'))->icon(Heroicon::OutlinedEnvelope)
+            ->label(__('vendra-console::actions.change_user_email'))->icon(Heroicon::OutlinedEnvelope)
             ->disabled(fn (Reseller $record): bool => $record->user() === null)
-            ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('console.user_account_required') : null)
+            ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('vendra-console::messages.user_account_required') : null)
             ->fillForm(fn (Reseller $record): array => ['email' => self::currentUser($record)?->email])
             ->schema([
-                TextInput::make('email')->label(__('console.email'))->email()->required()
+                TextInput::make('email')->label(__('vendra-console::attributes.email'))->email()->required()
                     ->rule(fn (Reseller $record): mixed => Rule::unique(User::class, 'email')
                         ->withoutTrashed()
                         ->ignore(self::currentUser($record)?->getKey())),
@@ -42,7 +42,7 @@ final class ChangeUserEmailTableAction extends Action
                 $user = self::currentUser($record);
                 if ($user instanceof User) {
                     resolve(UpdateResellerUserEmailAction::class)->execute($record, $user, (string) Arr::get($data, 'email'));
-                    self::notifySuccess(__('console.user_email_updated'));
+                    self::notifySuccess(__('vendra-console::messages.user_email_updated'));
                 }
             });
     }

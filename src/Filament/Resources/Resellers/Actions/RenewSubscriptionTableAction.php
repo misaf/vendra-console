@@ -25,18 +25,18 @@ final class RenewSubscriptionTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.renew'))->icon(Heroicon::OutlinedArrowPath)
+            ->label(__('vendra-console::actions.renew'))->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
             ->action(function (Reseller $record): void {
                 $plan = ($record->activeSubscription() ?? $record->subscriptions()->latest('starts_at')->first())?->plan;
                 if ($plan === null) {
-                    Notification::make()->danger()->title(__('console.no_active_subscription'))->send();
+                    Notification::make()->danger()->title(__('vendra-console::attributes.no_active_subscription'))->send();
 
                     return;
                 }
 
                 resolve(SubscribeAction::class)->execute($record, $plan);
-                self::notifySuccess(__('console.subscription_renewed'));
+                self::notifySuccess(__('vendra-console::messages.subscription_renewed'));
             });
     }
 }

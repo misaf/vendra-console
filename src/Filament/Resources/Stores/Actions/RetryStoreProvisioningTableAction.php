@@ -25,13 +25,13 @@ final class RetryStoreProvisioningTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.retry_store_provisioning'))
+            ->label(__('vendra-console::actions.retry_store_provisioning'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->visible(fn (Store $record): bool => ! $record->trashed()
                 && $record->provisioning_status !== TenantProvisioningStatus::Ready)
             ->action(function (Store $record, RetryStoreProvisioningAction $retryStoreProvisioning): void {
                 $retryStoreProvisioning->execute($record);
-                self::notify(__('console.store_provisioning_queued'));
+                self::notify(__('vendra-console::messages.store_provisioning_queued'));
             });
     }
 }

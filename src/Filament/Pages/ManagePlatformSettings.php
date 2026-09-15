@@ -22,7 +22,7 @@ final class ManagePlatformSettings extends SettingsPage
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group');
+        return __('vendra-console::navigation.navigation_group');
     }
 
     public static function getNavigationSort(): int
@@ -32,19 +32,19 @@ final class ManagePlatformSettings extends SettingsPage
 
     public static function getNavigationLabel(): string
     {
-        return __('console.platform_settings');
+        return __('vendra-console::navigation.platform_settings');
     }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make(__('console.store_creation'))
-                    ->description(__('console.store_creation_description'))
+                Section::make(__('vendra-console::attributes.store_creation'))
+                    ->description(__('vendra-console::attributes.store_creation_description'))
                     ->schema([
                         Toggle::make('open')
-                            ->label(__('console.store_creation_open'))
-                            ->helperText(__('console.store_creation_open_hint'))
+                            ->label(__('vendra-console::attributes.store_creation_open'))
+                            ->helperText(__('vendra-console::attributes.store_creation_open_hint'))
                             ->rules(['boolean']),
                     ])
                     ->columnSpanFull(),
@@ -53,6 +53,6 @@ final class ManagePlatformSettings extends SettingsPage
 
     public function getTitle(): string
     {
-        return __('console.platform_settings');
+        return __('vendra-console::navigation.platform_settings');
     }
 }

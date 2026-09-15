@@ -26,13 +26,13 @@ final class StoreForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->label(__('console.name'))
+                    ->label(__('vendra-console::attributes.name'))
                     ->required()
                     ->maxLength(255)
                     ->visibleOn('edit'),
 
                 Textarea::make('description')
-                    ->label(__('console.description'))
+                    ->label(__('vendra-console::attributes.description'))
                     ->rows(4)
                     ->maxLength(2000)
                     ->visibleOn('edit')
@@ -58,10 +58,10 @@ final class StoreForm
              */
             Select::make('reseller_id')
                 ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.reseller_id'))
-                ->label(__('console.reseller'))
+                ->label(__('vendra-console::navigation.reseller'))
                 ->live()
                 ->options(fn (): array => Reseller::query()->active()->pluck('name', 'id')->all())
-                ->placeholder(__('console.platform_owned_store'))
+                ->placeholder(__('vendra-console::attributes.platform_owned_store'))
                 ->searchable()
                 ->preload()
                 ->native(false)
@@ -86,8 +86,8 @@ final class StoreForm
                         $set('storefront_name_en', Str::headline($domainLabel));
                     }
                 })
-                ->helperText(__('console.domain_helper_text'))
-                ->label(__('console.domain'))
+                ->helperText(__('vendra-console::attributes.domain_helper_text'))
+                ->label(__('vendra-console::attributes.domain'))
                 ->placeholder('flowers.example')
                 ->extraAttributes(['dir' => 'ltr'])
                 ->live(onBlur: true)
@@ -107,7 +107,7 @@ final class StoreForm
                         $set('storefront_contact_email', $state);
                     }
                 })
-                ->label(__('console.email'))
+                ->label(__('vendra-console::attributes.email'))
                 ->email()
                 ->autocomplete('email')
                 ->placeholder('admin@example.com')
@@ -128,7 +128,7 @@ final class StoreForm
     {
         return Toggle::make('active')
             ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-            ->label(__('console.active'))
+            ->label(__('vendra-console::attributes.active'))
             ->columnSpanFull()
             ->default(true)
             ->live()

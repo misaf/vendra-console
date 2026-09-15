@@ -301,12 +301,12 @@ describe('platform dashboard', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.stores_needing_attention'))
-            ->assertSee(__('console.stores_needing_attention_description'))
-            ->assertSee(__('console.storefronts_ready'))
-            ->assertSee(__('console.deployments_processing').': 0')
-            ->assertSee(__('console.stores_active_suspended', ['active' => 2, 'suspended' => 1]))
-            ->assertSee(__('console.failed_deployments'));
+            ->assertSee(__('vendra-console::attributes.stores_needing_attention'))
+            ->assertSee(__('vendra-console::attributes.stores_needing_attention_description'))
+            ->assertSee(__('vendra-console::attributes.storefronts_ready'))
+            ->assertSee(__('vendra-console::attributes.deployments_processing').': 0')
+            ->assertSee(__('vendra-console::attributes.stores_active_suspended', ['active' => 2, 'suspended' => 1]))
+            ->assertSee(__('vendra-console::attributes.failed_deployments'));
     });
 });
 

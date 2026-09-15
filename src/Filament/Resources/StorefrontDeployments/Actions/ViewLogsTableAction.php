@@ -25,7 +25,7 @@ final class ViewLogsTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.view_logs'))
+            ->label(__('vendra-console::actions.view_logs'))
             ->icon(Heroicon::OutlinedDocumentText)
             ->fillForm(fn (StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => [
                 'logs' => self::logsFor($record, $provisioner),
@@ -36,12 +36,12 @@ final class ViewLogsTableAction extends Action
                     ->disabled()
                     ->dehydrated(false)
                     ->rows(20)
-                    ->placeholder(__('console.no_recent_logs'))
+                    ->placeholder(__('vendra-console::messages.no_recent_logs'))
                     ->columnSpanFull(),
             ])
-            ->modalHeading(__('console.recent_storefront_logs'))
+            ->modalHeading(__('vendra-console::attributes.recent_storefront_logs'))
             ->action(static fn (): null => null)
             ->modalSubmitAction(false)
-            ->modalCancelActionLabel(__('console.close'));
+            ->modalCancelActionLabel(__('vendra-console::actions.close'));
     }
 }

@@ -29,7 +29,7 @@ final class ResellerForm
             ->components([
                 TextInput::make('username')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.username'))
-                    ->label(__('console.username'))
+                    ->label(__('vendra-console::attributes.username'))
                     ->live(onBlur: true)
                     ->minLength(3)
                     ->maxLength(12)
@@ -45,7 +45,7 @@ final class ResellerForm
 
                 TextInput::make('email')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.email'))
-                    ->label(__('console.email'))
+                    ->label(__('vendra-console::attributes.email'))
                     ->email()
                     ->extraAttributes(['dir' => 'ltr'])
                     ->live(onBlur: true)
@@ -62,7 +62,7 @@ final class ResellerForm
                     ->visibleOn('create'),
 
                 TextInput::make('password')
-                    ->label(__('console.new_password'))
+                    ->label(__('vendra-console::attributes.new_password'))
                     ->password()
                     ->revealable(filament()->arePasswordsRevealable())
                     ->extraAttributes(['dir' => 'ltr'])
@@ -75,7 +75,7 @@ final class ResellerForm
                     ->visibleOn('create'),
 
                 TextInput::make('password_confirmation')
-                    ->label(__('console.confirm_password'))
+                    ->label(__('vendra-console::attributes.confirm_password'))
                     ->password()
                     ->revealable(filament()->arePasswordsRevealable())
                     ->required()
@@ -84,14 +84,14 @@ final class ResellerForm
 
                 Select::make('plan_id')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.plan_id'))
-                    ->label(__('console.subscription_plan'))
+                    ->label(__('vendra-console::attributes.subscription_plan'))
                     ->live()
                     ->options(fn (): array => Plan::query()
                         ->active()
                         ->get()
                         ->mapWithKeys(fn (Plan $plan): array => [
                             $plan->id => "{$plan->name} — ".($plan->isFree()
-                                ? __('console.free')
+                                ? __('vendra-console::attributes.free')
                                 : $plan->formattedPrice()),
                         ])
                         ->all())
@@ -101,7 +101,7 @@ final class ResellerForm
 
                 Toggle::make('active')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-                    ->label(__('console.active'))
+                    ->label(__('vendra-console::attributes.active'))
                     ->columnSpanFull()
                     ->default(true)
                     ->live()
@@ -109,20 +109,20 @@ final class ResellerForm
                     ->required()
                     ->visibleOn('create'),
 
-                Section::make(__('console.current_subscription'))
+                Section::make(__('vendra-console::attributes.current_subscription'))
                     ->visibleOn('edit')
                     ->columns(3)
                     ->schema([
                         TextEntry::make('current_plan')
-                            ->label(__('console.plan'))
+                            ->label(__('vendra-console::navigation.plan'))
                             ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->plan->name ?? '—'),
 
                         TextEntry::make('current_status')
-                            ->label(__('console.status'))
+                            ->label(__('vendra-console::attributes.status'))
                             ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->status->value ?? '—'),
 
                         TextEntry::make('current_ends_at')
-                            ->label(__('console.ends_at'))
+                            ->label(__('vendra-console::attributes.ends_at'))
                             ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->ends_at?->toDayDateTimeString() ?? '—'),
                     ]),
             ])

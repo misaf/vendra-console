@@ -24,12 +24,12 @@ final class RestoreStoreTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.restore_store'))
+            ->label(__('vendra-console::actions.restore_store'))
             ->icon(Heroicon::OutlinedArrowUturnLeft)
             ->visible(fn (Store $record): bool => $record->trashed())
             ->action(function (Store $record, RestoreOffboardedStoreAction $restoreOffboardedStore): void {
                 $restoreOffboardedStore->execute($record);
-                self::notify(__('console.store_restored'));
+                self::notify(__('vendra-console::messages.store_restored'));
             });
     }
 }

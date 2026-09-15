@@ -25,7 +25,7 @@ final class ViewDeploymentTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.view_deployment'))
+            ->label(__('vendra-console::actions.view_deployment'))
             ->icon(Heroicon::OutlinedEye)
             ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
             ->url(function (Store $record): ?string {

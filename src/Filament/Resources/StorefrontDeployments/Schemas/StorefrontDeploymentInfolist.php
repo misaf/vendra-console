@@ -22,62 +22,62 @@ final class StorefrontDeploymentInfolist
     {
         return $schema
             ->components([
-                Section::make(__('console.deployment_details'))
+                Section::make(__('vendra-console::attributes.deployment_details'))
                     ->schema([
                         Grid::make(3)
                             ->schema([
                                 TextEntry::make('store.name')
-                                    ->label(__('console.store')),
+                                    ->label(__('vendra-console::navigation.store')),
                                 TextEntry::make('status')
-                                    ->label(__('console.status'))
+                                    ->label(__('vendra-console::attributes.status'))
                                     ->badge()
-                                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("console.deployment_status_{$state->value}")),
+                                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("vendra-console::attributes.deployment_status_{$state->value}")),
                                 TextEntry::make('desired_state')
-                                    ->label(__('console.desired_state'))
+                                    ->label(__('vendra-console::attributes.desired_state'))
                                     ->badge()
-                                    ->formatStateUsing(fn (StorefrontDesiredState $state): string => __("console.desired_state_{$state->value}")),
+                                    ->formatStateUsing(fn (StorefrontDesiredState $state): string => __("vendra-console::attributes.desired_state_{$state->value}")),
                                 TextEntry::make('slug')
-                                    ->label(__('console.storefront_slug'))
+                                    ->label(__('vendra-console::attributes.storefront_slug'))
                                     ->copyable(),
                                 TextEntry::make('domain')
-                                    ->label(__('console.domain'))
+                                    ->label(__('vendra-console::attributes.domain'))
                                     ->copyable(),
                                 TextEntry::make('image')
-                                    ->label(__('console.storefront_image_reference'))
+                                    ->label(__('vendra-console::attributes.storefront_image_reference'))
                                     ->copyable()
                                     ->placeholder('—')
                                     ->columnSpanFull(),
                                 TextEntry::make('image_digest')
-                                    ->label(__('console.image_digest'))
+                                    ->label(__('vendra-console::attributes.image_digest'))
                                     ->copyable()
                                     ->placeholder('—')
                                     ->columnSpanFull(),
                                 TextEntry::make('container_name')
-                                    ->label(__('console.container_name'))
+                                    ->label(__('vendra-console::attributes.container_name'))
                                     ->copyable()
                                     ->placeholder('—'),
                                 TextEntry::make('requested_at')
-                                    ->label(__('console.requested_at'))
+                                    ->label(__('vendra-console::attributes.requested_at'))
                                     ->dateTime('Y-m-d H:i:s')
                                     ->placeholder('—'),
                                 TextEntry::make('deployed_at')
-                                    ->label(__('console.deployed_at'))
+                                    ->label(__('vendra-console::attributes.deployed_at'))
                                     ->dateTime('Y-m-d H:i:s')
                                     ->placeholder('—'),
                                 TextEntry::make('failed_at')
-                                    ->label(__('console.failed_at'))
+                                    ->label(__('vendra-console::attributes.failed_at'))
                                     ->dateTime('Y-m-d H:i:s')
                                     ->placeholder('—'),
                                 TextEntry::make('error')
-                                    ->label(__('console.failure_information'))
+                                    ->label(__('vendra-console::attributes.failure_information'))
                                     ->placeholder('—')
                                     ->columnSpanFull(),
                             ]),
                     ])
                     ->columnSpanFull(),
 
-                Section::make(__('console.runtime_observation'))
-                    ->description(__('console.runtime_observation_description'))
+                Section::make(__('vendra-console::attributes.runtime_observation'))
+                    ->description(__('vendra-console::attributes.runtime_observation_description'))
                     ->schema([
                         TextEntry::make('runtime_observation')
                             ->hiddenLabel()
@@ -101,7 +101,7 @@ final class StorefrontDeploymentInfolist
         } catch (Throwable $exception) {
             report($exception);
 
-            return [__('console.runtime_unavailable_message', ['message' => $exception->getMessage()])];
+            return [__('vendra-console::messages.runtime_unavailable_message', ['message' => $exception->getMessage()])];
         }
     }
 
@@ -109,10 +109,10 @@ final class StorefrontDeploymentInfolist
     private static function observationLines(StorefrontObservation $observation): array
     {
         return [
-            __('console.runtime_state_value', ['state' => __("console.runtime_state_{$observation->state->value}")]),
-            __('console.container_name_value', ['name' => $observation->containerName ?? '—']),
-            __('console.image_value', ['image' => $observation->image ?? '—']),
-            __('console.domain_value', ['domain' => $observation->domain ?? '—']),
+            __('vendra-console::attributes.runtime_state_value', ['state' => __("vendra-console::attributes.runtime_state_{$observation->state->value}")]),
+            __('vendra-console::attributes.container_name_value', ['name' => $observation->containerName ?? '—']),
+            __('vendra-console::attributes.image_value', ['image' => $observation->image ?? '—']),
+            __('vendra-console::attributes.domain_value', ['domain' => $observation->domain ?? '—']),
         ];
     }
 }

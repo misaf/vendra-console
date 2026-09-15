@@ -53,7 +53,7 @@ describe('console dashboard intervention tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.stores_needing_attention'))
+            ->assertSee(__('vendra-console::attributes.stores_needing_attention'))
             ->assertSee('2');
     });
 
@@ -64,7 +64,7 @@ describe('console dashboard intervention tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.stores_needing_attention'))
+            ->assertSee(__('vendra-console::attributes.stores_needing_attention'))
             ->assertSee('0');
     });
 
@@ -90,8 +90,8 @@ describe('console dashboard fleet totals', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.fleet_totals'))
-            ->assertSee(__('console.stores_active_suspended', [
+            ->assertSee(__('vendra-console::attributes.fleet_totals'))
+            ->assertSee(__('vendra-console::attributes.stores_active_suspended', [
                 'active' => 3,
                 'suspended' => 1,
             ]));
@@ -108,7 +108,7 @@ describe('console dashboard reseller tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.resellers'))
+            ->assertSee(__('vendra-console::navigation.resellers'))
             ->assertSee('2');
     });
 });
@@ -125,9 +125,9 @@ describe('console dashboard storefront tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.storefronts_ready'))
+            ->assertSee(__('vendra-console::attributes.storefronts_ready'))
             ->assertSee('1')
-            ->assertSee(__('console.failed_deployments'))
+            ->assertSee(__('vendra-console::attributes.failed_deployments'))
             ->assertSee('1');
     });
 
@@ -142,7 +142,7 @@ describe('console dashboard storefront tracking', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.deployments_processing').': 1');
+            ->assertSee(__('vendra-console::attributes.deployments_processing').': 1');
     });
 });
 
@@ -159,8 +159,8 @@ describe('console dashboard subscription health', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.active_subscriptions'))
-            ->assertSee(__('console.expiring_soon'));
+            ->assertSee(__('vendra-console::attributes.active_subscriptions'))
+            ->assertSee(__('vendra-console::attributes.expiring_soon'));
     });
 });
 
@@ -170,13 +170,13 @@ describe('console dashboard empty state', function (): void {
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('console.stores_needing_attention'))
+            ->assertSee(__('vendra-console::attributes.stores_needing_attention'))
             ->assertSee('0')
-            ->assertSee(__('console.fleet_totals'))
-            ->assertSee(__('console.resellers'))
-            ->assertSee(__('console.active_subscriptions'))
+            ->assertSee(__('vendra-console::attributes.fleet_totals'))
+            ->assertSee(__('vendra-console::navigation.resellers'))
+            ->assertSee(__('vendra-console::attributes.active_subscriptions'))
             ->assertSee('0')
-            ->assertSee(__('console.expiring_soon'))
+            ->assertSee(__('vendra-console::attributes.expiring_soon'))
             ->assertSee('0');
     });
 });

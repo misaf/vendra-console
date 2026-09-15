@@ -29,7 +29,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
             report($exception);
 
             return [
-                Stat::make(__('console.container_runtime'), __('console.unknown'))
+                Stat::make(__('vendra-console::attributes.container_runtime'), __('vendra-console::attributes.unknown'))
                     ->description($exception->getMessage())
                     ->icon(Heroicon::OutlinedServerStack)
                     ->color('danger'),
@@ -45,18 +45,18 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
     private function runtimeStat(StorefrontRuntimeStatus $status): Stat
     {
         $description = match (true) {
-            ! $status->reachable => $status->message ?? __('console.runtime_unavailable'),
-            $status->engineMismatch() => __('console.runtime_engine_mismatch', [
+            ! $status->reachable => $status->message ?? __('vendra-console::messages.runtime_unavailable'),
+            $status->engineMismatch() => __('vendra-console::messages.runtime_engine_mismatch', [
                 'configured' => $status->driver,
-                'reported' => $status->reportedEngine() ?? __('console.unknown'),
+                'reported' => $status->reportedEngine() ?? __('vendra-console::attributes.unknown'),
             ]),
-            default => __('console.runtime_connected', [
+            default => __('vendra-console::messages.runtime_connected', [
                 'api' => $status->apiVersion,
-                'version' => $status->server ?? __('console.unknown'),
+                'version' => $status->server ?? __('vendra-console::attributes.unknown'),
             ]),
         };
 
-        return Stat::make(__('console.container_runtime'), Str::headline($status->driver))
+        return Stat::make(__('vendra-console::attributes.container_runtime'), Str::headline($status->driver))
             ->description($description)
             ->icon(Heroicon::OutlinedServerStack)
             ->color(match (true) {
@@ -80,7 +80,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
             }
         }
 
-        return Stat::make(__('console.storefront_network'), $networkName)
+        return Stat::make(__('vendra-console::attributes.storefront_network'), $networkName)
             ->description($this->networkDescription($status, $network, $error))
             ->icon(Heroicon::OutlinedShare)
             ->color($status->reachable && $network instanceof StorefrontNetwork ? 'success' : 'danger');
@@ -89,7 +89,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
     private function networkDescription(StorefrontRuntimeStatus $status, ?StorefrontNetwork $network, ?string $error): string
     {
         if (! $status->reachable) {
-            return __('console.network_not_checked');
+            return __('vendra-console::messages.network_not_checked');
         }
 
         if ($error !== null) {
@@ -97,11 +97,11 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
         }
 
         if (! $network instanceof StorefrontNetwork) {
-            return __('console.network_unavailable');
+            return __('vendra-console::messages.network_unavailable');
         }
 
-        return __('console.network_available', [
-            'driver' => $network->driver ?? __('console.unknown'),
+        return __('vendra-console::messages.network_available', [
+            'driver' => $network->driver ?? __('vendra-console::attributes.unknown'),
         ]);
     }
 }

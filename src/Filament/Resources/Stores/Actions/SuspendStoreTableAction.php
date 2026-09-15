@@ -24,14 +24,14 @@ final class SuspendStoreTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.suspend_store'))
+            ->label(__('vendra-console::actions.suspend_store'))
             ->icon(Heroicon::OutlinedPauseCircle)
             ->color('warning')
             ->requiresConfirmation()
             ->visible(fn (Store $record): bool => ! $record->trashed() && $record->active)
             ->action(function (Store $record, SuspendStoreAction $suspendStore): void {
                 $suspendStore->execute($record);
-                self::notify(__('console.store_suspended'));
+                self::notify(__('vendra-console::messages.store_suspended'));
             });
     }
 }

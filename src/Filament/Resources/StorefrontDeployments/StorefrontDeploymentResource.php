@@ -29,22 +29,22 @@ final class StorefrontDeploymentResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('console.storefront_deployment');
+        return __('vendra-console::navigation.storefront_deployment');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.storefront_deployments');
+        return __('vendra-console::navigation.storefront_deployments');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.storefront_deployments');
+        return __('vendra-console::navigation.storefront_deployments');
     }
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group_stores');
+        return __('vendra-console::navigation.navigation_group_stores');
     }
 
     public static function getNavigationSort(): int

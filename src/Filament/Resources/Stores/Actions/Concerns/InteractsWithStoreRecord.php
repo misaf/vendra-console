@@ -25,17 +25,17 @@ trait InteractsWithStoreRecord
         $deployment = self::deployment($store);
 
         if (! $deployment instanceof StorefrontDeployment) {
-            return __('console.no_recent_logs');
+            return __('vendra-console::messages.no_recent_logs');
         }
 
         try {
             $logs = $provisioner->logs(StorefrontReference::for($deployment));
 
-            return mb_trim($logs) === '' ? __('console.no_recent_logs') : $logs;
+            return mb_trim($logs) === '' ? __('vendra-console::messages.no_recent_logs') : $logs;
         } catch (Throwable $exception) {
             report($exception);
 
-            return __('console.runtime_unavailable_message', ['message' => $exception->getMessage()]);
+            return __('vendra-console::messages.runtime_unavailable_message', ['message' => $exception->getMessage()]);
         }
     }
 
@@ -50,7 +50,7 @@ trait InteractsWithStoreRecord
 
             Notification::make()
                 ->danger()
-                ->title(__('console.operational_action_failed'))
+                ->title(__('vendra-console::messages.operational_action_failed'))
                 ->body($exception->getMessage())
                 ->send();
         }

@@ -26,19 +26,19 @@ final class OffboardStoreTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.offboard_store'))
+            ->label(__('vendra-console::actions.offboard_store'))
             ->icon(Heroicon::OutlinedArchiveBox)
             ->color('danger')
             ->visible(fn (Store $record): bool => ! $record->trashed())
             ->schema([
                 Textarea::make('reason')
-                    ->label(__('console.offboarding_reason'))
+                    ->label(__('vendra-console::attributes.offboarding_reason'))
                     ->required()
                     ->maxLength(OffboardStoreAction::MAX_REASON_LENGTH),
             ])
             ->action(function (Store $record, array $data, OffboardStoreAction $offboardStore): void {
                 $offboardStore->execute($record, mb_trim((string) Arr::get($data, 'reason')));
-                self::notify(__('console.store_offboarded'));
+                self::notify(__('vendra-console::messages.store_offboarded'));
             });
     }
 }

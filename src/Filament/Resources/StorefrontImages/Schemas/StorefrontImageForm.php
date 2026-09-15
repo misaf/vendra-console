@@ -19,8 +19,8 @@ final class StorefrontImageForm
             ->components([
                 TextInput::make('image')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.image'))
-                    ->label(__('console.storefront_image_reference'))
-                    ->helperText(__('console.storefront_image_reference_hint'))
+                    ->label(__('vendra-console::attributes.storefront_image_reference'))
+                    ->helperText(__('vendra-console::attributes.storefront_image_reference_hint'))
                     ->extraAttributes(['dir' => 'ltr'])
                     ->live(onBlur: true)
                     ->maxLength(255)
@@ -29,13 +29,13 @@ final class StorefrontImageForm
                     ->columnSpanFull(),
 
                 Textarea::make('notes')
-                    ->label(__('console.storefront_image_notes'))
+                    ->label(__('vendra-console::attributes.storefront_image_notes'))
                     ->autosize()
                     ->rows(2)
                     ->columnSpanFull(),
 
                 Toggle::make('active')
-                    ->label(__('console.active'))
+                    ->label(__('vendra-console::attributes.active'))
                     ->default(true)
                     ->onIcon(Heroicon::Bolt)
                     ->required(),

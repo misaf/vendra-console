@@ -35,22 +35,22 @@ final class ResellerResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('console.reseller');
+        return __('vendra-console::navigation.reseller');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.resellers');
+        return __('vendra-console::navigation.resellers');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.resellers');
+        return __('vendra-console::navigation.resellers');
     }
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group_resellers');
+        return __('vendra-console::navigation.navigation_group_resellers');
     }
 
     public static function getNavigationSort(): int
@@ -106,7 +106,7 @@ final class ResellerResource extends Resource
         $reseller = self::reseller($record);
 
         return [
-            __('console.email') => $reseller->email ?? '—',
+            __('vendra-console::attributes.email') => $reseller->email ?? '—',
         ];
     }
 

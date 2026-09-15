@@ -23,14 +23,14 @@ final class PlanForm
             ->components([
                 TextInput::make('name')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.name'))
-                    ->label(__('console.name'))
+                    ->label(__('vendra-console::attributes.name'))
                     ->live(onBlur: true)
                     ->maxLength(255)
                     ->required(),
 
                 TextInput::make('max_units')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.max_units'))
-                    ->label(__('console.max_units'))
+                    ->label(__('vendra-console::attributes.max_units'))
                     ->integer()
                     ->live(onBlur: true)
                     ->minValue(1)
@@ -38,7 +38,7 @@ final class PlanForm
 
                 Select::make('period_unit')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.period_unit'))
-                    ->label(__('console.period_unit'))
+                    ->label(__('vendra-console::attributes.period_unit'))
                     ->live()
                     ->native(false)
                     ->options(self::periodUnitOptions())
@@ -46,7 +46,7 @@ final class PlanForm
 
                 TextInput::make('period_count')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.period_count'))
-                    ->label(__('console.period_count'))
+                    ->label(__('vendra-console::attributes.period_count'))
                     ->integer()
                     ->live(onBlur: true)
                     ->minValue(1)
@@ -54,7 +54,7 @@ final class PlanForm
 
                 TextInput::make('grace_days')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.grace_days'))
-                    ->label(__('console.grace_days'))
+                    ->label(__('vendra-console::attributes.grace_days'))
                     ->integer()
                     ->live(onBlur: true)
                     ->minValue(0)
@@ -63,8 +63,8 @@ final class PlanForm
 
                 TextInput::make('price')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.price'))
-                    ->label(__('console.price'))
-                    ->helperText(__('console.price_hint'))
+                    ->label(__('vendra-console::attributes.price'))
+                    ->helperText(__('vendra-console::attributes.price_hint'))
                     ->integer()
                     ->minValue(0)
                     ->default(0)
@@ -73,7 +73,7 @@ final class PlanForm
 
                 TextInput::make('currency_code')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.currency_code'))
-                    ->label(__('console.currency'))
+                    ->label(__('vendra-console::attributes.currency'))
                     ->length(3)
                     ->alpha()
                     ->live(onBlur: true)
@@ -91,7 +91,7 @@ final class PlanForm
 
                 TextInput::make('trial_days')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.trial_days'))
-                    ->label(__('console.trial_days'))
+                    ->label(__('vendra-console::attributes.trial_days'))
                     ->integer()
                     ->live(onBlur: true)
                     ->minValue(0)
@@ -100,14 +100,14 @@ final class PlanForm
 
                 Textarea::make('description')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.description'))
-                    ->label(__('console.description'))
+                    ->label(__('vendra-console::attributes.description'))
                     ->columnSpanFull()
                     ->live(onBlur: true)
                     ->maxLength(1000),
 
                 Toggle::make('active')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-                    ->label(__('console.active'))
+                    ->label(__('vendra-console::attributes.active'))
                     ->columnSpanFull()
                     ->default(true)
                     ->live()
@@ -116,8 +116,8 @@ final class PlanForm
 
                 Toggle::make('is_default')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.is_default'))
-                    ->label(__('console.is_default'))
-                    ->helperText(__('console.is_default_hint'))
+                    ->label(__('vendra-console::attributes.is_default'))
+                    ->helperText(__('vendra-console::attributes.is_default_hint'))
                     ->columnSpanFull()
                     ->default(false)
                     ->onIcon(Heroicon::Bolt)
@@ -134,7 +134,7 @@ final class PlanForm
     private static function periodUnitOptions(): array
     {
         return collect(PeriodUnit::cases())
-            ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => ucfirst($unit->value)])
+            ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => __("vendra-console::attributes.period_{$unit->value}")])
             ->all();
     }
 }

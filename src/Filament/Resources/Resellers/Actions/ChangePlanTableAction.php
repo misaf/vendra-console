@@ -29,20 +29,20 @@ final class ChangePlanTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.change_plan'))
+            ->label(__('vendra-console::actions.change_plan'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)->slideOver()
-            ->schema([Select::make('plan_id')->label(__('console.plan'))
+            ->schema([Select::make('plan_id')->label(__('vendra-console::navigation.plan'))
                 ->options(fn (): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {
                 try {
                     resolve(SubscribeAction::class)->execute($record, Plan::query()->findOrFail((int) Arr::get($data, 'plan_id')));
                 } catch (SubscriptionLimitException $exception) {
-                    Notification::make()->danger()->title(__('console.downgrade_blocked'))->body($exception->getMessage())->send();
+                    Notification::make()->danger()->title(__('vendra-console::messages.downgrade_blocked'))->body($exception->getMessage())->send();
 
                     return;
                 }
 
-                self::notifySuccess(__('console.plan_changed'));
+                self::notifySuccess(__('vendra-console::messages.plan_changed'));
             });
     }
 }

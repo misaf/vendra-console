@@ -152,9 +152,9 @@ it('globally searches console resources', function (): void {
         ->and($storeResult->title)->toBe($store->name)
         ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('view', ['record' => $store]))
         ->and($storeResult->details)->toBe([
-            __('console.domain') => 'global-search-store.test',
+            __('vendra-console::attributes.domain') => 'global-search-store.test',
         ])
-        ->and($storeAction->getLabel())->toBe(__('console.admin_url'))
+        ->and($storeAction->getLabel())->toBe(__('vendra-console::attributes.admin_url'))
         ->and($storeAction->getUrl())->toBe(
             'https://'.$store->slug.'.'.Config::string('vendra-tenant.central_host'),
         )
@@ -353,7 +353,7 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
         ->assertWizardStepExists(3)
         ->assertWizardStepExists(4)
         ->assertFormFieldExists('create_storefront')
-        ->assertSee(__('console.storefront_map_query'))
+        ->assertSee(__('vendra-console::attributes.storefront_map_query'))
         // The billing reseller is optional; leaving it empty makes a
         // platform-owned store, so it must not appear among the errors.
         ->assertFormFieldExists('reseller_id')
@@ -763,9 +763,9 @@ it('uses the package table presentation conventions in the console', function (
         ->assertTableColumnExists('updated_at');
     $table = $component->instance()->getTable();
 
-    expect($table->getDescription())->toBe(__("console.tables.description.{$resource}"))
-        ->and($table->getEmptyStateHeading())->toBe(__("console.tables.empty_state.heading.{$resource}"))
-        ->and($table->getEmptyStateDescription())->toBe(__("console.tables.empty_state.description.{$resource}"))
+    expect($table->getDescription())->toBe(__("vendra-console::tables.description.{$resource}"))
+        ->and($table->getEmptyStateHeading())->toBe(__("vendra-console::tables.empty_state.heading.{$resource}"))
+        ->and($table->getEmptyStateDescription())->toBe(__("vendra-console::tables.empty_state.description.{$resource}"))
         ->and($table->getEmptyStateIcon())->toBe($emptyStateIcon)
         ->and($table->getFiltersLayout())->toBe(FiltersLayout::AboveContentCollapsible);
 })->with([

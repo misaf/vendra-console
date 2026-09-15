@@ -28,22 +28,22 @@ final class StorefrontImageResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return __('console.storefront_image');
+        return __('vendra-console::navigation.storefront_image');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('console.storefront_images');
+        return __('vendra-console::navigation.storefront_images');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('console.storefront_images');
+        return __('vendra-console::navigation.storefront_images');
     }
 
     public static function getNavigationGroup(): string
     {
-        return __('console.navigation_group_stores');
+        return __('vendra-console::navigation.navigation_group_stores');
     }
 
     public static function getNavigationSort(): int

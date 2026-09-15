@@ -18,7 +18,7 @@ final class DomainsRelationManager extends RelationManager
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
-        return __('console.domain_history');
+        return __('vendra-console::attributes.domain_history');
     }
 
     public function isReadOnly(): bool
@@ -31,18 +31,18 @@ final class DomainsRelationManager extends RelationManager
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label(__('console.domain'))
+                    ->label(__('vendra-console::attributes.domain'))
                     ->icon(Heroicon::GlobeAlt)
                     ->searchable(),
 
                 IconColumn::make('active')
-                    ->label(__('console.active'))
+                    ->label(__('vendra-console::attributes.active'))
                     ->boolean()
                     ->trueIcon(Heroicon::Bolt),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('console.created_at'))
+                    ->label(__('vendra-console::attributes.created_at'))
                     ->sinceTooltip()
                     ->sortable()
                     ->when(
@@ -53,7 +53,7 @@ final class DomainsRelationManager extends RelationManager
 
                 TextColumn::make('deleted_at')
                     ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('console.replaced_at'))
+                    ->label(__('vendra-console::attributes.replaced_at'))
                     ->sinceTooltip()
                     ->placeholder('—')
                     ->sortable()

@@ -164,7 +164,7 @@ it('shows runtime and required network health without runtime-specific console l
         ->assertOk()
         ->assertSee('Docker')
         ->assertSee('traefik-public')
-        ->assertSee(__('console.network_available', ['driver' => 'bridge']));
+        ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
 
     expect(collect($runtime->transport->requests)->contains(
         fn ($request): bool => str_ends_with($request->path, '/_ping'),

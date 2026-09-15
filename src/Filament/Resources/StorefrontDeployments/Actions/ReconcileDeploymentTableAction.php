@@ -24,7 +24,7 @@ final class ReconcileDeploymentTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('console.reconcile_storefront'))
+            ->label(__('vendra-console::actions.reconcile_storefront'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->requiresConfirmation()
             ->action(fn (
@@ -32,7 +32,7 @@ final class ReconcileDeploymentTableAction extends Action
                 ReconcileStoreStorefrontAction $reconcile,
             ): mixed => self::run(
                 fn (): mixed => $reconcile->execute($record),
-                __('console.storefront_reconciled'),
+                __('vendra-console::messages.storefront_reconciled'),
             ));
     }
 }
