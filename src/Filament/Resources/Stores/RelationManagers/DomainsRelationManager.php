@@ -6,12 +6,12 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 
 final class DomainsRelationManager extends RelationManager
 {
@@ -36,10 +36,7 @@ final class DomainsRelationManager extends RelationManager
                     ->icon(Heroicon::GlobeAlt)
                     ->searchable(),
 
-                IconColumn::make('active')
-                    ->label(__('vendra-console::attributes.active'))
-                    ->boolean()
-                    ->trueIcon(Heroicon::Bolt),
+                IsActiveIconColumn::make(),
 
                 CreatedAtColumn::make()
                     ->sortable(),

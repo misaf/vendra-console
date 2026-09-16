@@ -34,6 +34,7 @@ use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\NameColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
@@ -46,9 +47,7 @@ final class ResellerTable
             ->columns([
                 RowIndexColumn::make(),
 
-                TextColumn::make('name')
-                    ->label(__('vendra-console::attributes.name'))
-                    ->icon(Heroicon::Tag)
+                NameColumn::make()
                     ->searchable()
                     ->sortable(),
 
