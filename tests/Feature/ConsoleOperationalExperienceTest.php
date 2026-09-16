@@ -172,6 +172,27 @@ it('shows runtime and required network health without runtime-specific console l
     ))->toBeTrue();
 });
 
+it('probes the runtime once per cache window however many dashboards poll', function (): void {
+    $runtime = fakeExistingStorefront();
+
+    actAsOperationalConsoleUser();
+
+    livewire(ContainerRuntimeHealth::class)->assertOk();
+    $requestsAfterFirstRender = count($runtime->transport->requests);
+
+    livewire(ContainerRuntimeHealth::class)
+        ->assertOk()
+        ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
+
+    expect($runtime->transport->requests)->toHaveCount($requestsAfterFirstRender);
+
+    $this->travel(26)->seconds();
+
+    livewire(ContainerRuntimeHealth::class)->assertOk();
+
+    expect(count($runtime->transport->requests))->toBeGreaterThan($requestsAfterFirstRender);
+});
+
 it('links operational dashboard stats to resource filters', function (): void {
     actAsOperationalConsoleUser();
 

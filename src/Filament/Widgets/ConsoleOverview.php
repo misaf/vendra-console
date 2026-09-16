@@ -22,6 +22,8 @@ final class ConsoleOverview extends StatsOverviewWidget
 {
     use BuildsDailyTrend;
 
+    protected static ?int $sort = 1;
+
     protected function getStats(): array
     {
         $activeStores = Store::query()->withStatus(StoreStatus::Active)->count();
