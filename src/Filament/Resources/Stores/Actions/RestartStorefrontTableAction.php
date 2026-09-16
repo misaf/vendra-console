@@ -32,12 +32,16 @@ final class RestartStorefrontTableAction extends Action
             ->action(function (Store $record, RestartStoreStorefrontAction $restartStorefront): void {
                 $deployment = self::deployment($record);
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    self::run(
-                        fn (): mixed => $restartStorefront->execute($deployment),
-                        __('vendra-console::messages.storefront_restarted'),
-                    );
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                self::run(
+                    fn (): mixed => $restartStorefront->execute($deployment),
+                    __('vendra-console::messages.storefront_restarted'),
+                );
             });
     }
 }

@@ -33,10 +33,14 @@ final class CancelSubscriptionTableAction extends Action
             ], true))
             ->action(function (Reseller $record): void {
                 $subscription = $record->latestSubscription();
-                if ($subscription instanceof Subscription) {
-                    resolve(CancelSubscriptionAction::class)->execute($subscription);
-                    self::notifySuccess(__('vendra-console::messages.subscription_cancelled'));
+                if (! $subscription instanceof Subscription) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                resolve(CancelSubscriptionAction::class)->execute($subscription);
+                self::notifySuccess(__('vendra-console::messages.subscription_cancelled'));
             });
     }
 }

@@ -12,4 +12,9 @@ trait InteractsWithResellerRecord
     {
         Notification::make()->success()->title($title)->send();
     }
+
+    protected static function notifyUnavailable(): void
+    {
+        Notification::make()->danger()->title(__('vendra-console::messages.record_unavailable'))->send();
+    }
 }

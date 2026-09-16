@@ -43,6 +43,7 @@ return [
     'network_not_checked' => 'Not checked because the runtime is unavailable',
     'network_unavailable' => 'The required network is unavailable',
     'no_recent_logs' => 'No recent logs',
+    'record_unavailable' => 'The record is no longer available',
     'operational_action_failed' => 'Operational action failed',
     'runtime_connected' => 'Connected · API :api · :version',
     'runtime_engine_mismatch' => 'Configured as :configured, but :reported answered',

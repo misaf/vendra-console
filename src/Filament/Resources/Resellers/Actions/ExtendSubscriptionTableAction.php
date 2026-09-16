@@ -37,10 +37,14 @@ final class ExtendSubscriptionTableAction extends Action
                 ->after(fn (Reseller $record): ?Carbon => $record->latestSubscription()?->ends_at)->required()])
             ->action(function (Reseller $record, array $data): void {
                 $subscription = $record->latestSubscription();
-                if ($subscription instanceof Subscription) {
-                    resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse((string) Arr::get($data, 'ends_at')));
-                    self::notifySuccess(__('vendra-console::messages.subscription_extended'));
+                if (! $subscription instanceof Subscription) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse((string) Arr::get($data, 'ends_at')));
+                self::notifySuccess(__('vendra-console::messages.subscription_extended'));
             });
     }
 }

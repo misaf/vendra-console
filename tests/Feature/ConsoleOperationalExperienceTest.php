@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ListStorefrontDeployments;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ViewStorefrontDeployment;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
+use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
@@ -193,4 +194,102 @@ it('links operational dashboard stats to resource filters', function (): void {
         ->assertOk()
         ->assertSeeHtml('href="'.e($failedDeploymentsUrl).'"')
         ->assertSeeHtml('href="'.e($failedStoresUrl).'"');
+});
+
+describe('store row storefront operations', function (): void {
+    it('offers a retry on the store row only while its storefront has failed', function (): void {
+        Queue::fake();
+        $failedStore = Store::factory()->active()->create();
+        $failed = StorefrontDeployment::factory()->for($failedStore)->create([
+            'status' => StorefrontDeploymentStatus::Failed,
+        ]);
+        $readyStore = Store::factory()->active()->create();
+        StorefrontDeployment::factory()->for($readyStore)->create([
+            'status' => StorefrontDeploymentStatus::Ready,
+        ]);
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->assertActionHidden(TestAction::make('retryStorefront')->table($readyStore))
+            ->assertActionVisible(TestAction::make('retryStorefront')->table($failedStore))
+            ->callAction(TestAction::make('retryStorefront')->table($failedStore))
+            ->assertNotified();
+
+        Queue::assertPushed(
+            ProvisionStorefrontJob::class,
+            fn (ProvisionStorefrontJob $job): bool => $job->deploymentId === $failed->id,
+        );
+    });
+
+    it('queues a forced redeployment from the store row', function (): void {
+        Queue::fake();
+        $store = Store::factory()->active()->create();
+        $deployment = StorefrontDeployment::factory()->for($store)->create([
+            'status' => StorefrontDeploymentStatus::Ready,
+        ]);
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->callAction(TestAction::make('redeployStorefront')->table($store))
+            ->assertNotified();
+
+        Queue::assertPushed(
+            ProvisionStorefrontJob::class,
+            fn (ProvisionStorefrontJob $job): bool => $job->deploymentId === $deployment->id && $job->force,
+        );
+    });
+
+    it('restarts and reconciles a store storefront through the runtime contract', function (): void {
+        $store = Store::factory()->active()->create();
+        StorefrontDeployment::factory()->for($store)->create([
+            'status' => StorefrontDeploymentStatus::Ready,
+            'slug' => 'store-row-operated',
+        ]);
+        $runtime = fakeExistingStorefront();
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->callAction(TestAction::make('restartStorefront')->table($store))
+            ->assertNotified()
+            ->callAction(TestAction::make('reconcileStorefront')->table($store))
+            ->assertNotified();
+
+        expect($runtime->calls)->toContain('restart');
+    });
+
+    it('reads storefront logs from the store row', function (): void {
+        $store = Store::factory()->active()->create();
+        StorefrontDeployment::factory()->for($store)->create([
+            'status' => StorefrontDeploymentStatus::Ready,
+            'slug' => 'store-row-logs',
+        ]);
+        fakeExistingStorefront(logs: "booted\nserving");
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->mountAction(TestAction::make('viewStorefrontLogs')->table($store))
+            ->assertActionDataSet(['logs' => "booted\nserving"]);
+    });
+
+    it('links the store row to its latest deployment record', function (): void {
+        $store = Store::factory()->active()->create();
+        $deployment = StorefrontDeployment::factory()->for($store)->create(['status' => StorefrontDeploymentStatus::Ready]);
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->assertActionHasUrl(
+                TestAction::make('viewDeployment')->table($store),
+                StorefrontDeploymentResource::getUrl('view', ['record' => $deployment]),
+            );
+    });
 });

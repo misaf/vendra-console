@@ -32,10 +32,14 @@ final class ReactivateSubscriptionTableAction extends Action
             ], true))
             ->action(function (Reseller $record): void {
                 $subscription = $record->latestSubscription();
-                if ($subscription instanceof Subscription) {
-                    resolve(ReactivateSubscriptionAction::class)->execute($subscription);
-                    self::notifySuccess(__('vendra-console::messages.subscription_reactivated'));
+                if (! $subscription instanceof Subscription) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                resolve(ReactivateSubscriptionAction::class)->execute($subscription);
+                self::notifySuccess(__('vendra-console::messages.subscription_reactivated'));
             });
     }
 }

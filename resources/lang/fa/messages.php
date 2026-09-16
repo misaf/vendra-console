@@ -43,6 +43,7 @@ return [
     'network_not_checked' => 'به‌دلیل در دسترس نبودن محیط اجرا بررسی نشد',
     'network_unavailable' => 'شبکه مورد نیاز در دسترس نیست',
     'no_recent_logs' => 'لاگ جدیدی وجود ندارد',
+    'record_unavailable' => 'رکورد دیگر در دسترس نیست',
     'operational_action_failed' => 'عملیات ناموفق بود',
     'runtime_connected' => 'متصل · API :api · :version',
     'runtime_engine_mismatch' => 'پیکربندی :configured است اما :reported پاسخ داد',

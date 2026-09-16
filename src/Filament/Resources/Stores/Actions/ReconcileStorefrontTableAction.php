@@ -32,12 +32,16 @@ final class ReconcileStorefrontTableAction extends Action
             ->action(function (Store $record, ReconcileStoreStorefrontAction $reconcileStorefront): void {
                 $deployment = self::deployment($record);
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    self::run(
-                        fn (): mixed => $reconcileStorefront->execute($deployment),
-                        __('vendra-console::messages.storefront_reconciled'),
-                    );
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                self::run(
+                    fn (): mixed => $reconcileStorefront->execute($deployment),
+                    __('vendra-console::messages.storefront_reconciled'),
+                );
             });
     }
 }

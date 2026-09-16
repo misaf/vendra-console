@@ -43,6 +43,7 @@ return [
     'network_not_checked' => 'Nicht geprüft, da die Laufzeit nicht verfügbar ist',
     'network_unavailable' => 'Das erforderliche Netzwerk ist nicht verfügbar',
     'no_recent_logs' => 'Keine aktuellen Logs',
+    'record_unavailable' => 'Der Datensatz ist nicht mehr verfügbar',
     'operational_action_failed' => 'Betriebsaktion fehlgeschlagen',
     'runtime_connected' => 'Verbunden · API :api · :version',
     'runtime_engine_mismatch' => 'Als :configured konfiguriert, aber :reported antwortete',

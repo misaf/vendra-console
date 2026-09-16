@@ -32,10 +32,14 @@ final class RedeployStorefrontTableAction extends Action
             ->action(function (Store $record, RedeployStoreStorefrontAction $redeployStorefront): void {
                 $deployment = self::deployment($record);
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    $redeployStorefront->execute($deployment);
-                    self::notify(__('vendra-console::messages.storefront_redeployment_queued'));
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                $redeployStorefront->execute($deployment);
+                self::notify(__('vendra-console::messages.storefront_redeployment_queued'));
             });
     }
 }

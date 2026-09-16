@@ -32,10 +32,14 @@ final class RetryStorefrontTableAction extends Action
             ->action(function (Store $record, RetryFailedStorefrontDeploymentAction $retryStorefront): void {
                 $deployment = self::deployment($record);
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    $retryStorefront->execute($deployment);
-                    self::notify(__('vendra-console::messages.storefront_retry_queued'));
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                $retryStorefront->execute($deployment);
+                self::notify(__('vendra-console::messages.storefront_retry_queued'));
             });
     }
 }
