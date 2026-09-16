@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraStore\Models\Store;
+use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Tenancy\TenantSchema;
 
 final class ActivityLogTable
@@ -24,10 +26,7 @@ final class ActivityLogTable
 
         return $table
             ->columns([
-                TextColumn::make('row')
-                    ->label('#')
-                    ->rowIndex()
-                    ->sortable(['id']),
+                RowIndexColumn::make(),
 
                 TextColumn::make('store')
                     ->label(__('vendra-console::navigation.store'))
@@ -53,16 +52,8 @@ final class ActivityLogTable
                         : '#'.$record->subject_id)
                     ->placeholder('—'),
 
-                TextColumn::make('created_at')
-                    ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('vendra-console::attributes.created_at'))
-                    ->sinceTooltip()
-                    ->sortable()
-                    ->when(
-                        app()->isLocale('fa'),
-                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
-                    ),
+                CreatedAtColumn::make()
+                    ->sortable(),
             ])
             ->description(__('vendra-console::tables.description.activity_logs'))
             ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.activity_logs'))

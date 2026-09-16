@@ -11,6 +11,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 
 final class DomainsRelationManager extends RelationManager
 {
@@ -40,16 +41,8 @@ final class DomainsRelationManager extends RelationManager
                     ->boolean()
                     ->trueIcon(Heroicon::Bolt),
 
-                TextColumn::make('created_at')
-                    ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('vendra-console::attributes.created_at'))
-                    ->sinceTooltip()
-                    ->sortable()
-                    ->when(
-                        app()->isLocale('fa'),
-                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
-                    ),
+                CreatedAtColumn::make()
+                    ->sortable(),
 
                 TextColumn::make('deleted_at')
                     ->extraCellAttributes(['dir' => 'ltr'])

@@ -20,6 +20,7 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Restart
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\RetryDeploymentTableAction;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\ViewLogsTableAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
+use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 
 final class StorefrontDeploymentTable
 {
@@ -27,10 +28,7 @@ final class StorefrontDeploymentTable
     {
         return $table
             ->columns([
-                TextColumn::make('row')
-                    ->label('#')
-                    ->rowIndex()
-                    ->sortable(['id']),
+                RowIndexColumn::make(),
 
                 TextColumn::make('store.name')
                     ->label(__('vendra-console::navigation.store'))

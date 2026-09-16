@@ -17,6 +17,7 @@ use Misaf\VendraStore\Actions\DeleteStorefrontImageAction;
 use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
 use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 
 final class StorefrontImagesTable
 {
@@ -24,10 +25,7 @@ final class StorefrontImagesTable
     {
         return $table
             ->columns([
-                TextColumn::make('row')
-                    ->label('#')
-                    ->rowIndex()
-                    ->sortable(['id']),
+                RowIndexColumn::make(),
 
                 TextColumn::make('image')
                     ->label(__('vendra-console::attributes.storefront_image_reference'))

@@ -37,6 +37,9 @@ use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
+use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 
 final class StoreTable
 {
@@ -44,10 +47,7 @@ final class StoreTable
     {
         return $table
             ->columns([
-                TextColumn::make('row')
-                    ->label('#')
-                    ->rowIndex()
-                    ->sortable(['id']),
+                RowIndexColumn::make(),
 
                 TextColumn::make('name')
                     ->label(__('vendra-console::attributes.name'))
@@ -100,26 +100,10 @@ final class StoreTable
                     ->state(fn (Store $record): string => $record->status()->value)
                     ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.store_status_{$state}")),
 
-                TextColumn::make('created_at')
-                    ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('vendra-console::attributes.created_at'))
-                    ->sinceTooltip()
-                    ->sortable()
-                    ->when(
-                        app()->isLocale('fa'),
-                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
-                    ),
+                CreatedAtColumn::make()
+                    ->sortable(),
 
-                TextColumn::make('updated_at')
-                    ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('vendra-console::attributes.updated_at'))
-                    ->sinceTooltip()
-                    ->when(
-                        app()->isLocale('fa'),
-                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
-                    ),
+                UpdatedAtColumn::make(),
             ])
             ->description(__('vendra-console::tables.description.stores'))
             ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.stores'))
