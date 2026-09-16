@@ -7,11 +7,9 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\LaravelEmailVerification\Rules\EmailValidation;
@@ -122,17 +120,5 @@ final class StoreForm
                 ])
                 ->visibleOn('create'),
         ];
-    }
-
-    public static function activeField(): Toggle
-    {
-        return Toggle::make('active')
-            ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-            ->label(__('vendra-console::attributes.active'))
-            ->columnSpanFull()
-            ->default(true)
-            ->live()
-            ->onIcon(Heroicon::Bolt)
-            ->required();
     }
 }

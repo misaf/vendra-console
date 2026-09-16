@@ -9,7 +9,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -30,9 +29,11 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscript
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
+use Misaf\VendraReseller\Actions\SetResellerActiveAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
 
 final class ResellerTable
 {
@@ -55,10 +56,9 @@ final class ResellerTable
                     ->label(__('vendra-console::attributes.stores_count'))
                     ->alignCenter(),
 
-                IconColumn::make('active')
-                    ->label(__('vendra-console::attributes.active'))
-                    ->boolean()
-                    ->trueIcon(Heroicon::Bolt),
+                ActiveToggleColumn::make()
+                    ->disabled(fn (Reseller $record): bool => $record->trashed())
+                    ->updateStateUsing(fn (Reseller $record, bool $state, SetResellerActiveAction $setActive): bool => $setActive->execute($record, $state)->active),
 
                 TextColumn::make('created_at')
                     ->extraCellAttributes(['dir' => 'ltr'])

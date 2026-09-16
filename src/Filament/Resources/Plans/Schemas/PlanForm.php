@@ -14,6 +14,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
+use Misaf\VendraSupport\Filament\Forms\Components\ActiveToggle;
 
 final class PlanForm
 {
@@ -105,14 +106,8 @@ final class PlanForm
                     ->live(onBlur: true)
                     ->maxLength(1000),
 
-                Toggle::make('active')
-                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-                    ->label(__('vendra-console::attributes.active'))
-                    ->columnSpanFull()
-                    ->default(true)
-                    ->live()
-                    ->onIcon(Heroicon::Bolt)
-                    ->required(),
+                ActiveToggle::make()
+                    ->default(true),
 
                 Toggle::make('is_default')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.is_default'))

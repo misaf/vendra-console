@@ -12,7 +12,6 @@ use Filament\Actions\EditAction;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -23,6 +22,7 @@ use Misaf\VendraSubscription\Actions\DeletePlanAction;
 use Misaf\VendraSubscription\Actions\UpdatePlanAction;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
+use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
 
 final class PlanTable
 {
@@ -63,9 +63,7 @@ final class PlanTable
                         ? __('vendra-console::attributes.free')
                         : $record->price.' '.($record->currency_code ?? '')),
 
-                ToggleColumn::make('active')
-                    ->label(__('vendra-console::attributes.active'))
-                    ->onIcon(Heroicon::Bolt)
+                ActiveToggleColumn::make()
                     ->updateStateUsing(function (Plan $record, bool $state, UpdatePlanAction $updatePlan): bool {
                         $updatePlan->execute($record, ['active' => $state]);
 

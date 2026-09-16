@@ -9,7 +9,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -17,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraStore\Actions\DeleteStorefrontImageAction;
 use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
 use Misaf\VendraStore\Models\StorefrontImage;
+use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
 
 final class StorefrontImagesTable
 {
@@ -43,9 +43,7 @@ final class StorefrontImagesTable
                     ->placeholder('—')
                     ->limit(60),
 
-                ToggleColumn::make('active')
-                    ->label(__('vendra-console::attributes.active'))
-                    ->onIcon(Heroicon::Bolt)
+                ActiveToggleColumn::make()
                     ->updateStateUsing(function (StorefrontImage $record, bool $state, UpdateStorefrontImageAction $updateImage): bool {
                         $updateImage->execute($record, ['active' => $state]);
 

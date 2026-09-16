@@ -6,11 +6,9 @@ namespace Misaf\VendraConsole\Filament\Resources\Resellers\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rules\Unique;
@@ -19,6 +17,7 @@ use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
+use Misaf\VendraSupport\Filament\Forms\Components\ActiveToggle;
 use Misaf\VendraUser\Models\User;
 
 final class ResellerForm
@@ -99,14 +98,8 @@ final class ResellerForm
                     ->native(false)
                     ->visibleOn('create'),
 
-                Toggle::make('active')
-                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.active'))
-                    ->label(__('vendra-console::attributes.active'))
-                    ->columnSpanFull()
+                ActiveToggle::make()
                     ->default(true)
-                    ->live()
-                    ->onIcon(Heroicon::Bolt)
-                    ->required()
                     ->visibleOn('create'),
 
                 Section::make(__('vendra-console::attributes.current_subscription'))

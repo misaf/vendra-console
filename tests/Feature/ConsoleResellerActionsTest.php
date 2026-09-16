@@ -93,6 +93,22 @@ it('renews the subscription through the table row action', function (): void {
         ->and($reseller->subscriptions()->active()->count())->toBe(1);
 });
 
+it('toggles a reseller active state from the table through the domain action', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->create(['active' => true]);
+
+    livewire(ListResellers::class)
+        ->call('updateTableColumnState', 'active', (string) $reseller->getKey(), false);
+
+    expect($reseller->refresh()->active)->toBeFalse();
+
+    livewire(ListResellers::class)
+        ->call('updateTableColumnState', 'active', (string) $reseller->getKey(), true);
+
+    expect($reseller->refresh()->active)->toBeTrue();
+});
+
 it('offboards a reseller through the table row action with an audit reason', function (): void {
     actingConsoleAdmin();
 
