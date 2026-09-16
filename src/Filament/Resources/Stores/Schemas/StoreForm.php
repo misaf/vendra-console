@@ -5,42 +5,21 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Schemas;
 
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraStore\Filament\Schemas\StorefrontConfigurationFields;
-use Misaf\VendraStore\Models\StoreDomain;
+use Misaf\VendraStore\Filament\Forms\Components\StoreDomainInput;
+use Misaf\VendraStore\Filament\Resources\Stores\Schemas\StoreForm as BaseStoreForm;
 
 final class StoreForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->label(__('vendra-console::attributes.name'))
-                    ->required()
-                    ->maxLength(255)
-                    ->visibleOn('edit'),
-
-                Textarea::make('description')
-                    ->label(__('vendra-console::attributes.description'))
-                    ->rows(4)
-                    ->maxLength(2000)
-                    ->visibleOn('edit')
-                    ->columnSpanFull(),
-
-                ...self::storeFields(),
-
-                ...StorefrontConfigurationFields::make(optional: true),
-            ])
-            ->columns(2);
+        return BaseStoreForm::configure($schema, creationFields: self::storeFields(), storefrontIsOptional: true);
     }
 
     /**
@@ -65,37 +44,7 @@ final class StoreForm
                 ->native(false)
                 ->visibleOn('create'),
 
-            TextInput::make('domain')
-                ->afterStateUpdated(function (?string $state, Get $get, Set $set, Livewire $livewire): void {
-                    $livewire->validateOnly('data.domain');
-
-                    if (blank($state)) {
-                        return;
-                    }
-
-                    $domain = StoreDomain::normalizeDomain($state);
-                    $domainLabel = Str::before($domain, '.');
-
-                    if (blank($get('storefront_slug'))) {
-                        $set('storefront_slug', Str::slug($domainLabel));
-                    }
-
-                    if (blank($get('storefront_name_en'))) {
-                        $set('storefront_name_en', Str::headline($domainLabel));
-                    }
-                })
-                ->helperText(__('vendra-console::attributes.domain_helper_text'))
-                ->label(__('vendra-console::attributes.domain'))
-                ->placeholder('flowers.example')
-                ->extraAttributes(['dir' => 'ltr'])
-                ->live(onBlur: true)
-                ->maxLength(255)
-                ->required()
-                ->rules(StoreDomain::activeDomainRules())
-                ->dehydrateStateUsing(fn (?string $state): ?string => $state === null
-                    ? null
-                    : StoreDomain::normalizeDomain($state))
-                ->visibleOn('create'),
+            StoreDomainInput::make(),
 
             TextInput::make('email')
                 ->afterStateUpdated(function (?string $state, Get $get, Set $set, Livewire $livewire): void {

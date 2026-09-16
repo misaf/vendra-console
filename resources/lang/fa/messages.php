@@ -12,7 +12,6 @@ return [
     'user_password_updated' => 'رمز عبور کاربر به‌روزرسانی شد.',
     'user_account_created' => 'حساب کاربر ایجاد شد.',
     'user_account_required' => 'برای ایجاد حساب کاربر، ابتدا اولین ملک این حساب را ایجاد کنید.',
-    'url_copied' => 'URL کپی شد',
     'account_disabled' => 'حساب غیرفعال شد',
     'account_enabled' => 'حساب فعال شد',
     'administrator_added' => 'مدیر افزوده شد',

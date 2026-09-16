@@ -7,14 +7,10 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Tables;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\OffboardStoreTableAction;
@@ -33,117 +29,32 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ViewDeploymentTableAct
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ViewStorefrontLogsTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraStore\Enums\StoreStatus;
+use Misaf\VendraStore\Filament\Resources\Stores\Tables\StoreTable as BaseStoreTable;
 use Misaf\VendraStore\Models\Store;
-use Misaf\VendraStore\Models\StorefrontDeployment;
-use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\NameColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
-use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
 
 final class StoreTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
-            ->columns([
-                RowIndexColumn::make(),
-
-                NameColumn::make()
-                    ->searchable()
-                    ->sortable(),
-
+        return BaseStoreTable::configure(
+            $table,
+            identityColumns: [
                 TextColumn::make('reseller')
                     ->label(__('vendra-console::navigation.reseller'))
                     ->state(fn (Store $record): ?string => $record->reseller_id === null
                         ? null
                         : self::resellerNames()->get($record->reseller_id))
                     ->placeholder('—'),
+            ],
+            filtersSeveralStatuses: true,
+        )
+            ->pushFilters([
+                SelectFilter::make('reseller_id')
+                    ->label(__('vendra-console::navigation.reseller'))
+                    ->options(fn (): array => self::resellerNames()->all()),
 
-                TextColumn::make('domain')
-                    ->label(__('vendra-console::attributes.domain'))
-                    ->icon(Heroicon::GlobeAlt)
-                    ->state(fn (Store $record): ?string => $record->domains->first()?->name)
-                    ->placeholder('—'),
-
-                TextColumn::make('storefront_status')
-                    ->label(__('vendra-console::attributes.storefront_status'))
-                    ->badge()
-                    ->state(fn (Store $record): ?string => self::deployment($record)?->status->value)
-                    ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.deployment_status_{$state}"))
-                    ->placeholder(__('vendra-console::attributes.storefront_not_requested')),
-
-                TextColumn::make('admin_url')
-                    ->label(__('vendra-console::attributes.admin_url'))
-                    ->icon(Heroicon::OutlinedBuildingOffice2)
-                    ->state(fn (Store $record): string => $record->adminUrl())
-                    ->url(fn (Store $record): string => $record->adminUrl())
-                    ->openUrlInNewTab()
-                    ->copyable()
-                    ->copyMessage(__('vendra-console::messages.url_copied')),
-
-                TextColumn::make('storefront_url')
-                    ->label(__('vendra-console::attributes.storefront_url'))
-                    ->icon(Heroicon::OutlinedShoppingBag)
-                    ->state(fn (Store $record): ?string => self::deployment($record)?->domain)
-                    ->placeholder('—')
-                    ->url(fn (Store $record): ?string => self::deployment($record)?->url())
-                    ->openUrlInNewTab()
-                    ->copyable()
-                    ->copyMessage(__('vendra-console::messages.url_copied')),
-
-                TextColumn::make('status')
-                    ->label(__('vendra-console::attributes.status'))
-                    ->badge()
-                    ->state(fn (Store $record): string => $record->status()->value)
-                    ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.store_status_{$state}")),
-
-                CreatedAtColumn::make()
-                    ->sortable(),
-
-                UpdatedAtColumn::make(),
+                TrashedFilter::make(),
             ])
-            ->description(__('vendra-console::tables.description.stores'))
-            ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.stores'))
-            ->emptyStateDescription(__('vendra-console::tables.empty_state.description.stores'))
-            ->emptyStateIcon(Heroicon::OutlinedGlobeAlt)
-            ->filters(
-                [
-                    IsActiveFilter::make(),
-
-                    SelectFilter::make('reseller_id')
-                        ->label(__('vendra-console::navigation.reseller'))
-                        ->options(fn (): array => self::resellerNames()->all()),
-
-                    SelectFilter::make('status')
-                        ->label(__('vendra-console::attributes.operational_status'))
-                        ->multiple()
-                        ->options(self::statusOptions())
-                        ->query(function (Builder $query, array $data): Builder {
-                            $statuses = [];
-
-                            foreach ((array) (Arr::get($data, 'values', [])) as $value) {
-                                if (is_string($value) && ($status = StoreStatus::tryFrom($value)) instanceof StoreStatus) {
-                                    $statuses[] = $status;
-                                }
-                            }
-
-                            if ($statuses === []) {
-                                return $query;
-                            }
-
-                            return $query->where(function (Builder $query) use ($statuses): void {
-                                foreach ($statuses as $status) {
-                                    $query->orWhere(fn (Builder $query): Builder => $query->withStatus($status));
-                                }
-                            });
-                        }),
-
-                    TrashedFilter::make(),
-                ],
-                layout: FiltersLayout::AboveContentCollapsible,
-            )
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
@@ -175,8 +86,7 @@ final class StoreTable
                     ])->dropdown(false),
                 ]),
             ])
-            ->recordUrl(fn (Store $record): string => StoreResource::getUrl('view', ['record' => $record]))
-            ->defaultSort(column: 'id', direction: 'desc');
+            ->recordUrl(fn (Store $record): string => StoreResource::getUrl('view', ['record' => $record]));
     }
 
     /**
@@ -190,22 +100,5 @@ final class StoreTable
         return once(fn (): Collection => Reseller::query()
             ->get(['id', 'name'])
             ->mapWithKeys(fn (Reseller $reseller): array => [$reseller->id => $reseller->name]));
-    }
-
-    private static function deployment(Store $store): ?StorefrontDeployment
-    {
-        $deployment = $store->storefrontDeployments->first();
-
-        return $deployment instanceof StorefrontDeployment ? $deployment : null;
-    }
-
-    /** @return array<string, string> */
-    private static function statusOptions(): array
-    {
-        return collect(StoreStatus::cases())
-            ->mapWithKeys(fn (StoreStatus $status): array => [
-                $status->value => __("vendra-console::attributes.store_status_{$status->value}"),
-            ])
-            ->all();
     }
 }
