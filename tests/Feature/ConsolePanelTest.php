@@ -156,7 +156,7 @@ it('globally searches console resources', function (): void {
         ])
         ->and($storeAction->getLabel())->toBe(__('vendra-console::attributes.admin_url'))
         ->and($storeAction->getUrl())->toBe(
-            'https://'.$store->slug.'.'.Config::string('vendra-tenant.central_host'),
+            'https://'.$store->slug.'.admin.'.Config::string('vendra-tenant.central_host'),
         )
         ->and($storeAction->shouldOpenUrlInNewTab())->toBeTrue();
 });

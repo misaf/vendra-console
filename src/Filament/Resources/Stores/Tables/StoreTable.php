@@ -17,7 +17,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\OffboardStoreTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReactivateStoreTableAction;
@@ -79,8 +78,8 @@ final class StoreTable
                 TextColumn::make('admin_url')
                     ->label(__('vendra-console::attributes.admin_url'))
                     ->icon(Heroicon::OutlinedBuildingOffice2)
-                    ->state(fn (Store $record): string => 'https://'.$record->slug.'.'.Config::string('vendra-tenant.central_host'))
-                    ->url(fn (Store $record): string => 'https://'.$record->slug.'.'.Config::string('vendra-tenant.central_host'))
+                    ->state(fn (Store $record): string => $record->adminUrl())
+                    ->url(fn (Store $record): string => $record->adminUrl())
                     ->openUrlInNewTab()
                     ->copyable()
                     ->copyMessage(__('vendra-console::messages.url_copied')),
@@ -90,9 +89,7 @@ final class StoreTable
                     ->icon(Heroicon::OutlinedShoppingBag)
                     ->state(fn (Store $record): ?string => self::deployment($record)?->domain)
                     ->placeholder('—')
-                    ->url(fn (Store $record): ?string => self::deployment($record)?->domain === null
-                        ? null
-                        : 'https://'.self::deployment($record)?->domain)
+                    ->url(fn (Store $record): ?string => self::deployment($record)?->url())
                     ->openUrlInNewTab()
                     ->copyable()
                     ->copyMessage(__('vendra-console::messages.url_copied')),

@@ -31,15 +31,14 @@ final class ConsoleOverview extends StatsOverviewWidget
             + Store::query()->withStatus(StoreStatus::Provisioning)->count();
         $needsAttention = $failedStores + $provisioningStores;
 
-        $failedDeployments = StorefrontDeployment::query()
-            ->where('status', StorefrontDeploymentStatus::Failed)
-            ->count();
-        $readyDeployments = StorefrontDeployment::query()
-            ->where('status', StorefrontDeploymentStatus::Ready)
-            ->count();
-        $processingDeployments = StorefrontDeployment::query()
-            ->where('status', StorefrontDeploymentStatus::Processing)
-            ->count();
+        $deploymentCounts = StorefrontDeployment::query()
+            ->selectRaw('status, count(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $failedDeployments = (int) $deploymentCounts->get(StorefrontDeploymentStatus::Failed->value, 0);
+        $readyDeployments = (int) $deploymentCounts->get(StorefrontDeploymentStatus::Ready->value, 0);
+        $processingDeployments = (int) $deploymentCounts->get(StorefrontDeploymentStatus::Processing->value, 0);
 
         $expiringSoon = Subscription::query()->expiringWithin(7)->count();
         $activeSubscriptions = Subscription::query()->active()->count();
