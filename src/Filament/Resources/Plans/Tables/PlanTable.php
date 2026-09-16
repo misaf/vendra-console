@@ -26,6 +26,7 @@ use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
 
 final class PlanTable
 {
@@ -81,15 +82,7 @@ final class PlanTable
             ->emptyStateIcon(Heroicon::OutlinedRectangleStack)
             ->filters(
                 [
-                    TernaryFilter::make('active')
-                        ->label(__('vendra-console::attributes.active'))
-                        ->trueLabel(__('vendra-console::attributes.active'))
-                        ->falseLabel(__('vendra-console::attributes.inactive'))
-                        ->queries(
-                            true: fn (Builder $query): Builder => $query->where('active', true),
-                            false: fn (Builder $query): Builder => $query->where('active', false),
-                            blank: fn (Builder $query): Builder => $query,
-                        ),
+                    IsActiveFilter::make(),
 
                     TernaryFilter::make('is_default')
                         ->label(__('vendra-console::attributes.is_default'))

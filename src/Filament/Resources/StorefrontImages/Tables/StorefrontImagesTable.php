@@ -10,14 +10,13 @@ use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraStore\Actions\DeleteStorefrontImageAction;
 use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
 use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
+use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
 
 final class StorefrontImagesTable
 {
@@ -62,15 +61,7 @@ final class StorefrontImagesTable
             ->emptyStateDescription(__('vendra-console::tables.empty_state.description.storefront_images'))
             ->emptyStateIcon(Heroicon::OutlinedCube)
             ->filters([
-                TernaryFilter::make('active')
-                    ->label(__('vendra-console::attributes.active'))
-                    ->trueLabel(__('vendra-console::attributes.active'))
-                    ->falseLabel(__('vendra-console::attributes.inactive'))
-                    ->queries(
-                        true: fn (Builder $query): Builder => $query->where('active', true),
-                        false: fn (Builder $query): Builder => $query->where('active', false),
-                        blank: fn (Builder $query): Builder => $query,
-                    ),
+                IsActiveFilter::make(),
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->recordActions([
                 ActionGroup::make([

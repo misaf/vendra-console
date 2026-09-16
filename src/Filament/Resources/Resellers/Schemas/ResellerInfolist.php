@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Schemas;
 
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -12,6 +11,7 @@ use Filament\Schemas\Schema;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Filament\Infolists\Components\DescriptionEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\IsActiveEntry;
 use Misaf\VendraSupport\Filament\Infolists\Components\NameEntry;
 use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
 
@@ -31,9 +31,7 @@ final class ResellerInfolist
                             ->label(__('vendra-console::attributes.email'))
                             ->placeholder('—')
                             ->copyable(),
-                        IconEntry::make('active')
-                            ->label(__('vendra-console::attributes.active'))
-                            ->boolean(),
+                        IsActiveEntry::make(),
                         TextEntry::make('stores_count')
                             ->label(__('vendra-console::attributes.stores_count')),
                     ]),
