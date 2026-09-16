@@ -12,7 +12,7 @@ use RuntimeException;
 final class ConsoleUserSeeder extends Seeder
 {
     /**
-     * @throws RuntimeException When `console:user` fails, e.g. the default email belongs to an existing user.
+     * @throws RuntimeException
      */
     public function run(): void
     {

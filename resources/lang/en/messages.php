@@ -46,7 +46,6 @@ return [
     'operational_action_failed' => 'Operational action failed',
     'runtime_connected' => 'Connected · API :api · :version',
     'runtime_engine_mismatch' => 'Configured as :configured, but :reported answered',
-    'runtime_not_configured' => 'No runtime endpoint is configured',
     'runtime_unavailable' => 'Runtime unavailable',
     'runtime_unavailable_message' => 'Runtime unavailable: :message',
     'storefront_reconciled' => 'Storefront reconciled',

@@ -46,7 +46,6 @@ return [
     'operational_action_failed' => 'Betriebsaktion fehlgeschlagen',
     'runtime_connected' => 'Verbunden · API :api · :version',
     'runtime_engine_mismatch' => 'Als :configured konfiguriert, aber :reported antwortete',
-    'runtime_not_configured' => 'Kein Laufzeit-Endpunkt ist konfiguriert',
     'runtime_unavailable' => 'Laufzeit nicht verfügbar',
     'runtime_unavailable_message' => 'Laufzeit nicht verfügbar: :message',
     'storefront_reconciled' => 'Storefront abgeglichen',

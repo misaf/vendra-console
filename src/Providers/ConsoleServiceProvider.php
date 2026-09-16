@@ -6,7 +6,6 @@ namespace Misaf\VendraConsole\Providers;
 
 use Composer\InstalledVersions;
 use Illuminate\Foundation\Console\AboutCommand;
-use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
 use Misaf\VendraConsole\Console\Commands\ConsoleUserCommand;
 use Misaf\VendraUser\Support\PanelAccessRegistry;
@@ -40,12 +39,5 @@ final class ConsoleServiceProvider extends PackageServiceProvider
         ]);
 
         $this->app->make(PanelAccessRegistry::class)->register(new ConsolePanelAccessResolver);
-
-        $this->useConsoleUserProvider();
-    }
-
-    private function useConsoleUserProvider(): void
-    {
-        Config::set('auth.guards.console.provider', 'console');
     }
 }

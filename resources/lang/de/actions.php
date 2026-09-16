@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 return [
     'assign_reseller' => 'Konto zuweisen',
-    'create_store' => 'Store erstellen',
-    'view_stores' => 'Stores anzeigen',
-    'get_help' => 'Hilfe erhalten',
     'change_plan' => 'Tarif ändern',
     'create_user_account' => 'Benutzerkonto erstellen',
     'change_user_password' => 'Benutzer-Passwort ändern',

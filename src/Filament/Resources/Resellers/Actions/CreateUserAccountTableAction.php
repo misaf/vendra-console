@@ -30,7 +30,7 @@ final class CreateUserAccountTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.create_user_account'))->icon(Heroicon::OutlinedUserPlus)
-            ->visible(fn (Reseller $record): bool => self::latestUser($record) === null)
+            ->visible(fn (Reseller $record): bool => $record->latestUser() === null)
             ->slideOver()
             ->schema([
                 TextInput::make('username')->label(__('vendra-console::attributes.username'))->minLength(3)->maxLength(12)

@@ -353,7 +353,7 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
         ->assertWizardStepExists(3)
         ->assertWizardStepExists(4)
         ->assertFormFieldExists('create_storefront')
-        ->assertSee(__('vendra-console::attributes.storefront_map_query'))
+        ->assertSee(__('vendra-store::attributes.storefront_map_query'))
         // The billing reseller is optional; leaving it empty makes a
         // platform-owned store, so it must not appear among the errors.
         ->assertFormFieldExists('reseller_id')

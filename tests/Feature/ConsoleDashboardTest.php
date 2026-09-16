@@ -155,12 +155,19 @@ describe('console dashboard subscription health', function (): void {
         Subscription::factory()->forSubscriber($resellerB)->for(Plan::factory()->create())
             ->create(['ends_at' => now()->addDays(5)]);
 
+        $resellerC = Reseller::factory()->active()->create();
+        Subscription::factory()->expired()->forSubscriber($resellerC)->for(Plan::factory()->create())->create();
+
         actAsConsoleUser();
 
         livewire(ConsoleOverview::class)
             ->assertOk()
-            ->assertSee(__('vendra-console::attributes.active_subscriptions'))
-            ->assertSee(__('vendra-console::attributes.expiring_soon'));
+            ->assertSeeInOrder([
+                __('vendra-console::attributes.active_subscriptions'),
+                '2',
+                __('vendra-console::attributes.expiring_soon'),
+                '1',
+            ]);
     });
 });
 

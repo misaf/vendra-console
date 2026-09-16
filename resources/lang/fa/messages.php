@@ -46,7 +46,6 @@ return [
     'operational_action_failed' => 'عملیات ناموفق بود',
     'runtime_connected' => 'متصل · API :api · :version',
     'runtime_engine_mismatch' => 'پیکربندی :configured است اما :reported پاسخ داد',
-    'runtime_not_configured' => 'نشانی محیط اجرا پیکربندی نشده است',
     'runtime_unavailable' => 'محیط اجرا در دسترس نیست',
     'runtime_unavailable_message' => 'محیط اجرا در دسترس نیست: :message',
     'storefront_reconciled' => 'ویترین همگام‌سازی شد',

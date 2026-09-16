@@ -28,11 +28,11 @@ final class CancelSubscriptionTableAction extends Action
         $this
             ->label(__('vendra-console::actions.cancel_subscription'))->icon(Heroicon::OutlinedXCircle)
             ->color('danger')->requiresConfirmation()
-            ->visible(fn (Reseller $record): bool => in_array(self::latestSubscription($record)?->status, [
+            ->visible(fn (Reseller $record): bool => in_array($record->latestSubscription()?->status, [
                 SubscriptionStatus::PendingPayment, SubscriptionStatus::Active, SubscriptionStatus::PastDue,
             ], true))
             ->action(function (Reseller $record): void {
-                $subscription = self::latestSubscription($record);
+                $subscription = $record->latestSubscription();
                 if ($subscription instanceof Subscription) {
                     resolve(CancelSubscriptionAction::class)->execute($subscription);
                     self::notifySuccess(__('vendra-console::messages.subscription_cancelled'));

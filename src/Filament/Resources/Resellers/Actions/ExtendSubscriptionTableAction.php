@@ -31,12 +31,12 @@ final class ExtendSubscriptionTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.extend_subscription'))->icon(Heroicon::OutlinedCalendarDays)
-            ->visible(fn (Reseller $record): bool => self::latestSubscription($record)?->status === SubscriptionStatus::Active
-                && self::latestSubscription($record)?->ends_at !== null)
+            ->visible(fn (Reseller $record): bool => $record->latestSubscription()?->status === SubscriptionStatus::Active
+                && $record->latestSubscription()?->ends_at !== null)
             ->schema([DateTimePicker::make('ends_at')->label(__('vendra-console::attributes.ends_at'))
-                ->after(fn (Reseller $record): ?Carbon => self::latestSubscription($record)?->ends_at)->required()])
+                ->after(fn (Reseller $record): ?Carbon => $record->latestSubscription()?->ends_at)->required()])
             ->action(function (Reseller $record, array $data): void {
-                $subscription = self::latestSubscription($record);
+                $subscription = $record->latestSubscription();
                 if ($subscription instanceof Subscription) {
                     resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse((string) Arr::get($data, 'ends_at')));
                     self::notifySuccess(__('vendra-console::messages.subscription_extended'));

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 return [
     'assign_reseller' => 'Assign reseller',
-    'create_store' => 'Create store',
-    'view_stores' => 'View stores',
-    'get_help' => 'Get help',
     'change_plan' => 'Change plan',
     'create_user_account' => 'Create user account',
     'change_user_password' => 'Change user password',

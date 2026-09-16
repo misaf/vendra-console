@@ -7,7 +7,6 @@ namespace Misaf\VendraConsole\Filament\Widgets;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
@@ -42,12 +41,8 @@ final class ConsoleOverview extends StatsOverviewWidget
             ->where('status', StorefrontDeploymentStatus::Processing)
             ->count();
 
-        $expiringSoon = Reseller::query()
-            ->whereHas('subscriptions', fn (Builder $query): Builder => $query->expiringWithin(7))
-            ->count();
-        $activeSubscriptions = Reseller::query()
-            ->whereHas('subscriptions', fn (Builder $query): Builder => $query->active())
-            ->count();
+        $expiringSoon = Subscription::query()->expiringWithin(7)->count();
+        $activeSubscriptions = Subscription::query()->active()->count();
 
         return [
             Stat::make(__('vendra-console::attributes.stores_needing_attention'), $needsAttention)

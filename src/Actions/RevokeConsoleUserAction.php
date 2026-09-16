@@ -12,8 +12,6 @@ use Misaf\VendraUser\Models\User;
 final readonly class RevokeConsoleUserAction
 {
     /**
-     * @return bool Whether a grant was removed; false when the user held none.
-     *
      * @throws LastConsoleUserException
      */
     public function execute(User $user): bool

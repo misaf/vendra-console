@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 return [
     'assign_reseller' => 'تخصیص حساب',
-    'create_store' => 'ایجاد ملک',
-    'view_stores' => 'مشاهده املاک',
-    'get_help' => 'دریافت راهنمایی',
     'change_plan' => 'تغییر طرح',
     'create_user_account' => 'ایجاد حساب کاربر',
     'change_user_password' => 'تغییر رمز عبور کاربر',

@@ -27,9 +27,9 @@ final class EnableUserAccountTableAction extends Action
         $this
             ->label(__('vendra-console::actions.enable_user_account'))
             ->icon(Heroicon::OutlinedCheckCircle)
-            ->visible(fn (Reseller $record): bool => self::currentUser($record) === null && self::latestUser($record) instanceof User)
+            ->visible(fn (Reseller $record): bool => $record->user() === null && $record->latestUser() instanceof User)
             ->action(function (Reseller $record): void {
-                $user = self::latestUser($record);
+                $user = $record->latestUser();
                 if ($user instanceof User) {
                     resolve(SetResellerUserAccountEnabledAction::class)->execute($record, $user, true);
                     self::notifySuccess(__('vendra-console::messages.user_account_enabled'));
