@@ -20,7 +20,7 @@ final class StorefrontImageResource extends Resource
 {
     protected static ?string $model = StorefrontImage::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquare3Stack3d;
 
     protected static ?string $recordTitleAttribute = 'image';
 

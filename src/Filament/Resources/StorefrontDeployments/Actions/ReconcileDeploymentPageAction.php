@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions;
 use Filament\Actions\Action;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Concerns\ReconcilesDeployment;
 
-final class ReconcileDeploymentTableAction extends Action
+final class ReconcileDeploymentPageAction extends Action
 {
     use ReconcilesDeployment;
 }

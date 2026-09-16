@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 use Filament\Actions\Action;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\AssignsReseller;
 
-final class AssignResellerTableAction extends Action
+final class AssignResellerPageAction extends Action
 {
     use AssignsReseller;
 }

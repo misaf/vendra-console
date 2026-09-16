@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions;
 use Filament\Actions\Action;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Concerns\RestartsDeployment;
 
-final class RestartDeploymentTableAction extends Action
+final class RestartDeploymentPageAction extends Action
 {
     use RestartsDeployment;
 }
