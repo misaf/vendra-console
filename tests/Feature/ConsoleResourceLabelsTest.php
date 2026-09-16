@@ -116,7 +116,7 @@ it('translates every enum-derived console label', function (string $locale): voi
         }
     }
 
-    expect($missing)->toBe([]);
+    expect($missing)->toBeEmpty();
 })->with(['en', 'fa', 'de']);
 
 it('carries every English package string into each translation', function (string $package, string $locale): void {
@@ -135,5 +135,5 @@ it('carries every English package string into each translation', function (strin
         }
     }
 
-    expect($missing)->toBe([]);
+    expect($missing)->toBeEmpty();
 })->with(['vendra-console', 'vendra-reseller', 'vendra-store'])->with(['fa', 'de']);

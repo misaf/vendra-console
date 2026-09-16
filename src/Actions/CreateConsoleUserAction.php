@@ -45,9 +45,7 @@ final readonly class CreateConsoleUserAction
             } catch (UniqueConstraintViolationException $exception) {
                 $usernameWasTaken = DB::table('users')->where('username', $username)->exists();
 
-                if (! $usernameWasTaken || $attempt >= self::MAX_USERNAME_ATTEMPTS) {
-                    throw $exception;
-                }
+                throw_if(! $usernameWasTaken || $attempt >= self::MAX_USERNAME_ATTEMPTS, $exception);
             }
         }
     }
