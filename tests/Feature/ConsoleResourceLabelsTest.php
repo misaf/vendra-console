@@ -75,8 +75,8 @@ it('translates store and storefront statuses in the store list', function (): vo
 
     livewire(ListStores::class)
         ->loadTable()
-        ->assertTableColumnFormattedStateSet('status', __("vendra-store::attributes.store_status_{$storeStatus}"), $store)
-        ->assertTableColumnFormattedStateSet('storefront_status', __('vendra-store::attributes.deployment_status_failed'), $store);
+        ->assertTableColumnFormattedStateSet('status', __("vendra-console::attributes.store_status_{$storeStatus}"), $store)
+        ->assertTableColumnFormattedStateSet('storefront_status', __('vendra-console::attributes.deployment_status_failed'), $store);
 });
 
 it('translates plan period units in the list and the form', function (): void {
@@ -101,6 +101,7 @@ it('translates every enum-derived console label', function (string $locale): voi
         'deployment_status_' => StorefrontDeploymentStatus::cases(),
         'desired_state_' => StorefrontDesiredState::cases(),
         'runtime_state_' => StorefrontRuntimeState::cases(),
+        'store_status_' => StoreStatus::cases(),
         'status_' => SubscriptionStatus::cases(),
         'period_' => PeriodUnit::cases(),
     ];
@@ -111,14 +112,6 @@ it('translates every enum-derived console label', function (string $locale): voi
         foreach ($cases as $case) {
             if (! Lang::has("vendra-console::attributes.{$prefix}{$case->value}", $locale, false)) {
                 $missing[] = "{$prefix}{$case->value}";
-            }
-        }
-    }
-
-    foreach (['store_status_' => StoreStatus::cases(), 'deployment_status_' => StorefrontDeploymentStatus::cases()] as $prefix => $cases) {
-        foreach ($cases as $case) {
-            if (! Lang::has("vendra-store::attributes.{$prefix}{$case->value}", $locale, false)) {
-                $missing[] = "vendra-store::{$prefix}{$case->value}";
             }
         }
     }

@@ -12,6 +12,7 @@ return [
     'user_password_updated' => 'User password updated.',
     'user_account_created' => 'User account created.',
     'user_account_required' => 'Create the reseller’s first store to create its user account.',
+    'url_copied' => 'URL copied',
     'account_disabled' => 'Account disabled',
     'account_enabled' => 'Account enabled',
     'administrator_added' => 'Administrator added',

@@ -12,6 +12,7 @@ return [
     'user_password_updated' => 'Benutzer-Passwort aktualisiert.',
     'user_account_created' => 'Benutzerkonto erstellt.',
     'user_account_required' => 'Erstellen Sie zuerst den ersten Store des Kontos, um das Benutzerkonto anzulegen.',
+    'url_copied' => 'URL kopiert',
     'account_disabled' => 'Konto deaktiviert',
     'account_enabled' => 'Konto aktiviert',
     'administrator_added' => 'Administrator hinzugefügt',

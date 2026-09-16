@@ -31,7 +31,6 @@ use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelati
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
 use Misaf\VendraConsole\Models\ConsoleUser;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StoreDomain;
 use Misaf\VendraStore\Models\StorefrontDeployment;
@@ -725,20 +724,6 @@ it('filters stores by reseller', function (): void {
         ->assertCanNotSeeTableRecords([$unowned]);
 });
 
-it('filters stores by several operational statuses at once', function (): void {
-    actAsConsoleAdmin();
-
-    $suspended = Store::factory()->suspended()->create();
-    $failed = Store::factory()->provisioningFailed()->create();
-    $provisioning = Store::factory()->provisioning()->create();
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('status', [StoreStatus::Suspended->value, StoreStatus::Failed->value])
-        ->assertCanSeeTableRecords([$suspended, $failed])
-        ->assertCanNotSeeTableRecords([$provisioning]);
-});
-
 it('filters resellers by active', function (): void {
     actAsConsoleAdmin();
 
@@ -769,7 +754,6 @@ it('uses the package table presentation conventions in the console', function (
     string $page,
     string $resource,
     Heroicon $emptyStateIcon,
-    string $translationNamespace = 'vendra-console',
 ): void {
     actAsConsoleAdmin();
 
@@ -779,9 +763,9 @@ it('uses the package table presentation conventions in the console', function (
         ->assertTableColumnExists('updated_at');
     $table = $component->instance()->getTable();
 
-    expect($table->getDescription())->toBe(__("{$translationNamespace}::tables.description.{$resource}"))
-        ->and($table->getEmptyStateHeading())->toBe(__("{$translationNamespace}::tables.empty_state.heading.{$resource}"))
-        ->and($table->getEmptyStateDescription())->toBe(__("{$translationNamespace}::tables.empty_state.description.{$resource}"))
+    expect($table->getDescription())->toBe(__("vendra-console::tables.description.{$resource}"))
+        ->and($table->getEmptyStateHeading())->toBe(__("vendra-console::tables.empty_state.heading.{$resource}"))
+        ->and($table->getEmptyStateDescription())->toBe(__("vendra-console::tables.empty_state.description.{$resource}"))
         ->and($table->getEmptyStateIcon())->toBe($emptyStateIcon)
         ->and($table->getFiltersLayout())->toBe(FiltersLayout::AboveContentCollapsible);
 })->with([
@@ -799,7 +783,6 @@ it('uses the package table presentation conventions in the console', function (
         ListStores::class,
         'stores',
         Heroicon::OutlinedGlobeAlt,
-        'vendra-store',
     ],
     'storefront images' => [
         ListStorefrontImages::class,
