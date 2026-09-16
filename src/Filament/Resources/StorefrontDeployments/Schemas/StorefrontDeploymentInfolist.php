@@ -14,6 +14,7 @@ use Misaf\VendraStore\Enums\StorefrontDesiredState;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontObservation;
 use Misaf\VendraStore\Support\StorefrontReference;
+use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
 use Throwable;
 
 final class StorefrontDeploymentInfolist
@@ -36,7 +37,7 @@ final class StorefrontDeploymentInfolist
                                     ->label(__('vendra-console::attributes.desired_state'))
                                     ->badge()
                                     ->formatStateUsing(fn (StorefrontDesiredState $state): string => __("vendra-console::attributes.desired_state_{$state->value}")),
-                                TextEntry::make('slug')
+                                SlugEntry::make()
                                     ->label(__('vendra-console::attributes.storefront_slug'))
                                     ->copyable(),
                                 TextEntry::make('domain')

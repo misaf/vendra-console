@@ -63,3 +63,4 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Filament
 
 - Resources with a cluster live in `src/Filament/Clusters/Resources/`; resources without one live in `src/Filament/Resources/`.
+- Every console password form (reseller user accounts, store administrators, reseller creation) uses `Filament\Forms\Components\NewPasswordInput` and `PasswordConfirmationInput`: revealable per panel, required, confirmed, and validated with `Password::default()`. Add per-form extras such as `visibleOn()` or a `GeneratePasswordAction` hint at the call site.

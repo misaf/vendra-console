@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Actions;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\Rules\Password;
 use InvalidArgumentException;
+use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
+use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
@@ -32,10 +32,8 @@ final class ChangeUserPasswordTableAction extends Action
             ->disabled(fn (Reseller $record): bool => $record->user() === null)
             ->tooltip(fn (Reseller $record): ?string => $record->user() === null ? __('vendra-console::messages.user_account_required') : null)
             ->schema([
-                TextInput::make('password')->label(__('vendra-console::attributes.new_password'))->password()
-                    ->revealable(filament()->arePasswordsRevealable())->required()->confirmed()->rule(Password::default()),
-                TextInput::make('password_confirmation')->label(__('vendra-console::attributes.confirm_password'))->password()
-                    ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
+                NewPasswordInput::make(),
+                PasswordConfirmationInput::make(),
             ])
             ->action(function (Reseller $record, array $data): void {
                 resolve(UpdateUserPasswordAction::class)->execute(

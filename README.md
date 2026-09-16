@@ -83,7 +83,9 @@ page manages store administrators without permitting the final enabled
 administrator to be removed, demoted, or disabled. Reseller edit pages manage
 user credentials/account replacement and subscription change, renewal,
 extension, cancellation, and reactivation. Each control invokes the owning
-domain package; no meaningful transition is an Eloquent column toggle.
+domain package; no meaningful transition is an Eloquent column toggle. Every
+password form uses the shared `NewPasswordInput` and
+`PasswordConfirmationInput` fields.
 
 ### Assigning a store to a reseller
 

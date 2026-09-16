@@ -22,8 +22,8 @@ use Misaf\VendraSubscription\Actions\DeletePlanAction;
 use Misaf\VendraSubscription\Actions\UpdatePlanAction;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
-use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 
@@ -63,7 +63,7 @@ final class PlanTable
                         ? __('vendra-console::attributes.free')
                         : $record->price.' '.($record->currency_code ?? '')),
 
-                ActiveToggleColumn::make()
+                IsActiveToggleColumn::make()
                     ->updateStateUsing(function (Plan $record, bool $state, UpdatePlanAction $updatePlan): bool {
                         $updatePlan->execute($record, ['active' => $state]);
 

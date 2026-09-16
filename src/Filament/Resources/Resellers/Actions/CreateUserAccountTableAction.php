@@ -9,7 +9,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
+use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
+use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Actions\CreateResellerUserAction;
 use Misaf\VendraReseller\Models\Reseller;
@@ -38,10 +39,8 @@ final class CreateUserAccountTableAction extends Action
                 TextInput::make('email')->label(__('vendra-console::attributes.email'))->email()->maxLength(255)
                     ->default(fn (Reseller $record): ?string => $record->email)->required()
                     ->rule(Rule::unique(User::class, 'email')->withoutTrashed()),
-                TextInput::make('password')->label(__('vendra-console::attributes.new_password'))->password()
-                    ->revealable(filament()->arePasswordsRevealable())->required()->confirmed()->rule(Password::default()),
-                TextInput::make('password_confirmation')->label(__('vendra-console::attributes.confirm_password'))->password()
-                    ->revealable(filament()->arePasswordsRevealable())->required()->dehydrated(false),
+                NewPasswordInput::make(),
+                PasswordConfirmationInput::make(),
             ])
             ->action(function (Reseller $record, array $data): void {
                 resolve(CreateResellerUserAction::class)->execute(

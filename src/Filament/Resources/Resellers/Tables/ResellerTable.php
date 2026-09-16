@@ -33,8 +33,8 @@ use Misaf\VendraReseller\Actions\SetResellerActiveAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 
@@ -56,7 +56,7 @@ final class ResellerTable
                     ->label(__('vendra-console::attributes.stores_count'))
                     ->alignCenter(),
 
-                ActiveToggleColumn::make()
+                IsActiveToggleColumn::make()
                     ->disabled(fn (Reseller $record): bool => $record->trashed())
                     ->updateStateUsing(fn (Reseller $record, bool $state, SetResellerActiveAction $setActive): bool => $setActive->execute($record, $state)->active),
 

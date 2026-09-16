@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraStore\Actions\DeleteStorefrontImageAction;
 use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
 use Misaf\VendraStore\Models\StorefrontImage;
-use Misaf\VendraSupport\Filament\Tables\Columns\ActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 
 final class StorefrontImagesTable
@@ -41,7 +41,7 @@ final class StorefrontImagesTable
                     ->placeholder('—')
                     ->limit(60),
 
-                ActiveToggleColumn::make()
+                IsActiveToggleColumn::make()
                     ->updateStateUsing(function (StorefrontImage $record, bool $state, UpdateStorefrontImageAction $updateImage): bool {
                         $updateImage->execute($record, ['active' => $state]);
 

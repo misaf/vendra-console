@@ -11,6 +11,9 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSupport\Filament\Infolists\Components\DescriptionEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\NameEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
 
 final class ResellerInfolist
 {
@@ -20,9 +23,8 @@ final class ResellerInfolist
             Section::make(__('vendra-console::attributes.reseller_overview'))
                 ->schema([
                     Grid::make(4)->schema([
-                        TextEntry::make('name')
-                            ->label(__('vendra-console::attributes.name')),
-                        TextEntry::make('slug')
+                        NameEntry::make(),
+                        SlugEntry::make()
                             ->label(__('vendra-console::attributes.reseller_identifier'))
                             ->copyable(),
                         TextEntry::make('email')
@@ -35,10 +37,8 @@ final class ResellerInfolist
                         TextEntry::make('stores_count')
                             ->label(__('vendra-console::attributes.stores_count')),
                     ]),
-                    TextEntry::make('description')
-                        ->label(__('vendra-console::attributes.description'))
-                        ->placeholder('—')
-                        ->columnSpanFull(),
+                    DescriptionEntry::make()
+                        ->placeholder('—'),
                 ])
                 ->columnSpanFull(),
             Section::make(__('vendra-console::attributes.user_account'))

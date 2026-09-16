@@ -10,14 +10,15 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\Rules\Unique;
 use Livewire\Component as Livewire;
 use Misaf\LaravelEmailVerification\Rules\EmailValidation;
+use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
+use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
-use Misaf\VendraSupport\Filament\Forms\Components\ActiveToggle;
+use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
 use Misaf\VendraUser\Models\User;
 
 final class ResellerForm
@@ -60,25 +61,14 @@ final class ResellerForm
                         : [])
                     ->visibleOn('create'),
 
-                TextInput::make('password')
-                    ->label(__('vendra-console::attributes.new_password'))
-                    ->password()
-                    ->revealable(filament()->arePasswordsRevealable())
+                NewPasswordInput::make()
                     ->extraAttributes(['dir' => 'ltr'])
-                    ->required()
-                    ->confirmed()
-                    ->rule(Password::default())
                     ->hintAction(
                         GeneratePasswordAction::make()->confirmationField('password_confirmation'),
                     )
                     ->visibleOn('create'),
 
-                TextInput::make('password_confirmation')
-                    ->label(__('vendra-console::attributes.confirm_password'))
-                    ->password()
-                    ->revealable(filament()->arePasswordsRevealable())
-                    ->required()
-                    ->dehydrated(false)
+                PasswordConfirmationInput::make()
                     ->visibleOn('create'),
 
                 Select::make('plan_id')
@@ -98,7 +88,7 @@ final class ResellerForm
                     ->native(false)
                     ->visibleOn('create'),
 
-                ActiveToggle::make()
+                IsActiveToggle::make()
                     ->default(true)
                     ->visibleOn('create'),
 

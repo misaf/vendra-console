@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Plans\Schemas;
 
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
-use Misaf\VendraSupport\Filament\Forms\Components\ActiveToggle;
+use Misaf\VendraSupport\Filament\Forms\Components\DescriptionTextarea;
+use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
+use Misaf\VendraSupport\Filament\Forms\Components\IsDefaultToggle;
 
 final class PlanForm
 {
@@ -99,26 +98,15 @@ final class PlanForm
                     ->default(0)
                     ->required(),
 
-                Textarea::make('description')
-                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.description'))
-                    ->label(__('vendra-console::attributes.description'))
-                    ->columnSpanFull()
-                    ->live(onBlur: true)
+                DescriptionTextarea::make()
                     ->maxLength(1000),
 
-                ActiveToggle::make()
+                IsActiveToggle::make()
                     ->default(true),
 
-                Toggle::make('is_default')
-                    ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.is_default'))
-                    ->label(__('vendra-console::attributes.is_default'))
+                IsDefaultToggle::make()
                     ->helperText(__('vendra-console::attributes.is_default_hint'))
-                    ->columnSpanFull()
-                    ->default(false)
-                    ->onIcon(Heroicon::Bolt)
-                    ->visible(fn (Get $get): bool => (bool) $get('active'))
-                    ->live()
-                    ->required(),
+                    ->visible(fn (Get $get): bool => (bool) $get('active')),
             ])
             ->columns(2);
     }

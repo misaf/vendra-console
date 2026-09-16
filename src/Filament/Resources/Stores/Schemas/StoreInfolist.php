@@ -12,6 +12,9 @@ use Filament\Schemas\Schema;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
+use Misaf\VendraSupport\Filament\Infolists\Components\DescriptionEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\NameEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
 
 final class StoreInfolist
 {
@@ -21,8 +24,8 @@ final class StoreInfolist
             Section::make(__('vendra-console::attributes.store_identity'))
                 ->schema([
                     Grid::make(3)->schema([
-                        TextEntry::make('name')->label(__('vendra-console::attributes.name')),
-                        TextEntry::make('slug')->label(__('vendra-console::attributes.slug'))->copyable(),
+                        NameEntry::make(),
+                        SlugEntry::make()->label(__('vendra-console::attributes.slug'))->copyable(),
                         TextEntry::make('reseller_id')->label(__('vendra-console::navigation.reseller'))
                             ->formatStateUsing(fn (?int $state): string => $state === null
                                 ? __('vendra-console::attributes.platform_owned_store')
@@ -36,7 +39,7 @@ final class StoreInfolist
                             ->openUrlInNewTab()->copyable(),
                         IconEntry::make('active')->label(__('vendra-console::attributes.active'))->boolean(),
                     ]),
-                    TextEntry::make('description')->label(__('vendra-console::attributes.description'))->placeholder('—')->columnSpanFull(),
+                    DescriptionEntry::make()->placeholder('—'),
                 ])
                 ->columnSpanFull(),
             Section::make(__('vendra-console::attributes.storefront_configuration'))

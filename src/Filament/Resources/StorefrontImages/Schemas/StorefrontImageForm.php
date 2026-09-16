@@ -8,7 +8,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Livewire\Component as Livewire;
-use Misaf\VendraSupport\Filament\Forms\Components\ActiveToggle;
+use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
 
 final class StorefrontImageForm
 {
@@ -33,7 +33,7 @@ final class StorefrontImageForm
                     ->rows(2)
                     ->columnSpanFull(),
 
-                ActiveToggle::make()
+                IsActiveToggle::make()
                     ->default(true),
             ]);
     }
