@@ -22,12 +22,17 @@ final class ConsoleFactory extends Factory
     {
         return [
             'user_id' => UserFactory::new()->state(['tenant_id' => null]),
-            'active' => true,
+            'active' => fake()->boolean(80),
         ];
+    }
+
+    public function active(): static
+    {
+        return $this->state(fn (): array => ['active' => true]);
     }
 
     public function inactive(): static
     {
-        return $this->state(['active' => false]);
+        return $this->state(fn (): array => ['active' => false]);
     }
 }

@@ -43,7 +43,7 @@ function actAsOperationalConsoleUser(): User
 {
     $consoleUser = User::factory()->create(['tenant_id' => null]);
 
-    Console::factory()->for($consoleUser)->create();
+    Console::factory()->active()->for($consoleUser)->create();
 
     actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));

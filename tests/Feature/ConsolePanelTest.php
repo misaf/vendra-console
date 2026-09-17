@@ -61,7 +61,7 @@ function consoleAdmin(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    Console::factory()->for($admin)->create();
+    Console::factory()->active()->for($admin)->create();
 
     return $admin;
 }
@@ -78,7 +78,7 @@ function actAsConsoleAdmin(): User
 function consoleStorefrontFormData(): array
 {
     return [
-        'storefront_image_id' => StorefrontImage::factory()->create()->id,
+        'storefront_image_id' => StorefrontImage::factory()->active()->create()->id,
         'storefront_slug' => 'console-flowers',
         'storefront_name_en' => 'Console Flowers',
         'storefront_name_fa' => 'گل‌فروشی کنسول',
@@ -131,8 +131,8 @@ it('lets console users define storefront images', function (): void {
 it('globally searches console resources', function (): void {
     actAsConsoleAdmin();
 
-    $plan = Plan::factory()->create(['name' => 'Enterprise Search Plan']);
-    $reseller = Reseller::factory()
+    $plan = Plan::factory()->active()->create(['name' => 'Enterprise Search Plan']);
+    $reseller = Reseller::factory()->active()
         ->for(User::factory()->state([
             'tenant_id' => null,
             'username' => 'search_partner',
@@ -172,8 +172,8 @@ it('globally searches console resources', function (): void {
 it('uses a reseller overview as the record landing page', function (): void {
     actAsConsoleAdmin();
 
-    $plan = Plan::factory()->create(['name' => 'Growth']);
-    $reseller = Reseller::factory()->create();
+    $plan = Plan::factory()->active()->create(['name' => 'Growth']);
+    $reseller = Reseller::factory()->active()->create();
     $user = User::factory()->create([
         'tenant_id' => null,
         'username' => 'overview_owner',
@@ -273,7 +273,7 @@ it('honors a disabled state when creating a reseller', function (): void {
 
     livewire(CreateReseller::class)
         ->fillForm([
-            'plan_id' => Plan::factory()->create()->getKey(),
+            'plan_id' => Plan::factory()->active()->create()->getKey(),
             'username' => 'paused_owner',
             'email' => 'reseller@gmail.com',
             'password' => 'Secure123',
@@ -300,7 +300,7 @@ it('creates a reseller whose username and email are only used inside a store', f
 
     livewire(CreateReseller::class)
         ->fillForm([
-            'plan_id' => Plan::factory()->create()->getKey(),
+            'plan_id' => Plan::factory()->active()->create()->getKey(),
             'username' => 'shared_name',
             'email' => 'shared@gmail.com',
             'password' => 'Secure123',
@@ -319,7 +319,7 @@ it('rejects a reseller username another platform user already holds', function (
 
     livewire(CreateReseller::class)
         ->fillForm([
-            'plan_id' => Plan::factory()->create()->getKey(),
+            'plan_id' => Plan::factory()->active()->create()->getKey(),
             'username' => 'taken_name',
             'email' => 'fresh@gmail.com',
             'password' => 'Secure123',
@@ -332,7 +332,7 @@ it('rejects a reseller username another platform user already holds', function (
 it('prevents deleting a plan used by subscriptions from list and edit pages', function (): void {
     actAsConsoleAdmin();
 
-    $plan = Plan::factory()->create();
+    $plan = Plan::factory()->active()->create();
     Subscription::factory()->for($plan)->create();
 
     livewire(ListPlans::class)
@@ -345,7 +345,7 @@ it('prevents deleting a plan used by subscriptions from list and edit pages', fu
 it('allows deleting an unused plan from list and edit pages', function (): void {
     actAsConsoleAdmin();
 
-    $plan = Plan::factory()->create();
+    $plan = Plan::factory()->active()->create();
 
     livewire(ListPlans::class)
         ->assertActionVisible(TestAction::make('delete')->table($plan));
@@ -357,8 +357,8 @@ it('allows deleting an unused plan from list and edit pages', function (): void 
 it('creates a store for a reseller within its plan limit', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
 
     livewire(CreateStore::class)
         ->fillForm([
@@ -449,8 +449,8 @@ it('suggests storefront identity from the store domain', function (): void {
 
 it('requests a storefront when a console admin creates a store', function (): void {
     actAsConsoleAdmin();
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
 
     livewire(CreateStore::class)
         ->fillForm([
@@ -473,8 +473,8 @@ it('requests a storefront when a console admin creates a store', function (): vo
 it('blocks store creation once the reseller reaches its plan limit', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(1))->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->create();
     Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
     livewire(CreateStore::class)
@@ -493,8 +493,8 @@ it('blocks store creation once the reseller reaches its plan limit', function ()
 it('validates store domains during creation', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(3))->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(3))->create();
     $existingStore = Store::factory()->create();
     StoreDomain::factory()->for($existingStore)->create(['name' => 'taken.test', 'active' => true]);
 
@@ -562,8 +562,8 @@ it('uses a store overview as the console record landing page', function (): void
 it('edits store details without directly mutating operational identity fields', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    $otherReseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
+    $otherReseller = Reseller::factory()->active()->create();
     $store = Store::factory()->active()->create([
         'reseller_id' => $reseller->getKey(),
         'name' => 'Original store',
@@ -733,7 +733,7 @@ it('lets a console admin offboard then restore a store', function (): void {
 it('notifies instead of failing when restoring a store whose reseller was offboarded', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
     resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
 
@@ -802,8 +802,8 @@ it('filters resellers by active', function (): void {
 it('filters plans by period unit', function (): void {
     actAsConsoleAdmin();
 
-    $monthly = Plan::factory()->create(['period_unit' => PeriodUnit::Month]);
-    $yearly = Plan::factory()->create(['period_unit' => PeriodUnit::Year]);
+    $monthly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Month]);
+    $yearly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Year]);
 
     livewire(ListPlans::class)
         ->loadTable()
@@ -882,8 +882,8 @@ it('creates a store the platform owns directly, with no reseller', function (): 
 it('manages resellers and the stores that belong to them', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    $other = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
+    $other = Reseller::factory()->active()->create();
 
     $owned = Store::factory()->active()->create(['reseller_id' => $reseller->getKey()]);
     $foreign = Store::factory()->active()->create(['reseller_id' => $other->getKey()]);
@@ -905,7 +905,7 @@ it('manages resellers and the stores that belong to them', function (): void {
 
 it('opens the view page of an offboarded store and reseller', function (): void {
     actAsConsoleAdmin();
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
     resolve(OffboardResellerAction::class)->execute($reseller, 'Closed.');
 
@@ -916,7 +916,7 @@ it('opens the view page of an offboarded store and reseller', function (): void 
 it('names the offboarded reseller of an offboarded store', function (): void {
     actAsConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
     $resellerName = $reseller->displayName();
     resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');

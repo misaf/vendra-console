@@ -9,8 +9,8 @@ use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 it('deactivates the console while keeping the canonical user', function (): void {
-    $revokedConsole = Console::factory()->create();
-    Console::factory()->create();
+    $revokedConsole = Console::factory()->active()->create();
+    Console::factory()->active()->create();
 
     expect(resolve(RevokeConsoleUserAction::class)->execute($revokedConsole->user))->toBeTrue()
         ->and($revokedConsole->refresh()->active)->toBeFalse()
@@ -20,7 +20,7 @@ it('deactivates the console while keeping the canonical user', function (): void
 });
 
 it('refuses to revoke the last console user', function (): void {
-    $lastUser = Console::factory()->create()->user;
+    $lastUser = Console::factory()->active()->create()->user;
 
     expect(fn (): bool => resolve(RevokeConsoleUserAction::class)->execute($lastUser))
         ->toThrow(LastConsoleUserException::class, "[{$lastUser->email}] is the last console user.")
@@ -28,7 +28,7 @@ it('refuses to revoke the last console user', function (): void {
 });
 
 it('refuses to revoke the last active console user when others are inactive', function (): void {
-    $lastUser = Console::factory()->create()->user;
+    $lastUser = Console::factory()->active()->create()->user;
     Console::factory()->inactive()->create();
 
     expect(fn (): bool => resolve(RevokeConsoleUserAction::class)->execute($lastUser))
@@ -36,7 +36,7 @@ it('refuses to revoke the last active console user when others are inactive', fu
 });
 
 it('reports nothing revoked for a user without console access', function (): void {
-    Console::factory()->create();
+    Console::factory()->active()->create();
     $userWithoutAccess = User::factory()->create(['tenant_id' => null]);
 
     expect(resolve(RevokeConsoleUserAction::class)->execute($userWithoutAccess))->toBeFalse()
@@ -44,8 +44,8 @@ it('reports nothing revoked for a user without console access', function (): voi
 });
 
 it('does not count a deleted user as another console user', function (): void {
-    $lastUser = Console::factory()->create()->user;
-    Console::factory()->create()->user->delete();
+    $lastUser = Console::factory()->active()->create()->user;
+    Console::factory()->active()->create()->user->delete();
 
     expect(fn (): bool => resolve(RevokeConsoleUserAction::class)->execute($lastUser))
         ->toThrow(LastConsoleUserException::class);

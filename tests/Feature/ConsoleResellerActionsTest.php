@@ -23,7 +23,7 @@ function actingConsoleAdmin(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    Console::factory()->for($admin)->create();
+    Console::factory()->active()->for($admin)->create();
 
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
@@ -46,9 +46,9 @@ function consoleResellerUserFor(Reseller $reseller, array $attributes = []): Use
 it('changes a reseller plan through the table row action', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(2))->create();
-    $newPlan = Plan::factory()->maxUnits(5)->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
+    $newPlan = Plan::factory()->active()->maxUnits(5)->create();
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => $newPlan->getKey()]);
@@ -59,14 +59,14 @@ it('changes a reseller plan through the table row action', function (): void {
 it('blocks a plan change that cannot hold the current stores', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    $currentPlan = Plan::factory()->maxUnits(2)->create();
+    $reseller = Reseller::factory()->active()->create();
+    $currentPlan = Plan::factory()->active()->maxUnits(2)->create();
     Subscription::factory()->forSubscriber($reseller)->for($currentPlan)->create();
     createTestTenant(['reseller_id' => $reseller->getKey()]);
     createTestTenant(['reseller_id' => $reseller->getKey()]);
 
     livewire(ListResellers::class)
-        ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => Plan::factory()->maxUnits(1)->create()->getKey()]);
+        ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => Plan::factory()->active()->maxUnits(1)->create()->getKey()]);
 
     expect($reseller->activeSubscription()?->plan_id)->toBe($currentPlan->getKey());
 });
@@ -74,8 +74,8 @@ it('blocks a plan change that cannot hold the current stores', function (): void
 it('renews the subscription through the table row action', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory())->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active())->create();
 
     livewire(ListResellers::class)
         ->callAction(TestAction::make('renew')->table($reseller));
@@ -103,8 +103,8 @@ it('toggles a reseller active state from the table through the domain action', f
 it('offboards a reseller through the table row action with an audit reason', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory())->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active())->create();
     createTestTenant(['reseller_id' => $reseller->getKey()]);
 
     livewire(ListResellers::class)
@@ -122,8 +122,8 @@ it('offboards a reseller through the table row action with an audit reason', fun
 it('hides account and subscription actions on an offboarded reseller', function (string $action): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory())->create();
+    $reseller = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active())->create();
     resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
 
     livewire(ListResellers::class)
@@ -144,7 +144,7 @@ it('hides account and subscription actions on an offboarded reseller', function 
 it('changes a reseller user password through the table row action', function (): void {
     $admin = actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $user = consoleResellerUserFor($reseller);
     $originalRememberToken = $user->getRememberToken();
 
@@ -180,7 +180,7 @@ it('changes a reseller user password through the table row action', function ():
 it('requires confirmation when changing a reseller user password', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $user = consoleResellerUserFor($reseller);
     $originalPassword = $user->password;
 
@@ -197,7 +197,7 @@ it('requires confirmation when changing a reseller user password', function (): 
 it('rejects a reseller user email another active user already holds', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $user = consoleResellerUserFor($reseller);
     User::factory()->create(['tenant_id' => null, 'email' => 'taken@example.com']);
 
@@ -211,7 +211,7 @@ it('rejects a reseller user email another active user already holds', function (
 it('accepts a reseller user email that only a store user holds', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $user = consoleResellerUserFor($reseller);
     User::factory()->forTenant(createTestTenant())->create(['email' => 'store-user@example.com']);
 
@@ -225,7 +225,7 @@ it('accepts a reseller user email that only a store user holds', function (): vo
 it('validates a replacement reseller email as strictly as reseller creation', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $originalUser = consoleResellerUserFor($reseller);
 
     livewire(ListResellers::class)
@@ -243,7 +243,7 @@ it('validates a replacement reseller email as strictly as reseller creation', fu
 it('updates a reseller user email through the domain action', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $user = consoleResellerUserFor($reseller);
 
     livewire(ListResellers::class)
@@ -256,7 +256,7 @@ it('updates a reseller user email through the domain action', function (): void 
 it('replaces a reseller main account while preserving the old identity', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
+    $reseller = Reseller::factory()->active()->create();
     $originalUser = consoleResellerUserFor($reseller);
 
     livewire(ListResellers::class)
@@ -276,8 +276,8 @@ it('replaces a reseller main account while preserving the old identity', functio
 it('extends cancels and reactivates a reseller subscription through domain actions', function (): void {
     actingConsoleAdmin();
 
-    $reseller = Reseller::factory()->create();
-    $subscription = Subscription::factory()->forSubscriber($reseller)->for(Plan::factory())->create();
+    $reseller = Reseller::factory()->active()->create();
+    $subscription = Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active())->create();
     $extendedUntil = $subscription->ends_at?->copy()->addMonth();
 
     livewire(ListResellers::class)
@@ -302,7 +302,7 @@ it('extends cancels and reactivates a reseller subscription through domain actio
 
 it('renders the platform metrics widget', function (): void {
     actingConsoleAdmin();
-    Reseller::factory()->count(2)->create();
+    Reseller::factory()->active()->count(2)->create();
 
     livewire(PlatformMetrics::class)->assertOk();
 });

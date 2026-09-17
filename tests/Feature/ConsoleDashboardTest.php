@@ -47,7 +47,7 @@ function actAsConsoleUser(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    Console::factory()->for($admin)->create();
+    Console::factory()->active()->for($admin)->create();
 
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
@@ -101,11 +101,11 @@ describe('needs attention', function (): void {
 
     it('shows failed deployments, past-due subscriptions and subscriptions ending this week', function (): void {
         StorefrontDeployment::factory()->for(Store::factory()->active())->create(['status' => StorefrontDeploymentStatus::Failed]);
-        Subscription::factory()->forSubscriber(Reseller::factory()->create())->for(Plan::factory())->create([
+        Subscription::factory()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory()->active())->create([
             'status' => SubscriptionStatus::PastDue,
             'ends_at' => now()->subDay(),
         ]);
-        Subscription::factory()->forSubscriber(Reseller::factory()->create())->for(Plan::factory())->create([
+        Subscription::factory()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory()->active())->create([
             'ends_at' => now()->addDays(3),
             'expiry_reminder_sent_at' => now(),
         ]);
@@ -154,13 +154,13 @@ describe('needs attention', function (): void {
     });
 
     it('lists resellers with a past-due subscription through the linked filter', function (): void {
-        $pastDue = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($pastDue)->for(Plan::factory())->create([
+        $pastDue = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($pastDue)->for(Plan::factory()->active())->create([
             'status' => SubscriptionStatus::PastDue,
             'ends_at' => now()->subDay(),
         ]);
-        $current = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($current)->for(Plan::factory())->create();
+        $current = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($current)->for(Plan::factory()->active())->create();
 
         actAsConsoleUser();
 
@@ -178,8 +178,8 @@ describe('platform metrics', function (): void {
         Store::factory()->active()->suspended()->create();
         Reseller::factory()->active()->create();
         Reseller::factory()->create(['active' => false]);
-        Subscription::factory()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory())->create();
-        Subscription::factory()->expired()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory())->create();
+        Subscription::factory()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory()->active())->create();
+        Subscription::factory()->expired()->forSubscriber(Reseller::factory()->active()->create())->for(Plan::factory()->active())->create();
 
         actAsConsoleUser();
 

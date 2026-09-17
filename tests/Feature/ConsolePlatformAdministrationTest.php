@@ -52,7 +52,7 @@ function actAsPlatformUser(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
-    Console::factory()->for($admin)->create();
+    Console::factory()->active()->for($admin)->create();
 
     actingAs($admin, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
@@ -62,9 +62,9 @@ function actAsPlatformUser(): User
 
 describe('assigning stores to resellers', function (): void {
     it('moves a store to another reseller within its plan', function (): void {
-        $from = Reseller::factory()->create();
-        $to = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(2))->create();
+        $from = Reseller::factory()->active()->create();
+        $to = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->active()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
         actAsPlatformUser();
@@ -79,7 +79,7 @@ describe('assigning stores to resellers', function (): void {
     });
 
     it('takes a store back for the platform when no reseller is chosen', function (): void {
-        $reseller = Reseller::factory()->create();
+        $reseller = Reseller::factory()->active()->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
         actAsPlatformUser();
@@ -96,8 +96,8 @@ describe('assigning stores to resellers', function (): void {
      | same way creation does rather than writing the column past the check.
      */
     it('refuses a reseller whose plan is already full', function (): void {
-        $to = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(1))->create();
+        $to = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->active()->maxUnits(1))->create();
         Store::factory()->create(['reseller_id' => $to->getKey()]);
 
         $store = Store::factory()->create(['reseller_id' => null]);
@@ -114,8 +114,8 @@ describe('assigning stores to resellers', function (): void {
     });
 
     it('leaves a store with the reseller it already has without spending a slot', function (): void {
-        $reseller = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->maxUnits(1))->create();
+        $reseller = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
         actAsPlatformUser();
@@ -130,9 +130,9 @@ describe('assigning stores to resellers', function (): void {
     });
 
     it('reassigns a store from the edit page header action', function (): void {
-        $from = Reseller::factory()->create();
-        $to = Reseller::factory()->create();
-        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->maxUnits(2))->create();
+        $from = Reseller::factory()->active()->create();
+        $to = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($to)->for(Plan::factory()->active()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
         actAsPlatformUser();

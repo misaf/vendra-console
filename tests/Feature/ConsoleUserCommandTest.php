@@ -20,7 +20,7 @@ function printedConsolePassword(string $output): string
 
 function grantConsoleAccess(User $user): void
 {
-    Console::factory()->for($user)->create();
+    Console::factory()->active()->for($user)->create();
 }
 
 it('seeds a console user on a fresh install and prints its generated password', function (): void {
@@ -176,7 +176,7 @@ it('grants console access to an existing user once the prompt is confirmed', fun
 it('revokes console access from the user given by email', function (): void {
     $revokedUser = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
     grantConsoleAccess($revokedUser);
-    Console::factory()->create();
+    Console::factory()->active()->create();
 
     $this->artisan('console:user', ['--email' => 'OPS@vendra.test', '--revoke' => true])
         ->expectsOutputToContain('Console access revoked from [ops@vendra.test].')
@@ -197,7 +197,7 @@ it('refuses to revoke the last console user from the command', function (): void
 });
 
 it('requires an email to revoke console access', function (): void {
-    Console::factory()->count(2)->create();
+    Console::factory()->active()->count(2)->create();
 
     $this->artisan('console:user', ['--revoke' => true])
         ->expectsOutputToContain('The --revoke option requires --email.')

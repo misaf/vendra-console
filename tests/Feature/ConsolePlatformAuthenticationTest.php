@@ -25,7 +25,7 @@ function consolePlatformUser(array $attributes = []): User
         ...$attributes,
     ]);
 
-    Console::factory()->for($consoleUser)->create();
+    Console::factory()->active()->for($consoleUser)->create();
 
     return $consoleUser;
 }
