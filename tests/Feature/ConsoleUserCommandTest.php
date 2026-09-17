@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Misaf\VendraConsole\Database\Seeders\ConsoleUserSeeder;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 function printedConsolePassword(string $output): string
@@ -20,7 +20,7 @@ function printedConsolePassword(string $output): string
 
 function grantConsoleAccess(User $user): void
 {
-    ConsoleUser::factory()->for($user)->create();
+    Console::factory()->for($user)->create();
 }
 
 it('seeds a console user on a fresh install and prints its generated password', function (): void {
@@ -57,7 +57,7 @@ it('fails the seed when the default console email belongs to an existing user', 
 
     expect(fn (): int => Artisan::call('db:seed', ['--class' => ConsoleUserSeeder::class, '--force' => true, '--no-interaction' => true]))
         ->toThrow(RuntimeException::class, 'No console user was seeded.')
-        ->and(ConsoleUser::query()->count())->toBe(0);
+        ->and(Console::query()->count())->toBe(0);
 });
 
 it('creates a console user with a generated password and prints it', function (): void {
@@ -86,7 +86,7 @@ it('issues a new password to an existing console user without creating another',
         ->assertSuccessful();
 
     expect(User::query()->count())->toBe(1)
-        ->and(ConsoleUser::query()->count())->toBe(1)
+        ->and(Console::query()->count())->toBe(1)
         ->and(Hash::check('the-new-password', $consoleUser->refresh()->password))->toBeTrue();
 });
 
@@ -104,7 +104,7 @@ it('rejects an invalid email without creating a console user', function (): void
         ->assertFailed();
 
     expect(User::query()->count())->toBe(0)
-        ->and(ConsoleUser::query()->count())->toBe(0);
+        ->and(Console::query()->count())->toBe(0);
 });
 
 it('rejects a password that fails the password rules without creating a console user', function (): void {
@@ -113,7 +113,7 @@ it('rejects a password that fails the password rules without creating a console 
         ->assertFailed();
 
     expect(User::query()->count())->toBe(0)
-        ->and(ConsoleUser::query()->count())->toBe(0);
+        ->and(Console::query()->count())->toBe(0);
 });
 
 it('keeps an existing console user password when the given password fails the password rules', function (): void {
@@ -157,7 +157,7 @@ it('does not grant console access to an existing user when the prompt is decline
         ->expectsConfirmation('[reseller@vendra.test] is an existing user without console access. Grant console access and issue a new password?', 'no')
         ->assertFailed();
 
-    expect(ConsoleUser::query()->count())->toBe(0)
+    expect(Console::query()->count())->toBe(0)
         ->and(Hash::check('the-old-password', $user->refresh()->password))->toBeTrue();
 });
 
@@ -176,7 +176,7 @@ it('grants console access to an existing user once the prompt is confirmed', fun
 it('revokes console access from the user given by email', function (): void {
     $revokedUser = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
     grantConsoleAccess($revokedUser);
-    ConsoleUser::factory()->create();
+    Console::factory()->create();
 
     $this->artisan('console:user', ['--email' => 'OPS@vendra.test', '--revoke' => true])
         ->expectsOutputToContain('Console access revoked from [ops@vendra.test].')
@@ -193,17 +193,17 @@ it('refuses to revoke the last console user from the command', function (): void
         ->expectsOutputToContain('[ops@vendra.test] is the last console user.')
         ->assertFailed();
 
-    expect(ConsoleUser::query()->count())->toBe(1);
+    expect(Console::query()->count())->toBe(1);
 });
 
 it('requires an email to revoke console access', function (): void {
-    ConsoleUser::factory()->count(2)->create();
+    Console::factory()->count(2)->create();
 
     $this->artisan('console:user', ['--revoke' => true])
         ->expectsOutputToContain('The --revoke option requires --email.')
         ->assertFailed();
 
-    expect(ConsoleUser::query()->count())->toBe(2);
+    expect(Console::query()->count())->toBe(2);
 });
 
 it('asks before granting console access when the default email belongs to an existing user', function (): void {
@@ -219,7 +219,7 @@ it('asks before granting console access when the default email belongs to an exi
         ->expectsOutputToContain('No console access was granted.')
         ->assertFailed();
 
-    expect(ConsoleUser::query()->count())->toBe(0)
+    expect(Console::query()->count())->toBe(0)
         ->and(Hash::check('the-old-password', $user->refresh()->password))->toBeTrue();
 });
 

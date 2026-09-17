@@ -5,7 +5,6 @@ declare(strict_types=1);
 return [
     'assign_reseller' => 'Assign reseller',
     'change_plan' => 'Change plan',
-    'create_user_account' => 'Create user account',
     'change_user_password' => 'Change user password',
     'renew' => 'Renew',
     'create_storefront_action' => 'Create storefront',
@@ -16,9 +15,7 @@ return [
     'change_user_email' => 'Change user email',
     'demote_administrator' => 'Demote administrator',
     'disable_account' => 'Disable account',
-    'disable_user_account' => 'Disable user account',
     'enable_account' => 'Enable account',
-    'enable_user_account' => 'Enable user account',
     'extend_subscription' => 'Extend subscription',
     'offboard_store' => 'Offboard store',
     'promote_administrator' => 'Promote administrator',

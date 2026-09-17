@@ -6,30 +6,32 @@ namespace Misaf\VendraConsole\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Misaf\VendraConsole\Exceptions\LastConsoleUserException;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 final readonly class RevokeConsoleUserAction
 {
     /**
+     * Deactivates the user's console; the row stays so access can be granted again.
+     *
      * @throws LastConsoleUserException
      */
     public function execute(User $user): bool
     {
         return DB::transaction(function () use ($user): bool {
-            $grants = ConsoleUser::query()->lockForUpdate()->get();
+            $activeConsoles = Console::query()->active()->lockForUpdate()->get();
 
-            $grant = $grants->firstWhere('user_id', $user->getKey());
+            $console = $activeConsoles->firstWhere('user_id', $user->getKey());
 
-            if ($grant === null) {
+            if ($console === null) {
                 return false;
             }
 
-            if ($grants->count() === 1) {
+            if ($activeConsoles->count() === 1) {
                 throw LastConsoleUserException::forUser($user->email);
             }
 
-            $grant->delete();
+            $console->forceFill(['active' => false])->save();
 
             return true;
         });

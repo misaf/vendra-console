@@ -30,7 +30,8 @@ final class ChangePlanTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.change_plan'))
-            ->icon(Heroicon::OutlinedArrowsRightLeft)->slideOver()
+            ->icon(Heroicon::OutlinedArrowsRightLeft)
+            ->hidden(fn (Reseller $record): bool => $record->trashed())->slideOver()
             ->schema([Select::make('plan_id')->label(__('vendra-console::navigation.plan'))
                 ->options(fn (): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {

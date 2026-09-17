@@ -10,10 +10,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Subscription;
-use Misaf\VendraSupport\Filament\Infolists\Components\DescriptionEntry;
 use Misaf\VendraSupport\Filament\Infolists\Components\IsActiveEntry;
-use Misaf\VendraSupport\Filament\Infolists\Components\NameEntry;
-use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
 
 final class ResellerInfolist
 {
@@ -22,34 +19,20 @@ final class ResellerInfolist
         return $schema->components([
             Section::make(__('vendra-console::attributes.reseller_overview'))
                 ->schema([
-                    Grid::make(4)->schema([
-                        NameEntry::make(),
-                        SlugEntry::make()
-                            ->label(__('vendra-console::attributes.reseller_identifier'))
-                            ->copyable(),
-                        TextEntry::make('email')
-                            ->label(__('vendra-console::attributes.email'))
-                            ->placeholder('—')
-                            ->copyable(),
+                    Grid::make(2)->schema([
                         IsActiveEntry::make(),
                         TextEntry::make('stores_count')
                             ->label(__('vendra-console::attributes.stores_count')),
                     ]),
-                    DescriptionEntry::make()
-                        ->placeholder('—'),
                 ])
                 ->columnSpanFull(),
             Section::make(__('vendra-console::attributes.user_account'))
                 ->schema([
                     Grid::make(2)->schema([
-                        TextEntry::make('user_username')
-                            ->label(__('vendra-console::attributes.username'))
-                            ->state(fn (Reseller $record): ?string => $record->user()?->username)
-                            ->placeholder('—'),
-                        TextEntry::make('user_email')
+                        TextEntry::make('user.username')
+                            ->label(__('vendra-console::attributes.username')),
+                        TextEntry::make('user.email')
                             ->label(__('vendra-console::attributes.email'))
-                            ->state(fn (Reseller $record): ?string => $record->user()?->email)
-                            ->placeholder('—')
                             ->copyable(),
                     ]),
                 ])

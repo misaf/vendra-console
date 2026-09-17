@@ -22,7 +22,7 @@ final class ConsoleServiceProvider extends PackageServiceProvider
             ->hasConfigFile('console')
             ->hasTranslations()
             ->hasMigrations([
-                'create_console_users_table',
+                'create_consoles_table',
             ])
             ->hasCommand(ConsoleUserCommand::class)
             ->hasInstallCommand(function (InstallCommand $command): void {

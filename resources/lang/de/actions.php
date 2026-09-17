@@ -5,7 +5,6 @@ declare(strict_types=1);
 return [
     'assign_reseller' => 'Konto zuweisen',
     'change_plan' => 'Tarif ändern',
-    'create_user_account' => 'Benutzerkonto erstellen',
     'change_user_password' => 'Benutzer-Passwort ändern',
     'renew' => 'Verlängern',
     'create_storefront_action' => 'Shop erstellen',
@@ -16,9 +15,7 @@ return [
     'change_user_email' => 'Benutzer-E-Mail ändern',
     'demote_administrator' => 'Administrator herabstufen',
     'disable_account' => 'Konto deaktivieren',
-    'disable_user_account' => 'Benutzerkonto deaktivieren',
     'enable_account' => 'Konto aktivieren',
-    'enable_user_account' => 'Benutzerkonto aktivieren',
     'extend_subscription' => 'Abonnement verlängern',
     'offboard_store' => 'Store stilllegen',
     'promote_administrator' => 'Zum Administrator befördern',

@@ -6,7 +6,7 @@ namespace Misaf\VendraConsole\Database\Seeders;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\Seeder;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use RuntimeException;
 
 final class ConsoleUserSeeder extends Seeder
@@ -16,7 +16,7 @@ final class ConsoleUserSeeder extends Seeder
      */
     public function run(): void
     {
-        if (ConsoleUser::query()->exists()) {
+        if (Console::query()->active()->exists()) {
             return;
         }
 

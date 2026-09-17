@@ -20,9 +20,6 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CancelSubscriptionT
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangePlanTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserEmailTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserPasswordTableAction;
-use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CreateUserAccountTableAction;
-use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\DisableUserAccountTableAction;
-use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\EnableUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ExtendSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
@@ -34,7 +31,6 @@ use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\NameColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
@@ -47,9 +43,15 @@ final class ResellerTable
             ->columns([
                 RowIndexColumn::make(),
 
-                NameColumn::make()
+                TextColumn::make('user.username')
+                    ->label(__('vendra-console::attributes.username'))
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('user.email')
+                    ->label(__('vendra-console::attributes.email'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('stores_count')
                     ->label(__('vendra-console::attributes.stores_count'))
@@ -104,11 +106,8 @@ final class ResellerTable
                     ViewAction::make(),
                     EditAction::make(),
                     ActionGroup::make([
-                        CreateUserAccountTableAction::make(),
                         ChangeUserPasswordTableAction::make(),
                         ChangeUserEmailTableAction::make(),
-                        DisableUserAccountTableAction::make(),
-                        EnableUserAccountTableAction::make(),
                         ReplaceUserAccountTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([

@@ -17,7 +17,7 @@ use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Actions\GrantConsoleAccessAction;
 use Misaf\VendraConsole\Actions\RevokeConsoleUserAction;
 use Misaf\VendraConsole\Exceptions\LastConsoleUserException;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
 use Misaf\VendraUser\Models\User;
 use Symfony\Component\Console\Formatter\OutputFormatter;
@@ -73,7 +73,7 @@ final class ConsoleUserCommand extends Command
             return $this->reportPassword('Console user created.', $user, $password);
         }
 
-        $hasConsoleAccess = ConsoleUser::query()->forUser($user)->exists();
+        $hasConsoleAccess = Console::query()->active()->forUser($user)->exists();
 
         if (! $this->confirmChangesToExistingUser($email, $hasConsoleAccess, $passwordOption !== null)) {
             return self::FAILURE;

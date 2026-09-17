@@ -6,14 +6,14 @@ namespace Misaf\VendraConsole\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Attributes\UseModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Database\Factories\UserFactory;
 
 /**
- * @extends Factory<ConsoleUser>
+ * @extends Factory<Console>
  */
-#[UseModel(ConsoleUser::class)]
-final class ConsoleUserFactory extends Factory
+#[UseModel(Console::class)]
+final class ConsoleFactory extends Factory
 {
     /**
      * @return array<string, mixed>
@@ -22,6 +22,12 @@ final class ConsoleUserFactory extends Factory
     {
         return [
             'user_id' => UserFactory::new()->state(['tenant_id' => null]),
+            'active' => true,
         ];
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(['active' => false]);
     }
 }

@@ -8,7 +8,7 @@ use Filament\Facades\Filament;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\EditStorefrontImage;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\ListStorefrontImages;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSubscription\Models\Plan;
@@ -21,7 +21,7 @@ use function Pest\Livewire\livewire;
 
 beforeEach(function (): void {
     $consoleUser = User::factory()->create(['tenant_id' => null]);
-    ConsoleUser::factory()->for($consoleUser)->create();
+    Console::factory()->for($consoleUser)->create();
     actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
 });

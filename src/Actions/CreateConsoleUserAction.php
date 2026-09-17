@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Actions;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Actions\CreateUserAction;
 use Misaf\VendraUser\Models\User;
 
@@ -38,7 +38,7 @@ final readonly class CreateConsoleUserAction
                         password: $password,
                     );
 
-                    ConsoleUser::query()->create(['user_id' => $user->getKey()]);
+                    Console::query()->create(['user_id' => $user->getKey(), 'active' => true]);
 
                     return $user;
                 });

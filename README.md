@@ -23,8 +23,8 @@ composer require misaf/vendra-console
 php artisan migrate
 ```
 
-The `console_users` table records which canonical users
-(`misaf/vendra-user`) may enter the panel; the host application's
+The `consoles` table holds one row per canonical user
+(`misaf/vendra-user`) allowed into the panel, and only active rows grant access; the host application's
 `config/auth.php` points the `console` guard at the platform-scoped
 `console` provider and the `console` password broker, whose
 reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. Nothing is
@@ -35,8 +35,8 @@ console user or issues a new password, generating one unless `--password` is giv
 It asks before granting console access to an existing user who does not already have it
 (the default `console@<app host>` address included), and before replacing a console
 user's password with a generated one; passing `--password` skips that second prompt.
-`php artisan console:user --revoke --email=…` revokes console access while keeping the
-user, and refuses to remove the last console user.
+`php artisan console:user --revoke --email=…` deactivates the user's console while keeping the
+user, and refuses to deactivate the last active console user; granting access again reactivates it.
 
 ## The panel
 
@@ -46,8 +46,8 @@ user, and refuses to remove the last console user.
 - `console` auth guard against the canonical `User` (`misaf/vendra-user`)
   through the platform-scoped `console` provider and the
   `console` password broker, whose reset tokens live in
-  `console_password_reset_tokens`; panel access is granted by the
-  `console_users` row, with password reset and required email verification
+  `console_password_reset_tokens`; panel access is granted by an active
+  `consoles` row, with password reset and required email verification
 - top navigation, global search key bindings, database notifications and
   transactions
 
@@ -144,7 +144,7 @@ Nothing depends on this package, so anything reusable belongs one layer down.
 
 ## Testing
 
-Act as a canonical user with a `console_users` row on the `console` guard.
+Act as a canonical user with an active `consoles` row on the `console` guard.
 A test that sets up a current tenant is testing the wrong panel. Assert that
 the domain action ran rather than re-asserting the domain package's own
 behaviour.

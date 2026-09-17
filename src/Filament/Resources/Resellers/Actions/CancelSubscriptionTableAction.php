@@ -27,6 +27,7 @@ final class CancelSubscriptionTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.cancel_subscription'))->icon(Heroicon::OutlinedXCircle)
+            ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->color('danger')->requiresConfirmation()
             ->visible(fn (Reseller $record): bool => in_array($record->latestSubscription()?->status, [
                 SubscriptionStatus::PendingPayment, SubscriptionStatus::Active, SubscriptionStatus::PastDue,

@@ -31,6 +31,7 @@ final class ExtendSubscriptionTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.extend_subscription'))->icon(Heroicon::OutlinedCalendarDays)
+            ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->visible(fn (Reseller $record): bool => $record->latestSubscription()?->status === SubscriptionStatus::Active
                 && $record->latestSubscription()?->ends_at !== null)
             ->schema([DateTimePicker::make('ends_at')->label(__('vendra-console::attributes.ends_at'))

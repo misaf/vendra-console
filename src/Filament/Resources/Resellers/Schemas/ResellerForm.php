@@ -9,20 +9,19 @@ use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Unique;
 use Livewire\Component as Livewire;
-use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
 use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\ValidatesResellerUser;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
 use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
-use Misaf\VendraUser\Models\User;
 
 final class ResellerForm
 {
+    use ValidatesResellerUser;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -33,14 +32,8 @@ final class ResellerForm
                     ->live(onBlur: true)
                     ->minLength(3)
                     ->maxLength(12)
-                    ->rules(['alpha_dash'])
+                    ->rules(self::resellerUsernameRules())
                     ->required()
-                    ->unique(
-                        table: User::class,
-                        column: 'username',
-                        modifyRuleUsing: fn (Unique $rule): Unique => $rule
-                            ->withoutTrashed(),
-                    )
                     ->visibleOn('create'),
 
                 TextInput::make('email')
@@ -51,14 +44,7 @@ final class ResellerForm
                     ->live(onBlur: true)
                     ->maxLength(255)
                     ->required(fn (string $operation): bool => $operation === 'create')
-                    ->rules(fn (string $operation): array => $operation === 'create'
-                        ? [
-                            'bail',
-                            'email:rfc,strict,spoof,filter,filter_unicode',
-                            new EmailValidation,
-                            Rule::unique(User::class, 'email')->withoutTrashed(),
-                        ]
-                        : [])
+                    ->rules(fn (string $operation): array => $operation === 'create' ? self::resellerEmailRules() : [])
                     ->visibleOn('create'),
 
                 NewPasswordInput::make()
@@ -102,7 +88,10 @@ final class ResellerForm
 
                         TextEntry::make('current_status')
                             ->label(__('vendra-console::attributes.status'))
-                            ->state(fn (?Reseller $record): string => $record?->activeSubscription()?->status->value ?? '—'),
+                            ->badge()
+                            ->state(fn (?Reseller $record): ?string => $record?->activeSubscription()?->status->value)
+                            ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.status_{$state}"))
+                            ->placeholder('—'),
 
                         TextEntry::make('current_ends_at')
                             ->label(__('vendra-console::attributes.ends_at'))

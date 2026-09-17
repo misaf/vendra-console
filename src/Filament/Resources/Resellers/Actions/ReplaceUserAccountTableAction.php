@@ -8,17 +8,17 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\Rule;
 use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
 use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\ValidatesResellerUser;
 use Misaf\VendraReseller\Actions\ReplaceResellerUserAction;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraUser\Models\User;
 
 final class ReplaceUserAccountTableAction extends Action
 {
     use InteractsWithResellerRecord;
+    use ValidatesResellerUser;
 
     public static function getDefaultName(): string
     {
@@ -32,13 +32,13 @@ final class ReplaceUserAccountTableAction extends Action
         $this
             ->label(__('vendra-console::actions.replace_user_account'))
             ->icon(Heroicon::OutlinedUserPlus)
-            ->visible(fn (Reseller $record): bool => $record->latestUser() instanceof User)
+            ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->slideOver()
             ->schema([
                 TextInput::make('username')->label(__('vendra-console::attributes.username'))->minLength(3)->maxLength(12)
-                    ->rules(['alpha_dash'])->required()->rule(Rule::unique(User::class, 'username')->withoutTrashed()),
+                    ->rules(self::resellerUsernameRules())->required(),
                 TextInput::make('email')->label(__('vendra-console::attributes.email'))->email()->required()
-                    ->rule(Rule::unique(User::class, 'email')->withoutTrashed()),
+                    ->rules(self::resellerEmailRules()),
                 NewPasswordInput::make(),
                 PasswordConfirmationInput::make(),
             ])

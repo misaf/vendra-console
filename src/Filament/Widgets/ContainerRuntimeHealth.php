@@ -19,6 +19,10 @@ use Throwable;
  * Every open dashboard polls this widget, so the runtime probe is cached for
  * slightly less than the polling interval: however many tabs are open, the
  * daemon sees at most one ping and one network lookup per window.
+ *
+ * The probe is cached as plain arrays and rebuilt afterwards, because the host's
+ * `cache.serializable_classes` allow-list turns any other cached object into
+ * `__PHP_Incomplete_Class`.
  */
 final class ContainerRuntimeHealth extends StatsOverviewWidget
 {
@@ -40,6 +44,9 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
                 self::CACHE_SECONDS,
                 fn (): array => $this->probe($networkName),
             );
+
+            $status = new StorefrontRuntimeStatus(...$status);
+            $network = $network === null ? null : new StorefrontNetwork(...$network);
         } catch (Throwable $exception) {
             report($exception);
 
@@ -58,7 +65,7 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
     }
 
     /**
-     * @return array{status: StorefrontRuntimeStatus, network: ?StorefrontNetwork, error: ?string}
+     * @return array{status: array{reachable: bool, driver: string, apiVersion: string, server: ?string, message: ?string, endpoint: ?string}, network: array{name: string, driver: ?string}|null, error: ?string}
      */
     private function probe(string $networkName): array
     {
@@ -76,7 +83,11 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
             }
         }
 
-        return ['status' => $status, 'network' => $network, 'error' => $error];
+        return [
+            'status' => get_object_vars($status),
+            'network' => $network === null ? null : get_object_vars($network),
+            'error' => $error,
+        ];
     }
 
     private function runtimeStat(StorefrontRuntimeStatus $status): Stat

@@ -10,19 +10,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('console_users', function (Blueprint $table): void {
+        Schema::create('consoles', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')
+                ->unique()
                 ->constrained()
-                ->cascadeOnDelete();
+                ->restrictOnDelete();
+            $table->boolean('active')
+                ->index();
             $table->timestampsTz();
-
-            $table->unique('user_id', 'console_users_user_unique');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('console_users');
+        Schema::dropIfExists('consoles');
     }
 };

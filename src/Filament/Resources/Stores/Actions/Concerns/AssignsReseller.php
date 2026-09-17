@@ -39,7 +39,7 @@ trait AssignsReseller
             ->schema([
                 Select::make('reseller_id')
                     ->label(__('vendra-console::navigation.reseller'))
-                    ->options(fn (): array => Reseller::query()->active()->pluck('name', 'id')->all())
+                    ->options(fn (): array => Reseller::displayNames(Reseller::query()->active()))
                     ->placeholder(__('vendra-console::attributes.platform_owned_store'))
                     ->searchable()
                     ->preload()

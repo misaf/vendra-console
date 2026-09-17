@@ -9,8 +9,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Misaf\VendraStore\Contracts\StorefrontProvisioner;
-use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
-use Misaf\VendraStore\Enums\StorefrontDesiredState;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontObservation;
 use Misaf\VendraStore\Support\StorefrontReference;
@@ -31,12 +29,10 @@ final class StorefrontDeploymentInfolist
                                     ->label(__('vendra-console::navigation.store')),
                                 TextEntry::make('status')
                                     ->label(__('vendra-console::attributes.status'))
-                                    ->badge()
-                                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("vendra-console::attributes.deployment_status_{$state->value}")),
+                                    ->badge(),
                                 TextEntry::make('desired_state')
                                     ->label(__('vendra-console::attributes.desired_state'))
-                                    ->badge()
-                                    ->formatStateUsing(fn (StorefrontDesiredState $state): string => __("vendra-console::attributes.desired_state_{$state->value}")),
+                                    ->badge(),
                                 SlugEntry::make()
                                     ->label(__('vendra-console::attributes.storefront_slug'))
                                     ->copyable(),

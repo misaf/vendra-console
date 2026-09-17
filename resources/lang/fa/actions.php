@@ -5,7 +5,6 @@ declare(strict_types=1);
 return [
     'assign_reseller' => 'تخصیص حساب',
     'change_plan' => 'تغییر طرح',
-    'create_user_account' => 'ایجاد حساب کاربر',
     'change_user_password' => 'تغییر رمز عبور کاربر',
     'renew' => 'تمدید',
     'create_storefront_action' => 'ایجاد فروشگاه',
@@ -16,9 +15,7 @@ return [
     'change_user_email' => 'تغییر ایمیل کاربر',
     'demote_administrator' => 'برداشتن دسترسی مدیریت',
     'disable_account' => 'غیرفعال‌کردن حساب',
-    'disable_user_account' => 'غیرفعال‌کردن حساب کاربر',
     'enable_account' => 'فعال‌کردن حساب',
-    'enable_user_account' => 'فعال‌کردن حساب کاربر',
     'extend_subscription' => 'تمدید اشتراک',
     'offboard_store' => 'خارج‌کردن فروشگاه',
     'promote_administrator' => 'ارتقا به مدیر',

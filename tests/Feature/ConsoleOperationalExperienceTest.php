@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -15,7 +16,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
@@ -38,7 +39,7 @@ function actAsOperationalConsoleUser(): User
 {
     $consoleUser = User::factory()->create(['tenant_id' => null]);
 
-    ConsoleUser::factory()->for($consoleUser)->create();
+    Console::factory()->for($consoleUser)->create();
 
     actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
@@ -170,6 +171,23 @@ it('shows runtime and required network health without runtime-specific console l
     expect(collect($runtime->transport->requests)->contains(
         fn ($request): bool => str_ends_with($request->path, '/_ping'),
     ))->toBeTrue();
+});
+
+it('renders runtime health from a cache that only unserializes allow-listed classes', function (): void {
+    fakeExistingStorefront();
+    Config::set('cache.default', 'array');
+    Config::set('cache.stores.array.serialize', true);
+    Config::set('cache.serializable_classes', []);
+    Cache::forgetDriver('array');
+
+    actAsOperationalConsoleUser();
+
+    livewire(ContainerRuntimeHealth::class)->assertOk();
+
+    livewire(ContainerRuntimeHealth::class)
+        ->assertOk()
+        ->assertSee('Docker')
+        ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
 });
 
 it('probes the runtime once per cache window however many dashboards poll', function (): void {

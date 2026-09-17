@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 it('creates a platform user with console access', function (): void {
@@ -58,7 +58,7 @@ it('retries with a suffixed username when a concurrent create claims the usernam
     expect($raceWasFaked)->toBeTrue()
         ->and($user->username)->toBe('ops_2')
         ->and(User::query()->count())->toBe(2)
-        ->and(ConsoleUser::query()->sole()->user_id)->toBe($user->getKey());
+        ->and(Console::query()->sole()->user_id)->toBe($user->getKey());
 });
 
 it('lets the unique guard reject an email a platform user already holds', function (): void {
@@ -67,5 +67,5 @@ it('lets the unique guard reject an email a platform user already holds', functi
     expect(fn (): User => resolve(CreateConsoleUserAction::class)->execute('ops@vendra.test', 'a-secure-password'))
         ->toThrow(QueryException::class)
         ->and(User::query()->count())->toBe(1)
-        ->and(ConsoleUser::query()->count())->toBe(0);
+        ->and(Console::query()->count())->toBe(0);
 });

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
+use LogicException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithStoreRecord;
 use Misaf\VendraStore\Actions\RestoreOffboardedStoreAction;
 use Misaf\VendraStore\Models\Store;
+use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
 
 final class RestoreStoreTableAction extends Action
 {
@@ -28,7 +31,18 @@ final class RestoreStoreTableAction extends Action
             ->icon(Heroicon::OutlinedArrowUturnLeft)
             ->visible(fn (Store $record): bool => $record->trashed())
             ->action(function (Store $record, RestoreOffboardedStoreAction $restoreOffboardedStore): void {
-                $restoreOffboardedStore->execute($record);
+                try {
+                    $restoreOffboardedStore->execute($record);
+                } catch (LogicException|SubscriptionLimitException $exception) {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('vendra-console::messages.store_restore_failed'))
+                        ->body($exception->getMessage())
+                        ->send();
+
+                    return;
+                }
+
                 self::notify(__('vendra-console::messages.store_restored'));
             });
     }

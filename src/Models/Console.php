@@ -12,29 +12,36 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Misaf\VendraConsole\Database\Factories\ConsoleUserFactory;
+use Misaf\VendraConsole\Database\Factories\ConsoleFactory;
+use Misaf\VendraSupport\Tenancy\Scopes\TeamScope;
+use Misaf\VendraSupport\Tenancy\Scopes\TenantScope;
 use Misaf\VendraUser\Models\User;
 
 /**
+ * A console account: one platform user, which may enter the console panel while active.
+ *
  * @property int $id
  * @property int $user_id
+ * @property bool $active
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read User $user
  */
-#[Fillable(['user_id'])]
-#[UseFactory(ConsoleUserFactory::class)]
-final class ConsoleUser extends Model
+#[Fillable(['user_id', 'active'])]
+#[UseFactory(ConsoleFactory::class)]
+final class Console extends Model
 {
-    /** @use HasFactory<ConsoleUserFactory> */
+    /** @use HasFactory<ConsoleFactory> */
     use HasFactory;
 
     /**
+     * Console users are platform users, so the relation never applies tenant scopes.
+     *
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withoutGlobalScopes([TenantScope::class, TeamScope::class]);
     }
 
     /**
@@ -45,7 +52,18 @@ final class ConsoleUser extends Model
         return [
             'id' => 'integer',
             'user_id' => 'integer',
+            'active' => 'boolean',
         ];
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    #[Scope]
+    protected function active(Builder $query): Builder
+    {
+        return $query->where('active', true);
     }
 
     /**

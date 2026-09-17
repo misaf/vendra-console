@@ -11,6 +11,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\DeletedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 
 final class DomainsRelationManager extends RelationManager
@@ -41,17 +42,8 @@ final class DomainsRelationManager extends RelationManager
                 CreatedAtColumn::make()
                     ->sortable(),
 
-                TextColumn::make('deleted_at')
-                    ->extraCellAttributes(['dir' => 'ltr'])
-                    ->label(__('vendra-console::attributes.replaced_at'))
-                    ->sinceTooltip()
-                    ->placeholder('—')
-                    ->sortable()
-                    ->when(
-                        app()->isLocale('fa'),
-                        fn (TextColumn $column) => $column->jalaliDateTime('Y-m-d H:i', latinNumbers: true),
-                        fn (TextColumn $column) => $column->dateTime('Y-m-d H:i')
-                    ),
+                DeletedAtColumn::make()
+                    ->sortable(),
             ])
             ->filters([
                 TrashedFilter::make(),

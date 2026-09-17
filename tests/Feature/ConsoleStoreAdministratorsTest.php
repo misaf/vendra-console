@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
@@ -27,7 +27,7 @@ beforeEach(function (): void {
     fakeDockerEngine();
 
     $consoleUser = User::factory()->create(['tenant_id' => null]);
-    ConsoleUser::factory()->for($consoleUser)->create();
+    Console::factory()->for($consoleUser)->create();
     actingAs($consoleUser, 'console');
     Filament::setCurrentPanel(Filament::getPanel('console'));
 });

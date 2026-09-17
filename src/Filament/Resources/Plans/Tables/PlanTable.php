@@ -4,29 +4,26 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Plans\Tables;
 
-use Awcodes\BadgeableColumn\Components\Badge;
-use Awcodes\BadgeableColumn\Components\BadgeableColumn;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraSubscription\Actions\DeletePlanAction;
 use Misaf\VendraSubscription\Actions\UpdatePlanAction;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsDefaultIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
+use Misaf\VendraSupport\Filament\Tables\Filters\IsDefaultFilter;
 
 final class PlanTable
 {
@@ -36,18 +33,13 @@ final class PlanTable
             ->columns([
                 RowIndexColumn::make(),
 
-                BadgeableColumn::make('name')
+                TextColumn::make('name')
                     ->label(__('vendra-console::attributes.name'))
                     ->icon(Heroicon::Tag)
                     ->searchable()
-                    ->sortable()
-                    ->prefixBadges([
-                        Badge::make('is_default')
-                            ->label(__('vendra-console::attributes.is_default'))
-                            ->color('success')
-                            ->size(Size::ExtraSmall)
-                            ->hidden(fn (Plan $record): bool => ! $record->is_default),
-                    ]),
+                    ->sortable(),
+
+                IsDefaultIconColumn::make(),
 
                 TextColumn::make('max_units')
                     ->label(__('vendra-console::attributes.max_units'))
@@ -84,13 +76,7 @@ final class PlanTable
                 [
                     IsActiveFilter::make(),
 
-                    TernaryFilter::make('is_default')
-                        ->label(__('vendra-console::attributes.is_default'))
-                        ->queries(
-                            true: fn (Builder $query): Builder => $query->where('is_default', true),
-                            false: fn (Builder $query): Builder => $query->where('is_default', false),
-                            blank: fn (Builder $query): Builder => $query,
-                        ),
+                    IsDefaultFilter::make(),
 
                     SelectFilter::make('period_unit')
                         ->label(__('vendra-console::attributes.period_unit'))

@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Uri;
-use Misaf\VendraConsole\Models\ConsoleUser;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -25,7 +25,7 @@ function consolePlatformUser(array $attributes = []): User
         ...$attributes,
     ]);
 
-    ConsoleUser::factory()->for($consoleUser)->create();
+    Console::factory()->for($consoleUser)->create();
 
     return $consoleUser;
 }
@@ -149,13 +149,13 @@ it('restores console sessions only for the platform user via remember token', fu
         ->and($provider->retrieveByToken($tenantUser->getKey(), 'tenant-remember-token'))->toBeNull();
 });
 
-it('removes console access when the console user grant is revoked', function (): void {
+it('removes console access when the console is deactivated', function (): void {
     $consoleUser = consolePlatformUser();
     $panel = Filament::getPanel('console');
 
     expect($consoleUser->canAccessPanel($panel))->toBeTrue();
 
-    ConsoleUser::query()->forUser($consoleUser)->delete();
+    Console::query()->forUser($consoleUser)->update(['active' => false]);
 
     expect($consoleUser->canAccessPanel($panel))->toBeFalse()
         ->and(User::query()->find($consoleUser->getKey()))->not->toBeNull();

@@ -10,6 +10,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -28,8 +29,6 @@ final class ResellerResource extends Resource
     protected static ?string $model = Reseller::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
-
-    protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?string $slug = 'resellers';
 
@@ -78,7 +77,7 @@ final class ResellerResource extends Resource
         return parent::getEloquentQuery()
             ->withCount('stores')
             ->with([
-                'users',
+                'user',
                 'subscriptions' => fn (MorphMany $relation): MorphMany => $relation
                     ->with('plan')
                     ->latest('starts_at'),
@@ -91,11 +90,19 @@ final class ResellerResource extends Resource
     }
 
     /**
+     * A reseller has no name of its own; it is titled and searched by its user.
+     */
+    public static function getRecordTitle(?Model $record): string|Htmlable|null
+    {
+        return $record instanceof Reseller ? $record->displayName() : parent::getRecordTitle($record);
+    }
+
+    /**
      * @return array<int, string>
      */
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'slug', 'email'];
+        return ['user.username', 'user.email'];
     }
 
     /**
@@ -106,7 +113,7 @@ final class ResellerResource extends Resource
         $reseller = self::reseller($record);
 
         return [
-            __('vendra-console::attributes.email') => $reseller->email ?? '—',
+            __('vendra-console::attributes.email') => $reseller->user->email,
         ];
     }
 

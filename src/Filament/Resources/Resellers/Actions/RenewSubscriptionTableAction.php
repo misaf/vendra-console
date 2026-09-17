@@ -26,6 +26,7 @@ final class RenewSubscriptionTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.renew'))->icon(Heroicon::OutlinedArrowPath)
+            ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->requiresConfirmation()
             ->action(function (Reseller $record): void {
                 $plan = ($record->activeSubscription() ?? $record->subscriptions()->latest('starts_at')->first())?->plan;

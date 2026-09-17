@@ -39,7 +39,6 @@ final class StorefrontDeploymentTable
                 TextColumn::make('status')
                     ->label(__('vendra-console::attributes.status'))
                     ->badge()
-                    ->formatStateUsing(fn (StorefrontDeploymentStatus $state): string => __("vendra-console::attributes.deployment_status_{$state->value}"))
                     ->sortable(),
 
                 TextColumn::make('storefrontImage.image')
@@ -97,7 +96,7 @@ final class StorefrontDeploymentTable
                 [
                     SelectFilter::make('status')
                         ->label(__('vendra-console::attributes.status'))
-                        ->options(self::statusOptions()),
+                        ->options(StorefrontDeploymentStatus::class),
 
                     SelectFilter::make('store_id')
                         ->label(__('vendra-console::navigation.store'))
@@ -133,15 +132,5 @@ final class StorefrontDeploymentTable
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');
-    }
-
-    /** @return array<string, string> */
-    private static function statusOptions(): array
-    {
-        return collect(StorefrontDeploymentStatus::cases())
-            ->mapWithKeys(fn (StorefrontDeploymentStatus $status): array => [
-                $status->value => __("vendra-console::attributes.deployment_status_{$status->value}"),
-            ])
-            ->all();
     }
 }
