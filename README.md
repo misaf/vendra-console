@@ -65,14 +65,24 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 | `PlanResource` | `misaf/vendra-subscription`'s plan model |
 | `ActivityLogResource` | `misaf/vendra-activity-log`'s model, read-only and across every tenant |
 
-`DomainsRelationManager` manages a store's domains. `ConsoleOverview` links its
-platform-wide counts to the matching filtered resource tables, and
-`ContainerRuntimeHealth` reports runtime connection and storefront-network
-availability through `vendra-store`'s runtime adapter over `laravel-docker-engine`. The overview includes
-resellers and how many are active,
-stores split into active and suspended, how many are provisioning against how
-many failed, live storefronts against failed deployments, and the subscription
-position.
+`DomainsRelationManager` manages a store's domains.
+
+The console dashboard (`Filament\Pages\Dashboard`) lists its widgets by
+urgency. `NeedsAttention` shows only what a console user should act on — stores
+still provisioning or failed, failed storefront deployments, past-due
+subscriptions, payments awaiting review, subscriptions ending within a week, and
+jobs that failed in the last day — each linked to the filtered list that
+resolves it, and collapses to one all-clear stat when there is nothing.
+`PlatformMetrics` shows store, reseller and subscription totals and this month's
+paid revenue per currency against last month's. `PlatformGrowthChart` plots new
+stores, resellers and subscriptions per day over 7, 30 or 90 days.
+`RecentActivity` lists the latest audit entries.
+
+`ContainerRuntimeHealth` never contacts the runtime: only the storefront worker
+holds the runtime socket. The scheduler dispatches `vendra-store`'s
+`RecordStorefrontRuntimeHealthJob` onto the `storefronts` queue every minute,
+and the widget reads the report it records through `StorefrontRuntimeHealth`,
+warning when no report exists or the last one is more than five minutes old.
 
 Store rows expose suspend/reactivate, provisioning recovery, managed storefront
 start/stop/restart/redeploy/retry/reconcile, deployment viewing, recent logs,

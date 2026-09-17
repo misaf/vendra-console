@@ -79,6 +79,7 @@ final class ResellerTable
                         ->options([
                             'active' => SubscriptionStatus::Active->getLabel(),
                             'expiring_soon' => __('vendra-console::attributes.expiring_soon'),
+                            'past_due' => SubscriptionStatus::PastDue->getLabel(),
                             'none' => __('vendra-console::attributes.no_active_subscription'),
                         ])
                         ->query(fn (Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
@@ -89,6 +90,10 @@ final class ResellerTable
                             'expiring_soon' => $query->whereHas(
                                 'subscriptions',
                                 fn (Builder $query): Builder => $query->endingWithin(7),
+                            ),
+                            'past_due' => $query->whereHas(
+                                'subscriptions',
+                                fn (Builder $query): Builder => $query->where('status', SubscriptionStatus::PastDue),
                             ),
                             'none' => $query->whereDoesntHave(
                                 'subscriptions',

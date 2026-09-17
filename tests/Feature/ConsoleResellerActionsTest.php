@@ -6,7 +6,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
-use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
+use Misaf\VendraConsole\Filament\Widgets\PlatformMetrics;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraReseller\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Filament\Pages\Auth\Login;
@@ -300,9 +300,9 @@ it('extends cancels and reactivates a reseller subscription through domain actio
         ->and($reseller->activeSubscription())->not->toBeNull();
 });
 
-it('renders the console overview widget', function (): void {
+it('renders the platform metrics widget', function (): void {
     actingConsoleAdmin();
     Reseller::factory()->count(2)->create();
 
-    livewire(ConsoleOverview::class)->assertOk();
+    livewire(PlatformMetrics::class)->assertOk();
 });

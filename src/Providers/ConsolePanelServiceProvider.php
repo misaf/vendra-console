@@ -9,7 +9,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
@@ -39,7 +38,6 @@ final class ConsolePanelServiceProvider extends PanelProvider
             ->discoverResources(__DIR__.'/../Filament/Resources', 'Misaf\\VendraConsole\\Filament\\Resources')
             ->discoverPages(__DIR__.'/../Filament/Pages', 'Misaf\\VendraConsole\\Filament\\Pages')
             ->discoverWidgets(__DIR__.'/../Filament/Widgets', 'Misaf\\VendraConsole\\Filament\\Widgets')
-            ->pages([Dashboard::class])
             ->globalSearchFieldKeyBindingSuffix()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->homeUrl('/')

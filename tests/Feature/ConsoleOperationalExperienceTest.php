@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -14,9 +13,10 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ViewStore
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
-use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
+use Misaf\VendraConsole\Filament\Widgets\NeedsAttention;
 use Misaf\VendraConsole\Models\Console;
+use Misaf\VendraStore\Actions\RecordStorefrontRuntimeHealthAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StorefrontDesiredState;
 use Misaf\VendraStore\Enums\StoreStatus;
@@ -25,6 +25,7 @@ use Misaf\VendraStore\Jobs\ReconcileStorefrontJob;
 use Misaf\VendraStore\Jobs\RestartStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
+use Misaf\VendraStore\Support\StorefrontRuntimeHealthReport;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Models\User;
 
@@ -166,8 +167,9 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
     Queue::assertPushed(ReconcileStorefrontJob::class);
 });
 
-it('shows runtime and required network health without runtime-specific console logic', function (): void {
-    $runtime = fakeExistingStorefront();
+it('shows the runtime and network health the storefront worker recorded', function (): void {
+    fakeExistingStorefront();
+    resolve(RecordStorefrontRuntimeHealthAction::class)->execute();
 
     actAsOperationalConsoleUser();
 
@@ -176,48 +178,39 @@ it('shows runtime and required network health without runtime-specific console l
         ->assertSee('Docker')
         ->assertSee('traefik-public')
         ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
-
-    expect(collect($runtime->transport->requests)->contains(
-        fn ($request): bool => str_ends_with($request->path, '/_ping'),
-    ))->toBeTrue();
 });
 
-it('renders runtime health from a cache that only unserializes allow-listed classes', function (): void {
-    fakeExistingStorefront();
-    Config::set('cache.default', 'array');
-    Config::set('cache.stores.array.serialize', true);
-    Config::set('cache.serializable_classes', []);
-    Cache::forgetDriver('array');
-
-    actAsOperationalConsoleUser();
-
-    livewire(ContainerRuntimeHealth::class)->assertOk();
-
-    livewire(ContainerRuntimeHealth::class)
-        ->assertOk()
-        ->assertSee('Docker')
-        ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
-});
-
-it('probes the runtime once per cache window however many dashboards poll', function (): void {
+it('never contacts the runtime from the dashboard', function (): void {
     $runtime = fakeExistingStorefront();
+    resolve(RecordStorefrontRuntimeHealthAction::class)->execute();
+    $requestsBeforeRender = count($runtime->transport->requests);
 
     actAsOperationalConsoleUser();
 
     livewire(ContainerRuntimeHealth::class)->assertOk();
-    $requestsAfterFirstRender = count($runtime->transport->requests);
+
+    expect($runtime->transport->requests)->toHaveCount($requestsBeforeRender);
+});
+
+it('warns when the storefront worker has not recorded runtime health', function (): void {
+    actAsOperationalConsoleUser();
 
     livewire(ContainerRuntimeHealth::class)
         ->assertOk()
-        ->assertSee(__('vendra-console::messages.network_available', ['driver' => 'bridge']));
+        ->assertSee(__('vendra-console::messages.runtime_not_checked'));
+});
 
-    expect($runtime->transport->requests)->toHaveCount($requestsAfterFirstRender);
+it('warns when the recorded runtime health is stale', function (): void {
+    fakeExistingStorefront();
+    resolve(RecordStorefrontRuntimeHealthAction::class)->execute();
 
-    $this->travel(26)->seconds();
+    $this->travel(StorefrontRuntimeHealthReport::STALE_AFTER_SECONDS + 60)->seconds();
 
-    livewire(ContainerRuntimeHealth::class)->assertOk();
+    actAsOperationalConsoleUser();
 
-    expect(count($runtime->transport->requests))->toBeGreaterThan($requestsAfterFirstRender);
+    livewire(ContainerRuntimeHealth::class)
+        ->assertOk()
+        ->assertSee(__('vendra-console::messages.runtime_report_stale', ['time' => '6 minutes ago']));
 });
 
 it('links operational dashboard stats to resource filters', function (): void {
@@ -238,7 +231,10 @@ it('links operational dashboard stats to resource filters', function (): void {
         ],
     ]);
 
-    livewire(ConsoleOverview::class)
+    Store::factory()->provisioningFailed()->active()->create();
+    StorefrontDeployment::factory()->for(Store::factory()->active())->create(['status' => StorefrontDeploymentStatus::Failed]);
+
+    livewire(NeedsAttention::class)
         ->assertOk()
         ->assertSeeHtml('href="'.e($failedDeploymentsUrl).'"')
         ->assertSeeHtml('href="'.e($failedStoresUrl).'"');

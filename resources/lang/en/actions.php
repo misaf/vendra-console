@@ -37,4 +37,5 @@ return [
     'reconcile_storefront' => 'Reconcile storefront',
     'view_deployment' => 'View deployment',
     'view_logs' => 'View logs',
+    'view_all' => 'View all',
 ];

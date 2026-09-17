@@ -7,92 +7,48 @@ namespace Misaf\VendraConsole\Filament\Widgets;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Misaf\VendraStore\Services\StorefrontContainerRuntime;
 use Misaf\VendraStore\Support\StorefrontNetwork;
-use Misaf\VendraStore\Support\StorefrontRuntimeStatus;
-use Misaf\VendraStore\Support\StorefrontSettings;
-use Throwable;
+use Misaf\VendraStore\Support\StorefrontRuntimeHealth;
+use Misaf\VendraStore\Support\StorefrontRuntimeHealthReport;
 
 /**
- * Every open dashboard polls this widget, so the runtime probe is cached for
- * slightly less than the polling interval: however many tabs are open, the
- * daemon sees at most one ping and one network lookup per window.
+ * Shows the runtime health the storefront worker last recorded.
  *
- * The probe is cached as plain arrays and rebuilt afterwards, because the host's
- * `cache.serializable_classes` allow-list turns any other cached object into
- * `__PHP_Incomplete_Class`.
+ * The panel never probes the runtime itself: only the storefront worker holds
+ * the runtime socket, so a probe from the web container would report the
+ * runtime as down however healthy it is. A missing or stale report is shown as
+ * a warning, because it means the worker or the scheduler stopped recording.
  */
 final class ContainerRuntimeHealth extends StatsOverviewWidget
 {
-    private const string CACHE_KEY = 'vendra-console:runtime-health';
-
-    private const int CACHE_SECONDS = 25;
-
-    protected static ?int $sort = 2;
-
-    protected ?string $pollingInterval = '30s';
+    protected ?string $pollingInterval = '60s';
 
     protected function getStats(): array
     {
-        $networkName = resolve(StorefrontSettings::class)->network;
+        $report = resolve(StorefrontRuntimeHealth::class)->latest();
 
-        try {
-            ['status' => $status, 'network' => $network, 'error' => $error] = Cache::remember(
-                self::CACHE_KEY.':'.$networkName,
-                self::CACHE_SECONDS,
-                fn (): array => $this->probe($networkName),
-            );
-
-            $status = new StorefrontRuntimeStatus(...$status);
-            $network = $network === null ? null : new StorefrontNetwork(...$network);
-        } catch (Throwable $exception) {
-            report($exception);
-
+        if (! $report instanceof StorefrontRuntimeHealthReport) {
             return [
                 Stat::make(__('vendra-console::attributes.container_runtime'), __('vendra-console::attributes.unknown'))
-                    ->description($exception->getMessage())
+                    ->description(__('vendra-console::messages.runtime_not_checked'))
                     ->icon(Heroicon::OutlinedServerStack)
-                    ->color('danger'),
+                    ->color('warning'),
             ];
         }
 
         return [
-            $this->runtimeStat($status),
-            $this->networkStat($networkName, $status, $network, $error),
+            $this->runtimeStat($report),
+            $this->networkStat($report),
         ];
     }
 
-    /**
-     * @return array{status: array{reachable: bool, driver: string, apiVersion: string, server: ?string, message: ?string, endpoint: ?string}, network: array{name: string, driver: ?string}|null, error: ?string}
-     */
-    private function probe(string $networkName): array
+    private function runtimeStat(StorefrontRuntimeHealthReport $report): Stat
     {
-        $runtime = resolve(StorefrontContainerRuntime::class);
-        $status = $runtime->status();
-        $network = null;
-        $error = null;
+        $status = $report->status;
 
-        if ($status->reachable) {
-            try {
-                $network = $runtime->findNetwork($networkName);
-            } catch (Throwable $exception) {
-                report($exception);
-                $error = $exception->getMessage();
-            }
-        }
-
-        return [
-            'status' => get_object_vars($status),
-            'network' => $network === null ? null : get_object_vars($network),
-            'error' => $error,
-        ];
-    }
-
-    private function runtimeStat(StorefrontRuntimeStatus $status): Stat
-    {
         $description = match (true) {
+            $report->isStale() => __('vendra-console::messages.runtime_report_stale', ['time' => $report->checkedAt->diffForHumans()]),
             ! $status->reachable => $status->message ?? __('vendra-console::messages.runtime_unavailable'),
             $status->engineMismatch() => __('vendra-console::messages.runtime_engine_mismatch', [
                 'configured' => $status->driver,
@@ -108,35 +64,40 @@ final class ContainerRuntimeHealth extends StatsOverviewWidget
             ->description($description)
             ->icon(Heroicon::OutlinedServerStack)
             ->color(match (true) {
+                $report->isStale() => 'warning',
                 ! $status->reachable, $status->engineMismatch() => 'danger',
                 default => 'success',
             });
     }
 
-    private function networkStat(string $networkName, StorefrontRuntimeStatus $status, ?StorefrontNetwork $network, ?string $error): Stat
+    private function networkStat(StorefrontRuntimeHealthReport $report): Stat
     {
-        return Stat::make(__('vendra-console::attributes.storefront_network'), $networkName)
-            ->description($this->networkDescription($status, $network, $error))
+        return Stat::make(__('vendra-console::attributes.storefront_network'), $report->networkName)
+            ->description($this->networkDescription($report))
             ->icon(Heroicon::OutlinedShare)
-            ->color($status->reachable && $network instanceof StorefrontNetwork ? 'success' : 'danger');
+            ->color(match (true) {
+                $report->isStale() => 'warning',
+                $report->status->reachable && $report->network instanceof StorefrontNetwork => 'success',
+                default => 'danger',
+            });
     }
 
-    private function networkDescription(StorefrontRuntimeStatus $status, ?StorefrontNetwork $network, ?string $error): string
+    private function networkDescription(StorefrontRuntimeHealthReport $report): string
     {
-        if (! $status->reachable) {
+        if (! $report->status->reachable) {
             return __('vendra-console::messages.network_not_checked');
         }
 
-        if ($error !== null) {
-            return $error;
+        if ($report->networkError !== null) {
+            return $report->networkError;
         }
 
-        if (! $network instanceof StorefrontNetwork) {
+        if (! $report->network instanceof StorefrontNetwork) {
             return __('vendra-console::messages.network_unavailable');
         }
 
         return __('vendra-console::messages.network_available', [
-            'driver' => $network->driver ?? __('vendra-console::attributes.unknown'),
+            'driver' => $report->network->driver ?? __('vendra-console::attributes.unknown'),
         ]);
     }
 }

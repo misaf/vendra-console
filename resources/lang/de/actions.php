@@ -37,4 +37,5 @@ return [
     'reconcile_storefront' => 'Storefront abgleichen',
     'view_deployment' => 'Bereitstellung anzeigen',
     'view_logs' => 'Logs anzeigen',
+    'view_all' => 'Alle anzeigen',
 ];

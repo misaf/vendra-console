@@ -15,7 +15,8 @@ use Misaf\VendraConsole\Filament\Resources\ActivityLogs\Pages\ListActivityLogs;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
-use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
+use Misaf\VendraConsole\Filament\Widgets\NeedsAttention;
+use Misaf\VendraConsole\Filament\Widgets\PlatformMetrics;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraReseller\Models\Reseller;
@@ -353,14 +354,15 @@ describe('platform dashboard', function (): void {
 
         actAsPlatformUser();
 
-        livewire(ConsoleOverview::class)
+        livewire(NeedsAttention::class)
             ->assertOk()
-            ->assertSee(__('vendra-console::attributes.stores_needing_attention'))
+            ->assertSeeInOrder([__('vendra-console::attributes.stores_needing_attention'), '2'])
             ->assertSee(__('vendra-console::attributes.stores_needing_attention_description'))
-            ->assertSee(__('vendra-console::attributes.storefronts_ready'))
-            ->assertSee(__('vendra-console::attributes.deployments_processing').': 0')
-            ->assertSee(__('vendra-console::attributes.stores_active_suspended', ['active' => 2, 'suspended' => 1]))
-            ->assertSee(__('vendra-console::attributes.failed_deployments'));
+            ->assertSeeInOrder([__('vendra-console::attributes.failed_deployments'), '1']);
+
+        livewire(PlatformMetrics::class)
+            ->assertOk()
+            ->assertSee(__('vendra-console::attributes.stores_active_suspended', ['active' => 2, 'suspended' => 1]));
     });
 });
 

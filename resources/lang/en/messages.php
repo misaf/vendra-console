@@ -46,6 +46,8 @@ return [
     'operational_action_failed' => 'Operational action failed',
     'runtime_connected' => 'Connected · API :api · :version',
     'runtime_engine_mismatch' => 'Configured as :configured, but :reported answered',
+    'runtime_not_checked' => 'Not checked yet · waiting for the storefront worker to record runtime health',
+    'runtime_report_stale' => 'Last checked :time · the storefront worker or scheduler may be down',
     'runtime_unavailable' => 'Runtime unavailable',
     'runtime_unavailable_message' => 'Runtime unavailable: :message',
     'storefront_reconciled' => 'Storefront reconciliation queued',

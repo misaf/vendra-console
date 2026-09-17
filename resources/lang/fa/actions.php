@@ -37,4 +37,5 @@ return [
     'reconcile_storefront' => 'همگام‌سازی ویترین',
     'view_deployment' => 'مشاهده استقرار',
     'view_logs' => 'مشاهده لاگ‌ها',
+    'view_all' => 'مشاهده همه',
 ];
