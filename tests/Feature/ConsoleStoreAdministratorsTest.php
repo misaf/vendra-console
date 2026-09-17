@@ -134,3 +134,18 @@ it('changes a store administrator password', function (): void {
 
     expect(Hash::check('NewSecurePassword456', consoleStoreUser($store, $administrator)->password))->toBeTrue();
 });
+
+it('lets an administrator take the email of a disabled account', function (): void {
+    $store = consoleStoreWithAdministratorRole();
+    $disabled = consoleStoreAdministrator($store, 'disabled_admin');
+    $administrator = consoleStoreAdministrator($store, 'active_admin');
+    $store->execute(fn (): ?bool => consoleStoreUser($store, $disabled)->delete());
+
+    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->assertActionHidden(TestAction::make('removeAdministrator')->table(consoleStoreUser($store, $disabled)))
+        ->callAction(TestAction::make('changeAdministratorEmail')->table($administrator), ['email' => 'disabled_admin@example.com'])
+        ->assertHasNoFormErrors()
+        ->assertNotified(__('vendra-console::messages.administrator_email_updated'));
+
+    expect(consoleStoreUser($store, $administrator)->email)->toBe('disabled_admin@example.com');
+});

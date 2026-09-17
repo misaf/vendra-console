@@ -31,8 +31,10 @@ final class ReactivateStoreTableAction extends Action
                 && ! $record->active
                 && $record->provisioning_status === TenantProvisioningStatus::Ready)
             ->action(function (Store $record, ReactivateStoreAction $reactivateStore): void {
-                $reactivateStore->execute($record);
-                self::notify(__('vendra-console::messages.store_reactivated'));
+                self::run(
+                    fn (): mixed => $reactivateStore->execute($record),
+                    __('vendra-console::messages.store_reactivated'),
+                );
             });
     }
 }

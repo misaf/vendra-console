@@ -912,3 +912,17 @@ it('opens the view page of an offboarded store and reseller', function (): void 
     livewire(ViewStore::class, ['record' => $store->getKey()])->assertOk();
     livewire(ViewReseller::class, ['record' => $reseller->getKey()])->assertOk();
 });
+
+it('names the offboarded reseller of an offboarded store', function (): void {
+    actAsConsoleAdmin();
+
+    $reseller = Reseller::factory()->create();
+    $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+    $resellerName = $reseller->displayName();
+    resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
+
+    livewire(ListStores::class)
+        ->loadTable()
+        ->filterTable('trashed', ['value' => 'trashed'])
+        ->assertTableColumnStateSet('reseller', $resellerName, $store);
+});

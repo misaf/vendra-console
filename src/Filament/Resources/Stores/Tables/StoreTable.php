@@ -195,7 +195,7 @@ final class StoreTable
      */
     private static function resellerNames(): Collection
     {
-        return once(fn (): Collection => collect(Reseller::displayNames(Reseller::query())));
+        return once(fn (): Collection => collect(Reseller::displayNames(Reseller::query()->withTrashed())));
     }
 
     private static function deployment(Store $store): ?StorefrontDeployment

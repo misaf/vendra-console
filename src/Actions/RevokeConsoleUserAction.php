@@ -19,7 +19,7 @@ final readonly class RevokeConsoleUserAction
     public function execute(User $user): bool
     {
         return DB::transaction(function () use ($user): bool {
-            $activeConsoles = Console::query()->active()->lockForUpdate()->get();
+            $activeConsoles = Console::query()->active()->whereHas('user')->lockForUpdate()->get();
 
             $console = $activeConsoles->firstWhere('user_id', $user->getKey());
 

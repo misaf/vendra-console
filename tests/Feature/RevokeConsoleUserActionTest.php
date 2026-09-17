@@ -42,3 +42,11 @@ it('reports nothing revoked for a user without console access', function (): voi
     expect(resolve(RevokeConsoleUserAction::class)->execute($userWithoutAccess))->toBeFalse()
         ->and(Console::query()->active()->count())->toBe(1);
 });
+
+it('does not count a deleted user as another console user', function (): void {
+    $lastUser = Console::factory()->create()->user;
+    Console::factory()->create()->user->delete();
+
+    expect(fn (): bool => resolve(RevokeConsoleUserAction::class)->execute($lastUser))
+        ->toThrow(LastConsoleUserException::class);
+});

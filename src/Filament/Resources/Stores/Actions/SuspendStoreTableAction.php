@@ -31,8 +31,10 @@ final class SuspendStoreTableAction extends Action
             ->requiresConfirmation()
             ->visible(fn (Store $record): bool => ! $record->trashed() && $record->active && $record->provisioning_status === TenantProvisioningStatus::Ready)
             ->action(function (Store $record, SuspendStoreAction $suspendStore): void {
-                $suspendStore->execute($record);
-                self::notify(__('vendra-console::messages.store_suspended'));
+                self::run(
+                    fn (): mixed => $suspendStore->execute($record),
+                    __('vendra-console::messages.store_suspended'),
+                );
             });
     }
 }

@@ -30,8 +30,10 @@ final class RetryStoreProvisioningTableAction extends Action
             ->visible(fn (Store $record): bool => ! $record->trashed()
                 && $record->provisioning_status !== TenantProvisioningStatus::Ready)
             ->action(function (Store $record, RetryStoreProvisioningAction $retryStoreProvisioning): void {
-                $retryStoreProvisioning->execute($record);
-                self::notify(__('vendra-console::messages.store_provisioning_queued'));
+                self::run(
+                    fn (): mixed => $retryStoreProvisioning->execute($record),
+                    __('vendra-console::messages.store_provisioning_queued'),
+                );
             });
     }
 }

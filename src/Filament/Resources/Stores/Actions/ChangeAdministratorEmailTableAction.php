@@ -37,6 +37,7 @@ final class ChangeAdministratorEmailTableAction extends Action
                     ->required()
                     ->rule(fn (User $record, RelationManager $livewire): mixed => Rule::unique(User::class, 'email')
                         ->where(TenantSchema::column(), self::administratorStore($livewire)->id)
+                        ->withoutTrashed()
                         ->ignore($record->getKey())),
             ])
             ->action(function (User $record, array $data, UpdateUserEmailAction $updateEmail): void {

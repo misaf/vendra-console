@@ -38,8 +38,12 @@ final class RetryStorefrontTableAction extends Action
                     return;
                 }
 
-                $retryStorefront->execute($deployment);
-                self::notify(__('vendra-console::messages.storefront_retry_queued'));
+                self::run(
+                    function () use ($retryStorefront, $deployment): void {
+                        $retryStorefront->execute($deployment);
+                    },
+                    __('vendra-console::messages.storefront_retry_queued'),
+                );
             });
     }
 }
