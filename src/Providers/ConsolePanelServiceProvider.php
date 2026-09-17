@@ -20,6 +20,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Uri;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraLocalization\Http\Middleware\SetLocale;
 use Misaf\VendraSupport\Http\Middleware\AddPanelToRequestJobContext;
 
@@ -31,7 +32,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
             ->id('console')
             ->brandLogo(fn (): string => asset('images/vendra-logo.svg'))
             ->brandLogoHeight('2rem')
-            ->brandName(fn (): string => config()->string('console.platform.name'))
+            ->brandName(fn (): string => resolve(ConsoleSettings::class)->platform_name)
             ->darkModeBrandLogo(fn (): string => asset('images/vendra-logo-dark.svg'))
             ->databaseNotifications()
             ->databaseTransactions()

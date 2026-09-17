@@ -19,7 +19,6 @@ final class ConsoleServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('vendra-console')
-            ->hasConfigFile('console')
             ->hasTranslations()
             ->hasMigrations([
                 'create_consoles_table',
@@ -27,7 +26,6 @@ final class ConsoleServiceProvider extends PackageServiceProvider
             ->hasCommand(ConsoleUserCommand::class)
             ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
-                    ->publishConfigFile()
                     ->askToStarRepoOnGitHub('misaf/vendra-console');
             });
     }

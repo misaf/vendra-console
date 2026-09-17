@@ -108,18 +108,15 @@ tenant scope applies only while a tenant is current and this panel has none.
 
 ## Platform settings
 
-`config/console.php` holds only what is fixed for a deployment:
+The console keeps no config file. Everything a console user changes at runtime
+is a settings row, edited on `ManagePlatformSettings`.
 
-```dotenv
-CONSOLE_PLATFORM_NAME="Vendra Console"
-```
+The panel's brand name is `Misaf\VendraConsole\Settings\ConsoleSettings::$platform_name`,
+seeded as `Vendra Console` by a settings migration and read per request, so a
+rename takes effect on the next page load.
 
-`CONSOLE_PLATFORM_NAME` is the panel's brand name, read per request so a rename
-takes effect on the next page load.
-
-Anything a console user flips at runtime is a settings row instead.
-`ManagePlatformSettings` is the page they edit it on, and today it exposes one
-rule: whether the platform is creating stores at all. That rule is
+The page also exposes one platform rule: whether the platform is creating
+stores at all. That rule is
 `Misaf\VendraStore\Settings\StoreCreationSettings`, read through
 `Misaf\VendraStore\Support\StoreCreationPolicy`, and it lives in
 `misaf/vendra-store` precisely because the reseller panel creates stores too and
