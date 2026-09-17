@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Concerns;
 
 use Filament\Support\Icons\Heroicon;
-use Misaf\VendraStore\Actions\ReconcileStoreStorefrontAction;
+use Misaf\VendraStore\Actions\RequestStorefrontReconciliationAction;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 
 trait ReconcilesDeployment
@@ -27,9 +27,9 @@ trait ReconcilesDeployment
             ->requiresConfirmation()
             ->action(fn (
                 StorefrontDeployment $record,
-                ReconcileStoreStorefrontAction $reconcile,
+                RequestStorefrontReconciliationAction $requestReconciliation,
             ): mixed => self::run(
-                fn (): mixed => $reconcile->execute($record),
+                fn (): mixed => $requestReconciliation->execute($record),
                 __('vendra-console::messages.storefront_reconciled'),
             ));
     }

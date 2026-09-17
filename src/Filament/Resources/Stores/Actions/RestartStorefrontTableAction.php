@@ -28,7 +28,7 @@ final class RestartStorefrontTableAction extends Action
             ->label(__('vendra-console::actions.restart_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
-            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment && ! $record->keepsStorefrontDown())
             ->action(function (Store $record, RestartStoreStorefrontAction $restartStorefront): void {
                 $deployment = self::deployment($record);
 

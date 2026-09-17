@@ -25,6 +25,7 @@ trait RestartsDeployment
             ->label(__('vendra-console::actions.restart_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
+            ->visible(fn (StorefrontDeployment $record): bool => $record->storeMayServe())
             ->action(fn (
                 StorefrontDeployment $record,
                 RestartStoreStorefrontAction $restart,

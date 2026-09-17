@@ -25,7 +25,7 @@ trait RetriesDeployment
         $this
             ->label(__('vendra-console::actions.retry_storefront'))
             ->icon(Heroicon::OutlinedArrowPath)
-            ->visible(fn (StorefrontDeployment $record): bool => $record->status === StorefrontDeploymentStatus::Failed)
+            ->visible(fn (StorefrontDeployment $record): bool => $record->status === StorefrontDeploymentStatus::Failed && $record->storeMayServe())
             ->action(fn (
                 StorefrontDeployment $record,
                 RetryFailedStorefrontDeploymentAction $retry,

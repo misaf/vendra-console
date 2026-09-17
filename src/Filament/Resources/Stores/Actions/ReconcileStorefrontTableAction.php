@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithStoreRecord;
-use Misaf\VendraStore\Actions\ReconcileStoreStorefrontAction;
+use Misaf\VendraStore\Actions\RequestStorefrontReconciliationAction;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 
@@ -29,7 +29,7 @@ final class ReconcileStorefrontTableAction extends Action
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->requiresConfirmation()
             ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
-            ->action(function (Store $record, ReconcileStoreStorefrontAction $reconcileStorefront): void {
+            ->action(function (Store $record, RequestStorefrontReconciliationAction $requestReconciliation): void {
                 $deployment = self::deployment($record);
 
                 if (! $deployment instanceof StorefrontDeployment) {
@@ -39,7 +39,7 @@ final class ReconcileStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $reconcileStorefront->execute($deployment),
+                    fn (): mixed => $requestReconciliation->execute($deployment),
                     __('vendra-console::messages.storefront_reconciled'),
                 );
             });

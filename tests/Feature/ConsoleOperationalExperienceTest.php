@@ -18,8 +18,11 @@ use Misaf\VendraConsole\Filament\Widgets\ConsoleOverview;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
+use Misaf\VendraStore\Enums\StorefrontDesiredState;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
+use Misaf\VendraStore\Jobs\ReconcileStorefrontJob;
+use Misaf\VendraStore\Jobs\RestartStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
@@ -93,7 +96,7 @@ it('lists and filters storefront deployments by status, store, and requested dat
 
 it('retries only failed deployments through the existing provisioning job', function (): void {
     Queue::fake();
-    $failed = StorefrontDeployment::factory()->create(['status' => StorefrontDeploymentStatus::Failed]);
+    $failed = StorefrontDeployment::factory()->for(Store::factory()->active())->create(['status' => StorefrontDeploymentStatus::Failed]);
     $ready = StorefrontDeployment::factory()->create(['status' => StorefrontDeploymentStatus::Ready]);
 
     actAsOperationalConsoleUser();
@@ -110,8 +113,9 @@ it('retries only failed deployments through the existing provisioning job', func
     );
 });
 
-it('reconciles, restarts, and reads logs through storefront and runtime contracts', function (): void {
-    $deployment = StorefrontDeployment::factory()->create([
+it('queues reconcile and restart on the storefront worker and reads logs through the runtime contract', function (): void {
+    Queue::fake();
+    $deployment = StorefrontDeployment::factory()->for(Store::factory()->active())->create([
         'status' => StorefrontDeploymentStatus::Ready,
         'slug' => 'contract-operated',
     ]);
@@ -131,10 +135,11 @@ it('reconciles, restarts, and reads logs through storefront and runtime contract
         ->mountAction(TestAction::make('viewLogs')->table($deployment))
         ->assertActionDataSet(['logs' => "booted\nready"]);
 
-    expect($runtime->calls)->toContain(
-        'restart',
-        'logs:vendra-storefront-contract-operated',
-    );
+    Queue::assertPushed(ReconcileStorefrontJob::class, fn (ReconcileStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
+    Queue::assertPushed(RestartStorefrontJob::class, fn (RestartStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
+
+    expect($runtime->calls)->toContain('logs:vendra-storefront-contract-operated')
+        ->not->toContain('restart');
 });
 
 it('degrades deployment inspection and actions when the runtime is unavailable', function (): void {
@@ -152,9 +157,13 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
         ->assertOk()
         ->assertSee('The fake runtime is configured as unreachable.');
 
+    Queue::fake();
+
     livewire(ListStorefrontDeployments::class)
         ->callAction(TestAction::make('reconcileDeployment')->table($deployment))
         ->assertNotified();
+
+    Queue::assertPushed(ReconcileStorefrontJob::class);
 });
 
 it('shows runtime and required network health without runtime-specific console logic', function (): void {
@@ -282,9 +291,10 @@ describe('store row storefront operations', function (): void {
         );
     });
 
-    it('restarts and reconciles a store storefront through the runtime contract', function (): void {
+    it('queues restart and reconcile of a store storefront on the storefront worker', function (): void {
+        Queue::fake();
         $store = Store::factory()->active()->create();
-        StorefrontDeployment::factory()->for($store)->create([
+        $deployment = StorefrontDeployment::factory()->for($store)->create([
             'status' => StorefrontDeploymentStatus::Ready,
             'slug' => 'store-row-operated',
         ]);
@@ -299,7 +309,26 @@ describe('store row storefront operations', function (): void {
             ->callAction(TestAction::make('reconcileStorefront')->table($store))
             ->assertNotified();
 
-        expect($runtime->calls)->toContain('restart');
+        Queue::assertPushed(RestartStorefrontJob::class, fn (RestartStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
+        Queue::assertPushed(ReconcileStorefrontJob::class, fn (ReconcileStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
+        expect($runtime->calls)->not->toContain('restart');
+    });
+
+    it('hides storefront run operations for a suspended store', function (): void {
+        $store = Store::factory()->active()->suspended()->create();
+        StorefrontDeployment::factory()->for($store)->create([
+            'status' => StorefrontDeploymentStatus::Failed,
+            'desired_state' => StorefrontDesiredState::Stopped,
+        ]);
+
+        actAsOperationalConsoleUser();
+
+        livewire(ListStores::class)
+            ->call('loadTable')
+            ->assertActionHidden(TestAction::make('startStorefront')->table($store))
+            ->assertActionHidden(TestAction::make('restartStorefront')->table($store))
+            ->assertActionHidden(TestAction::make('redeployStorefront')->table($store))
+            ->assertActionHidden(TestAction::make('retryStorefront')->table($store));
     });
 
     it('reads storefront logs from the store row', function (): void {
