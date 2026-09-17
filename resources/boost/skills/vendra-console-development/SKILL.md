@@ -38,7 +38,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Panel Wiring
 
 - `Providers\ConsolePanelServiceProvider` owns the panel: `console` auth guard against the canonical `User` (the `console` provider and broker), `console.<app host>` domain derived from `app.url`, top navigation, and the `AddPanelToRequestJobContext` / `SetLocale` middleware.
-- Authentication is against the canonical user model, not a separate console model; panel access is an active `consoles` row, modelled by `Models\Console` (one per user, with a `user()` relation and `active()`/`forUser()` scopes, never an authenticatable model). Email verification is required. The first console user is created by `ConsoleUserSeeder` with a generated password printed once; use `console:user` to create another or issue a new password, and `console:user --revoke --email=…` (`RevokeConsoleUserAction`, which deactivates the console and never the last active one) to revoke access — there is no credentials config.
+- Authentication is against the canonical user model, not a separate console model; panel access is an active `consoles` row, modelled by `Models\Console` (one per user, with a `user()` relation and `active()`/`forUser()` scopes, never an authenticatable model). Email verification is required. The first console user is created by `ConsoleUserSeeder` with a generated password printed once; use `vendra-console:user` to create another or issue a new password, and `vendra-console:user --revoke --email=…` (`RevokeConsoleUserAction`, which deactivates the console and never the last active one) to revoke access — there is no credentials config.
 - Do not hard-code the panel host; it is derived from configuration.
 
 ## Resources

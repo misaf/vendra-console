@@ -20,6 +20,6 @@ final class ConsoleUserSeeder extends Seeder
             return;
         }
 
-        throw_if($this->command->call('console:user') !== Command::SUCCESS, RuntimeException::class, 'No console user was seeded. Run `php artisan console:user --email=<address>` to create one.');
+        throw_if($this->command->call('vendra-console:user') !== Command::SUCCESS, RuntimeException::class, 'No console user was seeded. Run `php artisan vendra-console:user --email=<address>` to create one.');
     }
 }

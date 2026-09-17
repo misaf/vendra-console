@@ -63,7 +63,7 @@ it('fails the seed when the default console email belongs to an existing user', 
 it('creates a console user with a generated password and prints it', function (): void {
     Config::set('app.url', 'https://vendra.test');
 
-    expect(Artisan::call('console:user'))->toBe(0);
+    expect(Artisan::call('vendra-console:user'))->toBe(0);
 
     $output = Artisan::output();
     $consoleUser = User::query()->sole();
@@ -81,7 +81,7 @@ it('issues a new password to an existing console user without creating another',
     ]);
     grantConsoleAccess($consoleUser);
 
-    $this->artisan('console:user', ['--email' => 'OPS@vendra.test', '--password' => 'the-new-password'])
+    $this->artisan('vendra-console:user', ['--email' => 'OPS@vendra.test', '--password' => 'the-new-password'])
         ->expectsOutputToContain('the-new-password')
         ->assertSuccessful();
 
@@ -91,7 +91,7 @@ it('issues a new password to an existing console user without creating another',
 });
 
 it('trims and lowercases the given email before creating a console user', function (): void {
-    $this->artisan('console:user', ['--email' => ' OPS@Vendra.test ', '--password' => 'the-new-password'])
+    $this->artisan('vendra-console:user', ['--email' => ' OPS@Vendra.test ', '--password' => 'the-new-password'])
         ->expectsOutputToContain('ops@vendra.test')
         ->assertSuccessful();
 
@@ -99,7 +99,7 @@ it('trims and lowercases the given email before creating a console user', functi
 });
 
 it('rejects an invalid email without creating a console user', function (): void {
-    $this->artisan('console:user', ['--email' => 'not-an-email'])
+    $this->artisan('vendra-console:user', ['--email' => 'not-an-email'])
         ->expectsOutputToContain('valid email')
         ->assertFailed();
 
@@ -108,7 +108,7 @@ it('rejects an invalid email without creating a console user', function (): void
 });
 
 it('rejects a password that fails the password rules without creating a console user', function (): void {
-    $this->artisan('console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
+    $this->artisan('vendra-console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
         ->expectsOutputToContain('at least 8 characters')
         ->assertFailed();
 
@@ -124,7 +124,7 @@ it('keeps an existing console user password when the given password fails the pa
     ]);
     grantConsoleAccess($consoleUser);
 
-    $this->artisan('console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
+    $this->artisan('vendra-console:user', ['--email' => 'ops@vendra.test', '--password' => 'short'])
         ->assertFailed();
 
     expect(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeTrue();
@@ -133,7 +133,7 @@ it('keeps an existing console user password when the given password fails the pa
 it('falls back to localhost for the email and console url when the app url has no host', function (): void {
     Config::set('app.url', '');
 
-    expect(Artisan::call('console:user'))->toBe(0)
+    expect(Artisan::call('vendra-console:user'))->toBe(0)
         ->and(Artisan::output())->toContain('console@localhost')
         ->toContain('https://console.localhost');
 });
@@ -141,7 +141,7 @@ it('falls back to localhost for the email and console url when the app url has n
 it('suffixes the username when another platform user already holds it', function (): void {
     User::factory()->create(['tenant_id' => null, 'username' => 'operations_1', 'email' => 'operations_1@a.test']);
 
-    $this->artisan('console:user', ['--email' => 'operations_1@b.test'])->assertSuccessful();
+    $this->artisan('vendra-console:user', ['--email' => 'operations_1@b.test'])->assertSuccessful();
 
     expect(User::query()->where('email', 'operations_1@b.test')->sole()->username)->toBe('operations_2');
 });
@@ -153,7 +153,7 @@ it('does not grant console access to an existing user when the prompt is decline
         'password' => Hash::make('the-old-password'),
     ]);
 
-    $this->artisan('console:user', ['--email' => 'reseller@vendra.test'])
+    $this->artisan('vendra-console:user', ['--email' => 'reseller@vendra.test'])
         ->expectsConfirmation('[reseller@vendra.test] is an existing user without console access. Grant console access and issue a new password?', 'no')
         ->assertFailed();
 
@@ -164,7 +164,7 @@ it('does not grant console access to an existing user when the prompt is decline
 it('grants console access to an existing user once the prompt is confirmed', function (): void {
     $user = User::factory()->create(['tenant_id' => null, 'email' => 'reseller@vendra.test']);
 
-    $this->artisan('console:user', ['--email' => 'reseller@vendra.test', '--password' => 'the-new-password'])
+    $this->artisan('vendra-console:user', ['--email' => 'reseller@vendra.test', '--password' => 'the-new-password'])
         ->expectsConfirmation('[reseller@vendra.test] is an existing user without console access. Grant console access and issue a new password?', 'yes')
         ->expectsOutputToContain('Console access granted and password updated.')
         ->assertSuccessful();
@@ -178,7 +178,7 @@ it('revokes console access from the user given by email', function (): void {
     grantConsoleAccess($revokedUser);
     Console::factory()->active()->create();
 
-    $this->artisan('console:user', ['--email' => 'OPS@vendra.test', '--revoke' => true])
+    $this->artisan('vendra-console:user', ['--email' => 'OPS@vendra.test', '--revoke' => true])
         ->expectsOutputToContain('Console access revoked from [ops@vendra.test].')
         ->assertSuccessful();
 
@@ -189,7 +189,7 @@ it('refuses to revoke the last console user from the command', function (): void
     $lastUser = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
     grantConsoleAccess($lastUser);
 
-    $this->artisan('console:user', ['--email' => 'ops@vendra.test', '--revoke' => true])
+    $this->artisan('vendra-console:user', ['--email' => 'ops@vendra.test', '--revoke' => true])
         ->expectsOutputToContain('[ops@vendra.test] is the last console user.')
         ->assertFailed();
 
@@ -199,7 +199,7 @@ it('refuses to revoke the last console user from the command', function (): void
 it('requires an email to revoke console access', function (): void {
     Console::factory()->active()->count(2)->create();
 
-    $this->artisan('console:user', ['--revoke' => true])
+    $this->artisan('vendra-console:user', ['--revoke' => true])
         ->expectsOutputToContain('The --revoke option requires --email.')
         ->assertFailed();
 
@@ -214,7 +214,7 @@ it('asks before granting console access when the default email belongs to an exi
         'password' => Hash::make('the-old-password'),
     ]);
 
-    $this->artisan('console:user')
+    $this->artisan('vendra-console:user')
         ->expectsConfirmation('[console@vendra.test] is an existing user without console access. Grant console access and issue a new password?', 'no')
         ->expectsOutputToContain('No console access was granted.')
         ->assertFailed();
@@ -232,7 +232,7 @@ it('keeps a console user password when the generated reset is declined', functio
     ]);
     grantConsoleAccess($consoleUser);
 
-    $this->artisan('console:user')
+    $this->artisan('vendra-console:user')
         ->expectsConfirmation('[console@vendra.test] is already a console user. Issue a new password?', 'no')
         ->expectsOutputToContain('The password was not changed.')
         ->assertFailed();
@@ -249,7 +249,7 @@ it('issues a generated password to a console user once the reset is confirmed', 
     ]);
     grantConsoleAccess($consoleUser);
 
-    $this->artisan('console:user')
+    $this->artisan('vendra-console:user')
         ->expectsConfirmation('[console@vendra.test] is already a console user. Issue a new password?', 'yes')
         ->expectsOutputToContain('Console user password updated.')
         ->assertSuccessful();

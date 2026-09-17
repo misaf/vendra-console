@@ -23,7 +23,7 @@ use Misaf\VendraUser\Models\User;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 #[Description('Create a console user, issue a new password to an existing one, or revoke console access')]
-#[Signature('console:user
+#[Signature('vendra-console:user
         {--email= : Email address for the console user; defaults to console@<app host>}
         {--password= : Password to set; a strong one is generated when omitted}
         {--revoke : Revoke console access from the user given by --email}')]
@@ -126,7 +126,7 @@ final class ConsoleUserCommand extends Command
         $this->components->twoColumnDetail('Email', $user->email);
         $this->components->twoColumnDetail('Password', OutputFormatter::escape($password));
         $this->newLine();
-        $this->components->warn('This password is shown once. Change it after signing in, or run `php artisan console:user` to issue a new one.');
+        $this->components->warn('This password is shown once. Change it after signing in, or run `php artisan vendra-console:user` to issue a new one.');
 
         return self::SUCCESS;
     }
