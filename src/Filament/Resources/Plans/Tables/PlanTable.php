@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Plans\Tables;
 
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -13,7 +12,8 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
-use Misaf\VendraSubscription\Actions\DeletePlanAction;
+use Misaf\VendraConsole\Filament\Resources\Plans\Actions\DeletePlanTableAction;
+use Misaf\VendraConsole\Filament\Resources\Plans\Actions\RestorePlanTableAction;
 use Misaf\VendraSubscription\Actions\UpdatePlanAction;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
@@ -54,7 +54,7 @@ final class PlanTable
                     ->label(__('vendra-console::attributes.price'))
                     ->state(fn (Plan $record): string => $record->isFree()
                         ? __('vendra-console::attributes.free')
-                        : $record->price.' '.($record->currency_code ?? '')),
+                        : $record->formattedPrice()),
 
                 IsActiveToggleColumn::make()
                     ->updateStateUsing(function (Plan $record, bool $state, UpdatePlanAction $updatePlan): bool {
@@ -90,13 +90,9 @@ final class PlanTable
                 ActionGroup::make([
                     EditAction::make(),
 
-                    DeleteAction::make()
-                        ->hidden(fn (Plan $record): bool => $record->isInUse())
-                        ->using(function (Plan $record, DeletePlanAction $deletePlan): bool {
-                            $deletePlan->execute($record);
+                    DeletePlanTableAction::make(),
 
-                            return true;
-                        }),
+                    RestorePlanTableAction::make(),
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');

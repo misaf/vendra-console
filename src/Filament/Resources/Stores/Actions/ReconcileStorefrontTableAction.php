@@ -28,9 +28,9 @@ final class ReconcileStorefrontTableAction extends Action
             ->label(__('vendra-console::actions.reconcile_storefront'))
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->requiresConfirmation()
-            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment)
             ->action(function (Store $record, RequestStorefrontReconciliationAction $requestReconciliation): void {
-                $deployment = self::deployment($record);
+                $deployment = $record->storefrontDeployment;
 
                 if (! $deployment instanceof StorefrontDeployment) {
                     self::notifyUnavailable();

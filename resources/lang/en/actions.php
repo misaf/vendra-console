@@ -17,6 +17,8 @@ return [
     'disable_account' => 'Disable account',
     'enable_account' => 'Enable account',
     'extend_subscription' => 'Extend subscription',
+    'offboard_reseller' => 'Offboard reseller',
+    'offboard_resellers' => 'Offboard resellers',
     'offboard_store' => 'Offboard store',
     'promote_administrator' => 'Promote administrator',
     'reactivate_store' => 'Reactivate store',

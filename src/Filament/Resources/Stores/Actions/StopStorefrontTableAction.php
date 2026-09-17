@@ -30,9 +30,9 @@ final class StopStorefrontTableAction extends Action
             ->icon(Heroicon::OutlinedStop)
             ->color('warning')
             ->requiresConfirmation()
-            ->visible(fn (Store $record): bool => self::deployment($record)?->desired_state === StorefrontDesiredState::Running)
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment?->desired_state === StorefrontDesiredState::Running)
             ->action(function (Store $record, StopStoreStorefrontAction $stopStorefront): void {
-                $deployment = self::deployment($record);
+                $deployment = $record->storefrontDeployment;
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(

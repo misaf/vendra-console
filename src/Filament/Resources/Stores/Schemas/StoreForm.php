@@ -14,11 +14,14 @@ use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
-use Misaf\VendraStore\Filament\Schemas\StorefrontConfigurationFields;
 use Misaf\VendraStore\Models\StoreDomain;
 
 final class StoreForm
 {
+    /**
+     * The edit form. Stores are created through `CreateStore`'s wizard, which
+     * builds its own steps from {@see self::storeFields()}.
+     */
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -35,10 +38,6 @@ final class StoreForm
                     ->maxLength(2000)
                     ->visibleOn('edit')
                     ->columnSpanFull(),
-
-                ...self::storeFields(),
-
-                ...StorefrontConfigurationFields::make(optional: true),
             ])
             ->columns(2);
     }

@@ -28,7 +28,7 @@ final class ViewStorefrontLogsTableAction extends Action
         $this
             ->label(__('vendra-console::actions.view_logs'))
             ->icon(Heroicon::OutlinedDocumentText)
-            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment)
             ->fillForm(fn (Store $record, StorefrontProvisioner $provisioner): array => [
                 'logs' => self::logsFor($record, $provisioner),
             ])

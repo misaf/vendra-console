@@ -28,9 +28,9 @@ final class RedeployStorefrontTableAction extends Action
             ->label(__('vendra-console::actions.redeploy_storefront'))
             ->icon(Heroicon::OutlinedCloudArrowUp)
             ->requiresConfirmation()
-            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment && ! $record->keepsStorefrontDown())
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment && ! $record->keepsStorefrontDown())
             ->action(function (Store $record, RedeployStoreStorefrontAction $redeployStorefront): void {
-                $deployment = self::deployment($record);
+                $deployment = $record->storefrontDeployment;
 
                 if (! $deployment instanceof StorefrontDeployment) {
                     self::notifyUnavailable();

@@ -20,6 +20,8 @@ return [
     'administrator_promoted' => 'Administrator promoted',
     'administrator_removed' => 'Administrator removed',
     'last_administrator_required' => 'At least one enabled administrator is required',
+    'offboard_reseller_description' => 'Cancels open subscriptions and removes access to every store.',
+    'offboard_resellers_description' => 'Cancels open subscriptions and removes access to every store for the selected resellers.',
     'store_offboarded' => 'Store offboarded',
     'store_provisioning_queued' => 'Store provisioning queued',
     'store_reactivated' => 'Store reactivated',

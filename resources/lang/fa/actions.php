@@ -17,6 +17,8 @@ return [
     'disable_account' => 'غیرفعال‌کردن حساب',
     'enable_account' => 'فعال‌کردن حساب',
     'extend_subscription' => 'تمدید اشتراک',
+    'offboard_reseller' => 'خروج حساب',
+    'offboard_resellers' => 'خروج حساب‌ها',
     'offboard_store' => 'خارج‌کردن فروشگاه',
     'promote_administrator' => 'ارتقا به مدیر',
     'reactivate_store' => 'فعال‌سازی دوباره فروشگاه',

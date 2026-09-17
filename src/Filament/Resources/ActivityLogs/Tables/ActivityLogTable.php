@@ -11,7 +11,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
@@ -31,7 +30,7 @@ final class ActivityLogTable
                 TextColumn::make('store')
                     ->label(__('vendra-console::navigation.store'))
                     ->icon(Heroicon::GlobeAlt)
-                    ->state(fn (ActivityLog $record): ?string => self::storeNames()->get($record->getAttribute(TenantSchema::column())))
+                    ->state(fn (ActivityLog $record): ?string => self::storeName($record->getAttribute(TenantSchema::column())))
                     ->placeholder(__('vendra-console::attributes.platform_owned_store')),
 
                 TextColumn::make('description')
@@ -63,7 +62,15 @@ final class ActivityLogTable
                 [
                     SelectFilter::make($tenantColumn)
                         ->label(__('vendra-console::navigation.store'))
-                        ->options(fn (): array => self::storeNames()->all()),
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search): array => Store::query()
+                            ->withTrashed()
+                            ->whereLike('name', "%{$search}%")
+                            ->orderBy('name')
+                            ->limit(50)
+                            ->pluck('name', 'id')
+                            ->all())
+                        ->getOptionLabelUsing(fn (mixed $value): ?string => self::storeName($value)),
 
                     SelectFilter::make('event')
                         ->label(__('vendra-console::attributes.event'))
@@ -83,19 +90,23 @@ final class ActivityLogTable
     }
 
     /**
-     * Store names keyed by id, resolved once per request.
+     * A store's name, resolved once per store per request.
      *
      * Every row carries a tenant key rather than a relation the console can
      * eager-load — the activity log is tenant-agnostic by design and names no
-     * Store — so the mapping is built here instead of per row.
-     *
-     * @return Collection<int, string>
+     * Store — so each distinct store on the page costs one lookup instead of
+     * the console loading every store it has ever had.
      */
-    private static function storeNames(): Collection
+    private static function storeName(mixed $storeId): ?string
     {
-        return once(fn (): Collection => Store::query()
-            ->withTrashed()
-            ->get(['id', 'name'])
-            ->mapWithKeys(fn (Store $store): array => [$store->id => $store->name]));
+        if (! is_numeric($storeId)) {
+            return null;
+        }
+
+        return once(function () use ($storeId): ?string {
+            $name = Store::query()->withTrashed()->whereKey((int) $storeId)->value('name');
+
+            return is_string($name) ? $name : null;
+        });
     }
 }

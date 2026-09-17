@@ -17,6 +17,8 @@ return [
     'disable_account' => 'Konto deaktivieren',
     'enable_account' => 'Konto aktivieren',
     'extend_subscription' => 'Abonnement verlängern',
+    'offboard_reseller' => 'Konto deaktivieren',
+    'offboard_resellers' => 'Konten deaktivieren',
     'offboard_store' => 'Store stilllegen',
     'promote_administrator' => 'Zum Administrator befördern',
     'reactivate_store' => 'Store reaktivieren',

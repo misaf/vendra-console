@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Resellers;
 
 use BackedEnum;
-use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -17,7 +16,6 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
-use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\EditReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerForm;
@@ -68,14 +66,9 @@ final class ResellerResource extends Resource
         return ResellerInfolist::configure($schema);
     }
 
-    public static function getRecordSubNavigation(Page $page): array
-    {
-        return $page->generateNavigationItems([ViewReseller::class, EditReseller::class]);
-    }
-
     /**
      * Offboarded records stay listed behind the trashed filter, so their view
-     * and edit pages must resolve them too.
+     * page must resolve them too.
      */
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
@@ -133,7 +126,6 @@ final class ResellerResource extends Resource
             'index' => ListResellers::route('/'),
             'create' => CreateReseller::route('/create'),
             'view' => ViewReseller::route('/{record}'),
-            'edit' => EditReseller::route('/{record}/edit'),
         ];
     }
 

@@ -6,7 +6,6 @@ namespace Misaf\VendraConsole\Filament\Resources\Resellers\Tables;
 
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -21,13 +20,13 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangePlanTableActi
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserEmailTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserPasswordTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ExtendSubscriptionTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerBulkAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Actions\SetResellerActiveAction;
-use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
-use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
@@ -105,7 +104,6 @@ final class ResellerTable
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),
-                    EditAction::make(),
                     ActionGroup::make([
                         ChangeUserPasswordTableAction::make(),
                         ChangeUserEmailTableAction::make(),

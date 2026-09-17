@@ -27,9 +27,9 @@ final class ViewDeploymentTableAction extends Action
         $this
             ->label(__('vendra-console::actions.view_deployment'))
             ->icon(Heroicon::OutlinedEye)
-            ->visible(fn (Store $record): bool => self::deployment($record) instanceof StorefrontDeployment)
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment)
             ->url(function (Store $record): ?string {
-                $deployment = self::deployment($record);
+                $deployment = $record->storefrontDeployment;
 
                 return $deployment instanceof StorefrontDeployment
                     ? StorefrontDeploymentResource::getUrl('view', ['record' => $deployment])

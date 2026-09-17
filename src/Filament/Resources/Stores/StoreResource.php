@@ -95,7 +95,7 @@ final class StoreResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with([
-            'storefrontDeployments',
+            'storefrontDeployment',
             'domains' => fn (Relation $relation): Relation => $relation->where('active', true),
         ]);
     }

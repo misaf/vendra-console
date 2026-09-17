@@ -366,6 +366,31 @@ describe('activity visibility', function (): void {
             ->assertSee('Beta Store');
     });
 
+    it('names and filters by an offboarded store without listing every store up front', function (): void {
+        $offboarded = Store::factory()->active()->create(['name' => 'Gamma Store']);
+        $other = Store::factory()->active()->create(['name' => 'Delta Store']);
+        $forOffboarded = ActivityLog::query()->create([
+            'tenant_id' => $offboarded->getKey(),
+            'log_name' => 'default',
+            'description' => 'Gamma changed a product',
+        ]);
+        $forOther = ActivityLog::query()->create([
+            'tenant_id' => $other->getKey(),
+            'log_name' => 'default',
+            'description' => 'Delta changed a product',
+        ]);
+        $offboarded->delete();
+
+        actAsPlatformUser();
+
+        livewire(ListActivityLogs::class)
+            ->call('loadTable')
+            ->assertTableColumnStateSet('store', 'Gamma Store', $forOffboarded)
+            ->filterTable('tenant_id', $offboarded->getKey())
+            ->assertCanSeeTableRecords([$forOffboarded])
+            ->assertCanNotSeeTableRecords([$forOther]);
+    });
+
     /*
      | The audit trail is a record of what happened. A console user holds no
      | tenant permissions, so the read is granted by panel access — and every

@@ -13,16 +13,9 @@ use Throwable;
 
 trait InteractsWithStoreRecord
 {
-    protected static function deployment(Store $store): ?StorefrontDeployment
-    {
-        $deployment = $store->storefrontDeployments->first();
-
-        return $deployment instanceof StorefrontDeployment ? $deployment : null;
-    }
-
     protected static function logsFor(Store $store, StorefrontProvisioner $provisioner): string
     {
-        $deployment = self::deployment($store);
+        $deployment = $store->storefrontDeployment;
 
         if (! $deployment instanceof StorefrontDeployment) {
             return __('vendra-console::messages.no_recent_logs');

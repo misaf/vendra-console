@@ -20,6 +20,8 @@ return [
     'administrator_promoted' => 'کاربر به مدیر ارتقا یافت',
     'administrator_removed' => 'مدیر حذف شد',
     'last_administrator_required' => 'حداقل یک مدیر فعال الزامی است',
+    'offboard_reseller_description' => 'اشتراک‌های باز را لغو می‌کند و دسترسی همه املاک را حذف می‌کند.',
+    'offboard_resellers_description' => 'اشتراک‌های باز را لغو می‌کند و دسترسی همه املاک حساب‌های انتخاب‌شده را حذف می‌کند.',
     'store_offboarded' => 'فروشگاه خارج شد',
     'store_provisioning_queued' => 'آماده‌سازی فروشگاه در صف قرار گرفت',
     'store_reactivated' => 'فروشگاه دوباره فعال شد',

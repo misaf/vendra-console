@@ -28,9 +28,9 @@ final class StartStorefrontTableAction extends Action
         $this
             ->label(__('vendra-console::actions.start_storefront'))
             ->icon(Heroicon::OutlinedPlay)
-            ->visible(fn (Store $record): bool => self::deployment($record)?->desired_state === StorefrontDesiredState::Stopped && ! $record->keepsStorefrontDown())
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment?->desired_state === StorefrontDesiredState::Stopped && ! $record->keepsStorefrontDown())
             ->action(function (Store $record, StartStoreStorefrontAction $startStorefront): void {
-                $deployment = self::deployment($record);
+                $deployment = $record->storefrontDeployment;
 
                 if ($deployment instanceof StorefrontDeployment) {
                     self::run(

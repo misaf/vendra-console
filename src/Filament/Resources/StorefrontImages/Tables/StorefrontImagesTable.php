@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\StorefrontImages\Tables;
 
 use Filament\Actions\ActionGroup;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
-use Misaf\VendraStore\Actions\DeleteStorefrontImageAction;
+use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Actions\DeleteStorefrontImageTableAction;
 use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
 use Misaf\VendraStore\Models\StorefrontImage;
+use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
 
 final class StorefrontImagesTable
@@ -47,14 +48,10 @@ final class StorefrontImagesTable
                         return $state;
                     }),
 
-                TextColumn::make('created_at')
-                    ->label(__('vendra-console::attributes.created_at'))
-                    ->dateTime('Y-m-d H:i')
+                CreatedAtColumn::make()
                     ->sortable(),
 
-                TextColumn::make('updated_at')
-                    ->label(__('vendra-console::attributes.updated_at'))
-                    ->dateTime('Y-m-d H:i'),
+                UpdatedAtColumn::make(),
             ])
             ->description(__('vendra-console::tables.description.storefront_images'))
             ->emptyStateHeading(__('vendra-console::tables.empty_state.heading.storefront_images'))
@@ -66,13 +63,7 @@ final class StorefrontImagesTable
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
-                    DeleteAction::make()
-                        ->hidden(fn (StorefrontImage $record): bool => $record->isInUse())
-                        ->using(function (StorefrontImage $record, DeleteStorefrontImageAction $deleteImage): bool {
-                            $deleteImage->execute($record);
-
-                            return true;
-                        }),
+                    DeleteStorefrontImageTableAction::make(),
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');

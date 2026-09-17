@@ -20,6 +20,8 @@ return [
     'administrator_promoted' => 'Administrator befördert',
     'administrator_removed' => 'Administrator entfernt',
     'last_administrator_required' => 'Mindestens ein aktiver Administrator ist erforderlich',
+    'offboard_reseller_description' => 'Storniert offene Abonnements und entfernt den Zugriff auf alle Stores.',
+    'offboard_resellers_description' => 'Storniert offene Abonnements und entfernt den Zugriff auf alle Stores der ausgewählten Konten.',
     'store_offboarded' => 'Store stillgelegt',
     'store_provisioning_queued' => 'Store-Bereitstellung eingeplant',
     'store_reactivated' => 'Store reaktiviert',

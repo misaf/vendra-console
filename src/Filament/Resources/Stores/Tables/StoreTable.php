@@ -39,7 +39,6 @@ use Misaf\VendraStore\Actions\SuspendStoreAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
-use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\NameColumn;
@@ -77,7 +76,7 @@ final class StoreTable
                 TextColumn::make('storefront_status')
                     ->label(__('vendra-console::attributes.storefront_status'))
                     ->badge()
-                    ->state(fn (Store $record): ?StorefrontDeploymentStatus => self::deployment($record)?->status)
+                    ->state(fn (Store $record): ?StorefrontDeploymentStatus => $record->storefrontDeployment?->status)
                     ->placeholder(__('vendra-console::attributes.storefront_not_requested')),
 
                 TextColumn::make('admin_url')
@@ -90,9 +89,9 @@ final class StoreTable
 
                 TextColumn::make('storefront_url')
                     ->label(__('vendra-console::attributes.storefront_url'))
-                    ->state(fn (Store $record): ?string => self::deployment($record)?->domain)
+                    ->state(fn (Store $record): ?string => $record->storefrontDeployment?->domain)
                     ->placeholder('—')
-                    ->url(fn (Store $record): ?string => self::deployment($record)?->url())
+                    ->url(fn (Store $record): ?string => $record->storefrontDeployment?->url())
                     ->openUrlInNewTab()
                     ->copyable()
                     ->copyMessage(__('vendra-console::messages.url_copied')),
@@ -196,13 +195,6 @@ final class StoreTable
     private static function resellerNames(): Collection
     {
         return once(fn (): Collection => collect(Reseller::displayNames(Reseller::query()->withTrashed())));
-    }
-
-    private static function deployment(Store $store): ?StorefrontDeployment
-    {
-        $deployment = $store->storefrontDeployments->first();
-
-        return $deployment instanceof StorefrontDeployment ? $deployment : null;
     }
 
     private static function setActive(Store $store, bool $active): bool
