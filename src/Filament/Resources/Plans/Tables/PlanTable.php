@@ -48,7 +48,7 @@ final class PlanTable
 
                 TextColumn::make('period')
                     ->label(__('vendra-console::attributes.period'))
-                    ->state(fn (Plan $record): string => "{$record->period_count} ".__("vendra-console::attributes.period_{$record->period_unit->value}")),
+                    ->state(fn (Plan $record): string => "{$record->period_count} ".$record->period_unit->getLabel()),
 
                 TextColumn::make('price')
                     ->label(__('vendra-console::attributes.price'))
@@ -80,12 +80,7 @@ final class PlanTable
 
                     SelectFilter::make('period_unit')
                         ->label(__('vendra-console::attributes.period_unit'))
-                        ->options([
-                            PeriodUnit::Day->value => __('vendra-console::attributes.period_day'),
-                            PeriodUnit::Week->value => __('vendra-console::attributes.period_week'),
-                            PeriodUnit::Month->value => __('vendra-console::attributes.period_month'),
-                            PeriodUnit::Year->value => __('vendra-console::attributes.period_year'),
-                        ]),
+                        ->options(PeriodUnit::class),
 
                     TrashedFilter::make(),
                 ],

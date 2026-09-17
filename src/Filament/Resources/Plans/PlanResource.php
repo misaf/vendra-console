@@ -79,7 +79,7 @@ final class PlanResource extends Resource
         $plan = self::plan($record);
 
         return [
-            __('vendra-console::attributes.period') => "{$plan->period_count} ".__("vendra-console::attributes.period_{$plan->period_unit->value}"),
+            __('vendra-console::attributes.period') => "{$plan->period_count} ".$plan->period_unit->getLabel(),
             __('vendra-console::attributes.price') => $plan->isFree() ? __('vendra-console::attributes.free') : $plan->formattedPrice(),
         ];
     }

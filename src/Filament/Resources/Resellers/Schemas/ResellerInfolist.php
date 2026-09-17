@@ -9,6 +9,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Filament\Infolists\Components\IsActiveEntry;
 
@@ -47,8 +48,7 @@ final class ResellerInfolist
                         TextEntry::make('current_status')
                             ->label(__('vendra-console::attributes.subscription_status'))
                             ->badge()
-                            ->state(fn (Reseller $record): ?string => self::subscription($record)?->status->value)
-                            ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.status_{$state}"))
+                            ->state(fn (Reseller $record): ?SubscriptionStatus => self::subscription($record)?->status)
                             ->placeholder('—'),
                         TextEntry::make('current_ends_at')
                             ->label(__('vendra-console::attributes.ends_at'))

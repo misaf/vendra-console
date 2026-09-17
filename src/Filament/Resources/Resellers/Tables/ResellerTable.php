@@ -29,6 +29,7 @@ use Misaf\VendraReseller\Actions\SetResellerActiveAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerBulkAction;
 use Misaf\VendraReseller\Filament\Actions\OffboardResellerTableAction;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
@@ -77,7 +78,7 @@ final class ResellerTable
                     SelectFilter::make('subscription_health')
                         ->label(__('vendra-console::attributes.subscription_status'))
                         ->options([
-                            'active' => __('vendra-console::attributes.status_active'),
+                            'active' => SubscriptionStatus::Active->getLabel(),
                             'expiring_soon' => __('vendra-console::attributes.expiring_soon'),
                             'none' => __('vendra-console::attributes.no_active_subscription'),
                         ])

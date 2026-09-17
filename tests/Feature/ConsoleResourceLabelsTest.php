@@ -21,7 +21,6 @@ use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
-use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Models\User;
@@ -86,10 +85,10 @@ it('translates plan period units in the list and the form', function (): void {
 
     livewire(ListPlans::class)
         ->loadTable()
-        ->assertTableColumnStateSet('period', '3 '.__('vendra-console::attributes.period_month'), $plan);
+        ->assertTableColumnStateSet('period', '3 '.PeriodUnit::Month->getLabel(), $plan);
 
     $expectedOptions = collect(PeriodUnit::cases())
-        ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => __("vendra-console::attributes.period_{$unit->value}")])
+        ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => $unit->getLabel()])
         ->all();
 
     livewire(CreatePlan::class)
@@ -99,8 +98,6 @@ it('translates plan period units in the list and the form', function (): void {
 it('translates every enum-derived console label', function (string $locale): void {
     $prefixedEnums = [
         'runtime_state_' => StorefrontRuntimeState::cases(),
-        'status_' => SubscriptionStatus::cases(),
-        'period_' => PeriodUnit::cases(),
     ];
 
     $missing = [];
@@ -133,4 +130,4 @@ it('carries every English package string into each translation', function (strin
     }
 
     expect($missing)->toBeEmpty();
-})->with(['vendra-console', 'vendra-reseller', 'vendra-store'])->with(['fa', 'de']);
+})->with(['vendra-console', 'vendra-reseller', 'vendra-store', 'vendra-subscription'])->with(['fa', 'de']);

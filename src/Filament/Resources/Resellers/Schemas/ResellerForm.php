@@ -14,6 +14,7 @@ use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
 use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\ValidatesResellerUser;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
 use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
@@ -89,8 +90,7 @@ final class ResellerForm
                         TextEntry::make('current_status')
                             ->label(__('vendra-console::attributes.status'))
                             ->badge()
-                            ->state(fn (?Reseller $record): ?string => $record?->activeSubscription()?->status->value)
-                            ->formatStateUsing(fn (string $state): string => __("vendra-console::attributes.status_{$state}"))
+                            ->state(fn (?Reseller $record): ?SubscriptionStatus => $record?->activeSubscription()?->status)
                             ->placeholder('—'),
 
                         TextEntry::make('current_ends_at')

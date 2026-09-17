@@ -41,7 +41,7 @@ final class PlanForm
                     ->label(__('vendra-console::attributes.period_unit'))
                     ->live()
                     ->native(false)
-                    ->options(self::periodUnitOptions())
+                    ->options(PeriodUnit::class)
                     ->required(),
 
                 TextInput::make('period_count')
@@ -109,15 +109,5 @@ final class PlanForm
                     ->visible(fn (Get $get): bool => (bool) $get('active')),
             ])
             ->columns(2);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function periodUnitOptions(): array
-    {
-        return collect(PeriodUnit::cases())
-            ->mapWithKeys(fn (PeriodUnit $unit): array => [$unit->value => __("vendra-console::attributes.period_{$unit->value}")])
-            ->all();
     }
 }
