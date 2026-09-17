@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Concerns;
 
 use Filament\Support\Icons\Heroicon;
+use Misaf\VendraConsole\Filament\Concerns\InteractsWithStorefrontRuntime;
 use Misaf\VendraStore\Actions\RestartStoreStorefrontAction;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 
 trait RestartsDeployment
 {
-    use InteractsWithDeploymentRecord;
+    use InteractsWithStorefrontRuntime;
 
     public static function getDefaultName(): string
     {
@@ -26,12 +27,14 @@ trait RestartsDeployment
             ->icon(Heroicon::OutlinedArrowPath)
             ->requiresConfirmation()
             ->visible(fn (StorefrontDeployment $record): bool => $record->storeMayServe())
-            ->action(fn (
+            ->action(function (
                 StorefrontDeployment $record,
                 RestartStoreStorefrontAction $restart,
-            ): mixed => self::run(
-                fn (): mixed => $restart->execute($record),
-                __('vendra-console::messages.storefront_restarted'),
-            ));
+            ): void {
+                self::run(
+                    fn (): mixed => $restart->execute($record),
+                    __('vendra-console::messages.storefront_restarted'),
+                );
+            });
     }
 }

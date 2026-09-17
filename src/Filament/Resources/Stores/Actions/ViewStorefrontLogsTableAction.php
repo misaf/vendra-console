@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\Textarea;
-use Filament\Support\Icons\Heroicon;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithStoreRecord;
-use Misaf\VendraStore\Contracts\StorefrontProvisioner;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 
@@ -26,24 +23,7 @@ final class ViewStorefrontLogsTableAction extends Action
         parent::setUp();
 
         $this
-            ->label(__('vendra-console::actions.view_logs'))
-            ->icon(Heroicon::OutlinedDocumentText)
-            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment)
-            ->fillForm(fn (Store $record, StorefrontProvisioner $provisioner): array => [
-                'logs' => self::logsFor($record, $provisioner),
-            ])
-            ->schema([
-                Textarea::make('logs')
-                    ->hiddenLabel()
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->rows(20)
-                    ->placeholder(__('vendra-console::messages.no_recent_logs'))
-                    ->columnSpanFull(),
-            ])
-            ->modalHeading(__('vendra-console::attributes.recent_storefront_logs'))
-            ->action(static fn (): null => null)
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel(__('vendra-console::actions.close'));
+            ->showsStorefrontLogs()
+            ->visible(fn (Store $record): bool => $record->storefrontDeployment instanceof StorefrontDeployment);
     }
 }
