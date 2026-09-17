@@ -24,6 +24,12 @@ final class ConsoleOverview extends StatsOverviewWidget
 
     protected static ?int $sort = 1;
 
+    /**
+     * Each refresh runs a dozen fleet-wide counts, so an open dashboard polls
+     * once a minute rather than at Filament's five-second default.
+     */
+    protected ?string $pollingInterval = '60s';
+
     protected function getStats(): array
     {
         $activeStores = Store::query()->withStatus(StoreStatus::Active)->count();
@@ -42,7 +48,7 @@ final class ConsoleOverview extends StatsOverviewWidget
         $readyDeployments = (int) $deploymentCounts->get(StorefrontDeploymentStatus::Ready->value, 0);
         $processingDeployments = (int) $deploymentCounts->get(StorefrontDeploymentStatus::Processing->value, 0);
 
-        $expiringSoon = Subscription::query()->expiringWithin(7)->count();
+        $expiringSoon = Subscription::query()->endingWithin(7)->count();
         $activeSubscriptions = Subscription::query()->active()->count();
 
         return [

@@ -89,7 +89,7 @@ final class ResellerTable
                             ),
                             'expiring_soon' => $query->whereHas(
                                 'subscriptions',
-                                fn (Builder $query): Builder => $query->expiringWithin(7),
+                                fn (Builder $query): Builder => $query->endingWithin(7),
                             ),
                             'none' => $query->whereDoesntHave(
                                 'subscriptions',

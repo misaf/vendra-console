@@ -155,6 +155,11 @@ describe('console dashboard subscription health', function (): void {
         Subscription::factory()->forSubscriber($resellerB)->for(Plan::factory()->create())
             ->create(['ends_at' => now()->addDays(5)]);
 
+        // Already reminded by the scheduler, and still ending within the week.
+        $resellerD = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($resellerD)->for(Plan::factory()->create())
+            ->create(['ends_at' => now()->addDays(3), 'expiry_reminder_sent_at' => now()]);
+
         $resellerC = Reseller::factory()->active()->create();
         Subscription::factory()->expired()->forSubscriber($resellerC)->for(Plan::factory()->create())->create();
 
@@ -164,9 +169,9 @@ describe('console dashboard subscription health', function (): void {
             ->assertOk()
             ->assertSeeInOrder([
                 __('vendra-console::attributes.active_subscriptions'),
-                '2',
+                '3',
                 __('vendra-console::attributes.expiring_soon'),
-                '1',
+                '2',
             ]);
     });
 });

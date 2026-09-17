@@ -9,6 +9,7 @@ use Filament\Support\Icons\Heroicon;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithStoreRecord;
 use Misaf\VendraStore\Actions\SuspendStoreAction;
 use Misaf\VendraStore\Models\Store;
+use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
 
 final class SuspendStoreTableAction extends Action
 {
@@ -28,7 +29,7 @@ final class SuspendStoreTableAction extends Action
             ->icon(Heroicon::OutlinedPauseCircle)
             ->color('warning')
             ->requiresConfirmation()
-            ->visible(fn (Store $record): bool => ! $record->trashed() && $record->active)
+            ->visible(fn (Store $record): bool => ! $record->trashed() && $record->active && $record->provisioning_status === TenantProvisioningStatus::Ready)
             ->action(function (Store $record, SuspendStoreAction $suspendStore): void {
                 $suspendStore->execute($record);
                 self::notify(__('vendra-console::messages.store_suspended'));

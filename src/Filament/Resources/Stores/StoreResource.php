@@ -14,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
@@ -80,6 +81,15 @@ final class StoreResource extends Resource
     public static function table(Table $table): Table
     {
         return StoreTable::configure($table);
+    }
+
+    /**
+     * Offboarded records stay listed behind the trashed filter, so their view
+     * and edit pages must resolve them too.
+     */
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        return parent::getRecordRouteBindingEloquentQuery()->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function getEloquentQuery(): Builder

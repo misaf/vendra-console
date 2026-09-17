@@ -28,7 +28,7 @@ final class ReactivateSubscriptionTableAction extends Action
         $this
             ->label(__('vendra-console::actions.reactivate_subscription'))->icon(Heroicon::OutlinedPlayCircle)
             ->hidden(fn (Reseller $record): bool => $record->trashed())
-            ->visible(fn (Reseller $record): bool => in_array($record->latestSubscription()?->status, [
+            ->visible(fn (Reseller $record): bool => in_array(self::displayedLatestSubscription($record)?->status, [
                 SubscriptionStatus::Cancelled, SubscriptionStatus::Expired, SubscriptionStatus::PastDue,
             ], true))
             ->action(function (Reseller $record): void {

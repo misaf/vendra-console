@@ -7,6 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Once;
 use LogicException;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraUser\Exceptions\LastAdministratorException;
@@ -23,9 +24,13 @@ trait InteractsWithAdministratorRecord
         return $store;
     }
 
+    /**
+     * Memoized per store and user for the request: the column and two action
+     * visibility checks all ask, and each answer switches tenancy.
+     */
     protected static function isAdministrator(Store $store, User $user): bool
     {
-        return $store->execute(fn (): bool => $user->hasRole(Config::string('vendra-permission.admin_role')));
+        return once(fn (): bool => $store->execute(fn (): bool => $user->hasRole(Config::string('vendra-permission.admin_role'))));
     }
 
     /**
@@ -51,8 +56,14 @@ trait InteractsWithAdministratorRecord
         self::notifySuccess($successTitle);
     }
 
+    /**
+     * Every membership change ends here, so the memoized role answers are
+     * dropped before the table renders again.
+     */
     protected static function notifySuccess(string $title): void
     {
+        Once::flush();
+
         Notification::make()->success()->title($title)->send();
     }
 }

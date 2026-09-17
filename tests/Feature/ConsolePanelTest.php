@@ -902,3 +902,13 @@ it('manages resellers and the stores that belong to them', function (): void {
         ->and($other->stores()->pluck('id')->all())->toBe([$foreign->getKey()])
         ->and($direct->reseller_id)->toBeNull();
 });
+
+it('opens the view page of an offboarded store and reseller', function (): void {
+    actAsConsoleAdmin();
+    $reseller = Reseller::factory()->create();
+    $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+    resolve(OffboardResellerAction::class)->execute($reseller, 'Closed.');
+
+    livewire(ViewStore::class, ['record' => $store->getKey()])->assertOk();
+    livewire(ViewReseller::class, ['record' => $reseller->getKey()])->assertOk();
+});

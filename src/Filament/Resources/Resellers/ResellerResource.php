@@ -14,6 +14,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\EditReseller;
@@ -70,6 +71,15 @@ final class ResellerResource extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([ViewReseller::class, EditReseller::class]);
+    }
+
+    /**
+     * Offboarded records stay listed behind the trashed filter, so their view
+     * and edit pages must resolve them too.
+     */
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        return parent::getRecordRouteBindingEloquentQuery()->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function getEloquentQuery(): Builder
