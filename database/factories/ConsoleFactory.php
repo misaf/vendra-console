@@ -7,7 +7,7 @@ namespace Misaf\VendraConsole\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Attributes\UseModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Misaf\VendraConsole\Models\Console;
-use Misaf\VendraUser\Database\Factories\UserFactory;
+use Misaf\VendraUser\Models\User;
 
 /**
  * @extends Factory<Console>
@@ -21,7 +21,7 @@ final class ConsoleFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => UserFactory::new()->state(['tenant_id' => null]),
+            'user_id' => User::factory()->state(fn (): array => ['tenant_id' => null]),
             'active' => fake()->boolean(80),
         ];
     }

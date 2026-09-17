@@ -11,6 +11,7 @@ use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Arr;
 use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 
@@ -89,7 +90,7 @@ final class ManagePlatformSettings extends SettingsPage
     protected function mutateFormDataBeforeSave(array $data): array
     {
         resolve(ConsoleSettings::class)
-            ->fill(['platform_name' => $data['platform_name']])
+            ->fill(['platform_name' => Arr::get($data, 'platform_name')])
             ->save();
 
         unset($data['platform_name']);
