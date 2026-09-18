@@ -43,7 +43,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 ## Resources
 
-- `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
+- `StoreResource`, `ResellerResource`, and `PlanResource` render and delegate. Store creation extends `Misaf\VendraStore\Filament\Pages\CreateStorePage` and reuses `StorefrontConfigurationFields`; domain replacement reuses that package's `ReplaceDomainTableAction`; reseller offboarding calls `Misaf\VendraReseller\Actions\OffboardResellerAction`.
 - `StorefrontDeploymentResource` is read-only history and console inspection. Read live state and logs through `StorefrontProvisioner`; invoke `vendra-store` retry, reconcile, and restart actions for mutations. Do not import runtime-specific clients into Filament.
 - `ContainerRuntimeHealth` only reads the report `vendra-store`'s `RecordStorefrontRuntimeHealthJob` records on the storefront worker (`StorefrontRuntimeHealth::latest()`). Never call the runtime from a panel request: the web container has no runtime socket.
 - Keep `NeedsAttention` and `PlatformMetrics` stat counts aligned with their destination resource filters. Count stores by status with `StoreStatusCounts`.
