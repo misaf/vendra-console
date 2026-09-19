@@ -21,16 +21,8 @@ use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSubscription\Models\SubscriptionPayment;
 
-/**
- * Only what a console user should act on, each linked to the list that resolves
- * it. Problems with nothing to count are left out, and an empty set collapses to
- * a single all-clear stat so the top of the dashboard stays quiet when it can.
- */
 final class NeedsAttention extends StatsOverviewWidget
 {
-    /**
-     * Payments a gateway or a failed refund left for a person to resolve.
-     */
     private const array PAYMENT_STATUSES_NEEDING_REVIEW = [
         SubscriptionPaymentStatus::RequiresAction,
         SubscriptionPaymentStatus::NeedsReconciliation,
@@ -107,9 +99,6 @@ final class NeedsAttention extends StatsOverviewWidget
         return array_values($stats);
     }
 
-    /**
-     * Queued jobs of any queue that failed within the last day.
-     */
     private static function recentlyFailedJobs(): int
     {
         return DB::connection(Config::string('queue.failed.database'))

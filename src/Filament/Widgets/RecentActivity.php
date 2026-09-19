@@ -13,9 +13,6 @@ use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraConsole\Filament\Resources\ActivityLogs\ActivityLogResource;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 
-/**
- * The latest audit-log entries across the platform, with a link to the full log.
- */
 final class RecentActivity extends TableWidget
 {
     private const int ROWS = 8;

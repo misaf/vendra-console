@@ -84,8 +84,7 @@ final class StoreResource extends Resource
     }
 
     /**
-     * Offboarded records stay listed behind the trashed filter, so their view
-     * and edit pages must resolve them too.
+     * Include offboarded records, so their view and edit pages resolve.
      */
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
@@ -153,14 +152,6 @@ final class StoreResource extends Resource
         ];
     }
 
-    /**
-     * Whether the console may create a store right now.
-     *
-     * The platform-wide freeze switch, owned by `vendra-store` so the reseller
-     * panel can honour the same rule without depending on the console. It is
-     * resolved per request, so flipping it on the platform settings page takes
-     * effect on the next page load.
-     */
     public static function canCreate(): bool
     {
         return resolve(StoreCreationPolicy::class)->isOpen();

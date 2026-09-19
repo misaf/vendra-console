@@ -18,8 +18,6 @@ use Misaf\VendraSupport\Tenancy\Scopes\TenantScope;
 use Misaf\VendraUser\Models\User;
 
 /**
- * A console account: one platform user, which may enter the console panel while active.
- *
  * @property int $id
  * @property int $user_id
  * @property bool $active
@@ -35,7 +33,7 @@ final class Console extends Model
     use HasFactory;
 
     /**
-     * Console users are platform users, so the relation never applies tenant scopes.
+     * Get the console's user, without tenant scopes.
      *
      * @return BelongsTo<User, $this>
      */

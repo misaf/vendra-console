@@ -67,8 +67,7 @@ final class ResellerResource extends Resource
     }
 
     /**
-     * Offboarded records stay listed behind the trashed filter, so their view
-     * page must resolve them too.
+     * Include offboarded records, so their view page resolves.
      */
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
@@ -93,7 +92,7 @@ final class ResellerResource extends Resource
     }
 
     /**
-     * A reseller has no name of its own; it is titled and searched by its user.
+     * Title the reseller by its user, since it has no name of its own.
      */
     public static function getRecordTitle(?Model $record): string|Htmlable|null
     {

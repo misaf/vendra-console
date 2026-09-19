@@ -45,8 +45,7 @@ beforeEach(function (): void {
 });
 
 /**
- * The console user this file acts as. Named apart from ConsolePanelTest's
- * helper so each file stands on its own when run alone.
+ * Act as a console user; named apart from ConsolePanelTest's helper.
  */
 function actAsPlatformUser(): User
 {

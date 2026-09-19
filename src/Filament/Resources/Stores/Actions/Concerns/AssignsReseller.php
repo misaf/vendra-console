@@ -14,11 +14,7 @@ use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
 
 /**
- * Hand a store to a reseller, to a different reseller, or back to the platform.
- *
- * A deliberate operation rather than a field on the edit form: reassignment
- * consumes a slot in the receiving reseller's plan, and a plain `reseller_id`
- * select would write the column straight past that check.
+ * An action rather than a form field, so the reseller's plan quota is checked.
  */
 trait AssignsReseller
 {

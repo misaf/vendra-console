@@ -12,7 +12,7 @@ use Misaf\VendraUser\Models\User;
 final readonly class RevokeConsoleUserAction
 {
     /**
-     * Deactivates the user's console; the row stays so access can be granted again.
+     * The row is kept so access can be granted again.
      *
      * @throws LastConsoleUserException
      */

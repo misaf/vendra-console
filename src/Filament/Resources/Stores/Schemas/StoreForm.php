@@ -19,8 +19,7 @@ use Misaf\VendraStore\Models\StoreDomain;
 final class StoreForm
 {
     /**
-     * The edit form. Stores are created through `CreateStore`'s wizard, which
-     * builds its own steps from {@see self::storeFields()}.
+     * Creation uses `CreateStore`'s wizard instead.
      */
     public static function configure(Schema $schema): Schema
     {

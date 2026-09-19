@@ -18,8 +18,8 @@ final readonly class CreateConsoleUserAction
     public function __construct(private CreateUserAction $createUserAction) {}
 
     /**
-     * A concurrent create can claim the chosen username between the check and
-     * the insert; that attempt is rolled back and retried with a fresh suffix.
+     * Retry with a fresh username suffix if a concurrent create claims it first.
+     *
      * Any other unique violation, such as a taken email, is rethrown.
      *
      * @throws UniqueConstraintViolationException
@@ -51,10 +51,9 @@ final readonly class CreateConsoleUserAction
     }
 
     /**
-     * Usernames are unique among platform users, so a taken local part gets a
-     * numeric suffix. Every row is checked, trashed and tenant-scoped ones
-     * included, because which unique index applies depends on whether tenancy
-     * is enabled.
+     * Derive a free username from the email, adding a numeric suffix if taken.
+     *
+     * Trashed and tenant rows are checked too, since the unique index depends on tenancy.
      */
     private static function usernameFor(string $email): string
     {

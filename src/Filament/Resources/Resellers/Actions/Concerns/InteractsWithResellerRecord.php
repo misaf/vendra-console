@@ -11,9 +11,9 @@ use Misaf\VendraSubscription\Models\Subscription;
 trait InteractsWithResellerRecord
 {
     /**
-     * For visibility and form defaults on table rows: the resource eager loads
-     * subscriptions newest first, so reading them costs no query per action.
-     * Writes still re-read through {@see Reseller::latestSubscription()}.
+     * Get the eager-loaded latest subscription, for visibility and form defaults.
+     *
+     * Writes re-read through {@see Reseller::latestSubscription()}.
      */
     protected static function displayedLatestSubscription(Reseller $reseller): ?Subscription
     {

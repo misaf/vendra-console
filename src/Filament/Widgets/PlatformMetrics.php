@@ -22,7 +22,7 @@ use Misaf\VendraSubscription\Models\SubscriptionPayment;
 use Throwable;
 
 /**
- * The platform's key numbers. They change slowly, so the widget does not poll.
+ * Show the platform's key numbers; they change slowly, so the widget does not poll.
  */
 final class PlatformMetrics extends StatsOverviewWidget
 {
@@ -66,10 +66,6 @@ final class PlatformMetrics extends StatsOverviewWidget
         ];
     }
 
-    /**
-     * Paid subscription revenue in the window, one formatted amount per currency.
-     * Null when nothing was paid.
-     */
     private static function revenueBetween(CarbonInterface $from, CarbonInterface $until): ?string
     {
         $totals = SubscriptionPayment::query()

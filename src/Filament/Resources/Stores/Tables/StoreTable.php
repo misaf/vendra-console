@@ -187,8 +187,7 @@ final class StoreTable
     }
 
     /**
-     * Reseller names keyed by id, resolved once per request to avoid a
-     * per-row query when rendering the reseller column.
+     * Get reseller names keyed by id, memoized per request.
      *
      * @return Collection<int, string>
      */

@@ -11,11 +11,6 @@ use Misaf\VendraConsole\Filament\Widgets\PlatformGrowthChart;
 use Misaf\VendraConsole\Filament\Widgets\PlatformMetrics;
 use Misaf\VendraConsole\Filament\Widgets\RecentActivity;
 
-/**
- * The console's home, ordered by urgency: what needs a console user now, the
- * platform's key numbers, how it is growing, the storefront runtime, and what
- * changed recently.
- */
 final class Dashboard extends BaseDashboard
 {
     /**

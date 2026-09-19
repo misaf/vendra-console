@@ -13,12 +13,7 @@ use Misaf\VendraStore\Support\StorefrontRuntimeHealth;
 use Misaf\VendraStore\Support\StorefrontRuntimeHealthReport;
 
 /**
- * Shows the runtime health the storefront worker last recorded.
- *
- * The panel never probes the runtime itself: only the storefront worker holds
- * the runtime socket, so a probe from the web container would report the
- * runtime as down however healthy it is. A missing or stale report is shown as
- * a warning, because it means the worker or the scheduler stopped recording.
+ * Only the worker can reach the runtime, so a missing or stale report is a warning.
  */
 final class ContainerRuntimeHealth extends StatsOverviewWidget
 {

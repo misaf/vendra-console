@@ -17,10 +17,8 @@ use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
 use Misaf\VendraUser\Models\User;
 
 /**
- * The two uniqueness rules treat soft deletes differently on purpose: the
- * tenant-scoped email unique index is built on a guard column that nulls out
- * once `deleted_at` is set, so a trashed administrator frees its address,
- * while the username unique index covers the raw column and keeps holding it.
+ * A trashed administrator frees its email but keeps its username, matching the
+ * users table's unique indexes.
  */
 final class AddAdministratorTableAction extends Action
 {

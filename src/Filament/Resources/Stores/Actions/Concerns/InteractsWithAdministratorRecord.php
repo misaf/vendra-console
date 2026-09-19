@@ -25,8 +25,7 @@ trait InteractsWithAdministratorRecord
     }
 
     /**
-     * Memoized per store and user for the request: the column and two action
-     * visibility checks all ask, and each answer switches tenancy.
+     * Determine if the user administers the store, memoized per request.
      */
     protected static function isAdministrator(Store $store, User $user): bool
     {
@@ -34,8 +33,7 @@ trait InteractsWithAdministratorRecord
     }
 
     /**
-     * Runs an operation that may refuse to remove the store's last administrator,
-     * turning that refusal into a notification instead of an error page.
+     * Run an operation, reporting a last-administrator refusal as a notification.
      *
      * @param  callable(): mixed  $operation
      */
@@ -57,8 +55,7 @@ trait InteractsWithAdministratorRecord
     }
 
     /**
-     * Every membership change ends here, so the memoized role answers are
-     * dropped before the table renders again.
+     * Notify success and clear the memoized role answers.
      */
     protected static function notifySuccess(string $title): void
     {

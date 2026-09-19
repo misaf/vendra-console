@@ -28,7 +28,7 @@ The `consoles` table holds one row per canonical user
 `config/auth.php` points the `console` guard at the platform-scoped
 `console` provider and the `console` password broker, whose
 reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. Nothing is
-configured for the first one: on a fresh install `ConsoleUserSeeder` creates
+configured for the first one: on a fresh install `ConsoleSeeder` creates
 `console@<app host>` with a generated password and prints it once to the seed
 output (the container's first-boot log). `php artisan vendra-console:user` creates a
 console user or issues a new password, generating one unless `--password` is given.

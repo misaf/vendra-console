@@ -397,8 +397,7 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
         ->assertWizardStepExists(4)
         ->assertFormFieldExists('create_storefront')
         ->assertSee(__('vendra-store::attributes.storefront_map_query'))
-        // The billing reseller is optional; leaving it empty makes a
-        // platform-owned store, so it must not appear among the errors.
+        // The reseller is optional, so it must not appear among the errors.
         ->assertFormFieldExists('reseller_id')
         ->call('create')
         ->assertHasFormErrors([
@@ -889,7 +888,7 @@ it('manages resellers and the stores that belong to them', function (): void {
     $foreign = Store::factory()->active()->create(['reseller_id' => $other->getKey()]);
     $direct = Store::factory()->active()->create();
 
-    // The console is the cross-tenant surface: it sees every store, whoever owns it.
+    // The console sees every store, whoever owns it.
     livewire(ListStores::class)
         ->loadTable()
         ->assertCanSeeTableRecords([$owned, $foreign, $direct]);

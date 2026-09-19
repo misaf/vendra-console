@@ -12,8 +12,7 @@ use Misaf\VendraUser\Models\User;
 final readonly class GrantConsoleAccessAction
 {
     /**
-     * Creates the user's console, or reactivates it when it was revoked.
-     * Returns whether access changed.
+     * Returns false when the user already had active access.
      *
      * @throws InvalidArgumentException
      */

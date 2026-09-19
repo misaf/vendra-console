@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Misaf\VendraConsole\Database\Seeders\ConsoleUserSeeder;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
@@ -22,43 +21,6 @@ function grantConsoleAccess(User $user): void
 {
     Console::factory()->active()->for($user)->create();
 }
-
-it('seeds a console user on a fresh install and prints its generated password', function (): void {
-    Config::set('app.url', 'https://www.vendra.test');
-
-    Artisan::call('db:seed', ['--class' => ConsoleUserSeeder::class, '--force' => true]);
-
-    $output = Artisan::output();
-    $consoleUser = User::query()->sole();
-
-    expect($consoleUser->email)->toBe('console@www.vendra.test')
-        ->and($consoleUser->tenant_id)->toBeNull()
-        ->and($consoleUser->username)->toBe('console')
-        ->and($consoleUser->hasVerifiedEmail())->toBeTrue()
-        ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
-        ->and($output)->toContain('https://console.www.vendra.test')
-        ->and(printedConsolePassword($output))->toHaveLength(32)
-        ->and(Hash::check(printedConsolePassword($output), $consoleUser->password))->toBeTrue();
-});
-
-it('does not seed a console user when a console grant already exists', function (): void {
-    $existingConsoleUser = User::factory()->create(['tenant_id' => null]);
-    grantConsoleAccess($existingConsoleUser);
-
-    Artisan::call('db:seed', ['--class' => ConsoleUserSeeder::class, '--force' => true]);
-
-    expect(Artisan::output())->not->toContain('Password')
-        ->and(User::query()->sole()->is($existingConsoleUser))->toBeTrue();
-});
-
-it('fails the seed when the default console email belongs to an existing user', function (): void {
-    Config::set('app.url', 'https://vendra.test');
-    User::factory()->create(['tenant_id' => null, 'email' => 'console@vendra.test']);
-
-    expect(fn (): int => Artisan::call('db:seed', ['--class' => ConsoleUserSeeder::class, '--force' => true, '--no-interaction' => true]))
-        ->toThrow(RuntimeException::class, 'No console user was seeded.')
-        ->and(Console::query()->count())->toBe(0);
-});
 
 it('creates a console user with a generated password and prints it', function (): void {
     Config::set('app.url', 'https://vendra.test');

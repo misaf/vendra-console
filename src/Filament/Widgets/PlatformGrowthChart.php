@@ -10,9 +10,6 @@ use Misaf\VendraStore\Filament\Concerns\BuildsDailyTrend;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSubscription\Models\Subscription;
 
-/**
- * New stores, resellers and subscriptions per day over a chosen window.
- */
 final class PlatformGrowthChart extends ChartWidget
 {
     use BuildsDailyTrend;
@@ -31,7 +28,7 @@ final class PlatformGrowthChart extends ChartWidget
     }
 
     /**
-     * Keyed by the window in days.
+     * Get the filters, keyed by the window in days.
      *
      * @return array<int, string>
      */

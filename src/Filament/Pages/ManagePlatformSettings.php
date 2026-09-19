@@ -16,10 +16,7 @@ use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 
 /**
- * Edits the platform rules a console user can change at runtime.
- *
- * The page saves `StoreCreationSettings`; the console's own presentation lives
- * in `ConsoleSettings` and is filled and saved alongside it in one transaction.
+ * Edit `StoreCreationSettings` and `ConsoleSettings` in one transaction.
  */
 final class ManagePlatformSettings extends SettingsPage
 {

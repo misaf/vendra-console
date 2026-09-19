@@ -66,8 +66,7 @@ final class CreateStore extends CreateStorePage
     }
 
     /**
-     * The console picks the billing reseller on the form. Leaving it empty
-     * creates a store the platform owns directly.
+     * Use the reseller picked on the form; none means a platform store.
      *
      * @param  array<string, mixed>  $data
      */
@@ -85,8 +84,6 @@ final class CreateStore extends CreateStorePage
     }
 
     /**
-     * Every wizard step is laid out the same way, so the shape is written once.
-     *
      * @param  array<int, Htmlable|string>  $schema
      */
     private function step(string $label, string $description, Heroicon $icon, array $schema): Step

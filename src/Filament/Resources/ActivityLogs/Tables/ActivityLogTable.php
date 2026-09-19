@@ -90,12 +90,9 @@ final class ActivityLogTable
     }
 
     /**
-     * A store's name, resolved once per store per request.
+     * Get a store's name, memoized per request.
      *
-     * Every row carries a tenant key rather than a relation the console can
-     * eager-load — the activity log is tenant-agnostic by design and names no
-     * Store — so each distinct store on the page costs one lookup instead of
-     * the console loading every store it has ever had.
+     * The activity log has no store relation to eager load.
      */
     private static function storeName(mixed $storeId): ?string
     {

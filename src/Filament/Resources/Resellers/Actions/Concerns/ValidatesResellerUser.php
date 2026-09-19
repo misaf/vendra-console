@@ -11,12 +11,7 @@ use Misaf\VendraSupport\Tenancy\TenantSchema;
 use Misaf\VendraUser\Models\User;
 
 /**
- * Validation for a reseller's main account, which is always a platform user.
- *
- * Uniqueness mirrors the users table indexes: with tenancy enabled, platform
- * users are unique only among other live platform users, so a store's own
- * users never block a reseller username or email. Without tenancy the
- * username index covers every row, trashed ones included.
+ * Uniqueness mirrors the users table indexes, which depend on whether tenancy is enabled.
  */
 trait ValidatesResellerUser
 {

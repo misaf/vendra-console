@@ -14,16 +14,9 @@ use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontReference;
 use Throwable;
 
-/**
- * Storefront runtime plumbing shared by the store and storefront deployment
- * actions: running an operation behind a notification and showing recent logs.
- */
 trait InteractsWithStorefrontRuntime
 {
     /**
-     * Runs a storefront operation, reporting a failure as a notification
-     * instead of an error page.
-     *
      * @param  callable(): mixed  $operation
      */
     protected static function run(callable $operation, string $successTitle): void
@@ -62,10 +55,6 @@ trait InteractsWithStorefrontRuntime
         }
     }
 
-    /**
-     * Turns the action into a read-only modal of the record's recent storefront
-     * logs, for a store or a storefront deployment record.
-     */
     protected function showsStorefrontLogs(): static
     {
         return $this
