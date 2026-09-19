@@ -17,6 +17,10 @@ use Misaf\VendraStore\Settings\StoreCreationSettings;
 
 /**
  * Edit `StoreCreationSettings` and `ConsoleSettings` in one transaction.
+ *
+ * `ConsoleSettings` is saved from `mutateFormDataBeforeSave()`, which runs
+ * inside the transaction the console panel's `databaseTransactions()` opens
+ * around `save()`, so a failed store creation save rolls it back too.
  */
 final class ManagePlatformSettings extends SettingsPage
 {

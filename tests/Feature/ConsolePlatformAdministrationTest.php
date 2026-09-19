@@ -33,6 +33,7 @@ use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
 use Misaf\VendraUser\Models\User;
+use Spatie\LaravelSettings\Events\SavingSettings;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
@@ -301,6 +302,20 @@ describe('platform settings', function (): void {
 
         expect(resolve(ConsoleSettings::class)->platform_name)->toBe('Acme Platform')
             ->and(resolve(StoreCreationSettings::class)->open)->toBeTrue();
+    });
+
+    it('rolls back the platform name when saving the store creation settings fails', function (): void {
+        actAsPlatformUser();
+        Event::listen(SavingSettings::class, function (SavingSettings $event): void {
+            throw_if($event->settings instanceof StoreCreationSettings, RuntimeException::class, 'Store creation settings could not be saved.');
+        });
+
+        expect(fn () => livewire(ManagePlatformSettings::class)
+            ->fillForm(['platform_name' => 'Acme Platform', 'open' => false])
+            ->call('save'))
+            ->toThrow(RuntimeException::class, 'Store creation settings could not be saved.')
+            ->and(resolve(ConsoleSettings::class)->refresh()->platform_name)->toBe('Vendra Console')
+            ->and(resolve(StoreCreationSettings::class)->refresh()->open)->toBeTrue();
     });
 
     it('requires a platform name', function (): void {

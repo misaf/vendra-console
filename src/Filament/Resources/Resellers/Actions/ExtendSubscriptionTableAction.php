@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Date;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Actions\ExtendSubscriptionAction;
-use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 
 final class ExtendSubscriptionTableAction extends Action
@@ -32,8 +31,7 @@ final class ExtendSubscriptionTableAction extends Action
         $this
             ->label(__('vendra-console::actions.extend_subscription'))->icon(Heroicon::OutlinedCalendarDays)
             ->hidden(fn (Reseller $record): bool => $record->trashed())
-            ->visible(fn (Reseller $record): bool => self::displayedLatestSubscription($record)?->status === SubscriptionStatus::Active
-                && self::displayedLatestSubscription($record)?->ends_at !== null)
+            ->visible(fn (Reseller $record): bool => self::displayedLatestSubscription($record)?->canBeExtended() === true)
             ->schema([DateTimePicker::make('ends_at')->label(__('vendra-console::attributes.ends_at'))
                 ->after(fn (Reseller $record): ?Carbon => $record->latestSubscription()?->ends_at)->required()])
             ->action(function (Reseller $record, array $data): void {

@@ -77,6 +77,22 @@ it('demotes and promotes a store administrator through row actions', function ()
     expect(consoleStoreUserIsAdministrator($store, $second))->toBeTrue();
 });
 
+it('flips the promote and demote actions once the role changes', function (): void {
+    $store = consoleStoreWithAdministratorRole();
+    consoleStoreAdministrator($store, 'first_admin');
+    $second = consoleStoreAdministrator($store, 'second_admin');
+
+    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->assertActionVisible(TestAction::make('demoteAdministrator')->table($second))
+        ->assertActionHidden(TestAction::make('promoteAdministrator')->table($second))
+        ->callAction(TestAction::make('demoteAdministrator')->table($second))
+        ->assertActionHidden(TestAction::make('demoteAdministrator')->table($second))
+        ->assertActionVisible(TestAction::make('promoteAdministrator')->table($second))
+        ->callAction(TestAction::make('promoteAdministrator')->table($second))
+        ->assertActionVisible(TestAction::make('demoteAdministrator')->table($second))
+        ->assertActionHidden(TestAction::make('promoteAdministrator')->table($second));
+});
+
 it('keeps the last store administrator when demoting or removing them', function (): void {
     $store = consoleStoreWithAdministratorRole();
     $administrator = consoleStoreAdministrator($store, 'only_admin');

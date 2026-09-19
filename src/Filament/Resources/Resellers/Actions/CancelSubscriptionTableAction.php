@@ -9,7 +9,6 @@ use Filament\Support\Icons\Heroicon;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Actions\CancelSubscriptionAction;
-use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 
 final class CancelSubscriptionTableAction extends Action
@@ -29,9 +28,7 @@ final class CancelSubscriptionTableAction extends Action
             ->label(__('vendra-console::actions.cancel_subscription'))->icon(Heroicon::OutlinedXCircle)
             ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->color('danger')->requiresConfirmation()
-            ->visible(fn (Reseller $record): bool => in_array(self::displayedLatestSubscription($record)?->status, [
-                SubscriptionStatus::PendingPayment, SubscriptionStatus::Active, SubscriptionStatus::PastDue,
-            ], true))
+            ->visible(fn (Reseller $record): bool => self::displayedLatestSubscription($record)?->canBeCancelled() === true)
             ->action(function (Reseller $record): void {
                 $subscription = $record->latestSubscription();
                 if (! $subscription instanceof Subscription) {
