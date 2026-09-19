@@ -53,7 +53,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Platform Settings
 
 - The console has no config file. The brand name is `Settings\ConsoleSettings::$platform_name` (global repository), edited on `ManagePlatformSettings`. Anything a console user flips at runtime is a settings row.
-- `Filament\Pages\ManagePlatformSettings` edits `Misaf\VendraStore\Settings\StoreCreationSettings`; `StoreResource::canCreate()` reads it through `Misaf\VendraStore\Support\StoreCreationPolicy`. A rule the reseller or store layer must honour belongs to the layer that enforces it.
+- `Filament\Pages\ManagePlatformSettings` edits `Misaf\VendraStore\Settings\StoreCreationSettings`; `StoreResource::canCreate()` reads its `open` flag. A rule the reseller or store layer must honour belongs to the layer that enforces it.
 
 ## Testing
 

@@ -7,6 +7,7 @@ namespace Misaf\VendraConsole\Console\Commands;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -17,6 +18,7 @@ use Misaf\VendraConsole\Actions\RevokeConsoleUserAction;
 use Misaf\VendraConsole\Exceptions\LastConsoleUserException;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Support\ConsoleAddress;
+use Misaf\VendraSupport\Tenancy\TenantSchema;
 use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
 use Misaf\VendraUser\Models\User;
 use Symfony\Component\Console\Formatter\OutputFormatter;
@@ -164,7 +166,7 @@ final class ConsoleUserCommand extends Command
     {
         return User::query()
             ->where('email', $email)
-            ->whereNull('tenant_id')
+            ->when(TenantSchema::enabled(), fn (Builder $query): Builder => $query->whereNull(TenantSchema::column()))
             ->first();
     }
 }

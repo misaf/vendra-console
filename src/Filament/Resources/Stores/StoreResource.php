@@ -26,7 +26,7 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreInfolist;
 use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
 use Misaf\VendraStore\Models\Store;
-use Misaf\VendraStore\Support\StoreCreationPolicy;
+use Misaf\VendraStore\Settings\StoreCreationSettings;
 
 final class StoreResource extends Resource
 {
@@ -154,7 +154,7 @@ final class StoreResource extends Resource
 
     public static function canCreate(): bool
     {
-        return resolve(StoreCreationPolicy::class)->isOpen();
+        return resolve(StoreCreationSettings::class)->open;
     }
 
     public static function getPages(): array

@@ -127,8 +127,7 @@ rename takes effect on the next page load.
 
 The page also exposes one platform rule: whether the platform is creating
 stores at all. That rule is
-`Misaf\VendraStore\Settings\StoreCreationSettings`, read through
-`Misaf\VendraStore\Support\StoreCreationPolicy`, and it lives in
+`Misaf\VendraStore\Settings\StoreCreationSettings`, and it lives in
 `misaf/vendra-store` precisely because the reseller panel creates stores too and
 sits below this package. Closing it therefore closes reseller creation as well;
 a reseller's own plan remains the second half of their gate.
