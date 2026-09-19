@@ -8,13 +8,12 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Misaf\VendraConsole\Filament\Forms\Components\NewPasswordInput;
 use Misaf\VendraConsole\Filament\Forms\Components\PasswordConfirmationInput;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithAdministratorRecord;
-use Misaf\VendraSupport\Tenancy\TenantSchema;
 use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
-use Misaf\VendraUser\Models\User;
+use Misaf\VendraUser\Support\UserRules;
 
 /**
  * A trashed administrator frees its email but keeps its username, matching the
@@ -43,15 +42,12 @@ final class AddAdministratorTableAction extends Action
                     ->minLength(3)
                     ->maxLength(12)
                     ->rules(['alpha_dash'])
-                    ->rule(fn (RelationManager $livewire): mixed => Rule::unique(User::class, 'username')
-                        ->where(TenantSchema::column(), self::administratorStore($livewire)->id)),
+                    ->rule(fn (RelationManager $livewire): Unique => UserRules::unique('username', self::administratorStore($livewire)->id)),
                 TextInput::make('email')
                     ->label(__('vendra-console::attributes.email'))
                     ->required()
                     ->email()
-                    ->rule(fn (RelationManager $livewire): mixed => Rule::unique(User::class, 'email')
-                        ->where(TenantSchema::column(), self::administratorStore($livewire)->id)
-                        ->withoutTrashed()),
+                    ->rule(fn (RelationManager $livewire): Unique => UserRules::unique('email', self::administratorStore($livewire)->id)),
                 NewPasswordInput::make(),
                 PasswordConfirmationInput::make(),
             ])

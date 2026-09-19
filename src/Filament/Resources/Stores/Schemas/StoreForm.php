@@ -12,9 +12,9 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
-use Misaf\LaravelEmailVerification\Rules\EmailValidation;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Models\StoreDomain;
+use Misaf\VendraUser\Support\UserRules;
 
 final class StoreForm
 {
@@ -111,11 +111,7 @@ final class StoreForm
                 ->live(onBlur: true)
                 ->maxLength(255)
                 ->required()
-                ->rules([
-                    'bail',
-                    'email:rfc,strict,spoof,filter,filter_unicode',
-                    new EmailValidation,
-                ])
+                ->rules(UserRules::email())
                 ->visibleOn('create'),
         ];
     }

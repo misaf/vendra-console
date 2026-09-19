@@ -8,11 +8,11 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Illuminate\Support\Arr;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWithAdministratorRecord;
-use Misaf\VendraSupport\Tenancy\TenantSchema;
 use Misaf\VendraUser\Actions\UpdateUserEmailAction;
 use Misaf\VendraUser\Models\User;
+use Misaf\VendraUser\Support\UserRules;
 
 final class ChangeAdministratorEmailTableAction extends Action
 {
@@ -35,10 +35,7 @@ final class ChangeAdministratorEmailTableAction extends Action
                     ->label(__('vendra-console::attributes.email'))
                     ->email()
                     ->required()
-                    ->rule(fn (User $record, RelationManager $livewire): mixed => Rule::unique(User::class, 'email')
-                        ->where(TenantSchema::column(), self::administratorStore($livewire)->id)
-                        ->withoutTrashed()
-                        ->ignore($record->getKey())),
+                    ->rule(fn (User $record, RelationManager $livewire): Unique => UserRules::unique('email', self::administratorStore($livewire)->id, $record->id)),
             ])
             ->action(function (User $record, array $data, UpdateUserEmailAction $updateEmail): void {
                 $updateEmail->execute($record, (string) Arr::get($data, 'email'));
