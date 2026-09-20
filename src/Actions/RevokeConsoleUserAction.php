@@ -12,14 +12,17 @@ use Misaf\VendraUser\Models\User;
 final readonly class RevokeConsoleUserAction
 {
     /**
-     * The row is kept so access can be granted again.
+     * Deactivate the user's console grant.
+     *
+     * The last-user guard counts only grants whose user still exists, so a
+     * soft-deleted user can be revoked even as the final grant holder.
      *
      * @throws LastConsoleUserException
      */
     public function execute(User $user): bool
     {
         return DB::transaction(function () use ($user): bool {
-            $activeConsoles = Console::query()->active()->whereHas('user')->lockForUpdate()->get();
+            $activeConsoles = Console::query()->active()->lockForUpdate()->get();
 
             $console = $activeConsoles->firstWhere('user_id', $user->getKey());
 
@@ -27,11 +30,15 @@ final readonly class RevokeConsoleUserAction
                 return false;
             }
 
-            if ($activeConsoles->count() === 1) {
+            $liveConsoleUserIds = $activeConsoles->load('user')
+                ->filter(fn (Console $activeConsole): bool => $activeConsole->user !== null)
+                ->pluck('user_id');
+
+            if ($liveConsoleUserIds->all() === [$user->getKey()]) {
                 throw LastConsoleUserException::forUser($user->email);
             }
 
-            $console->forceFill(['active' => false])->save();
+            $console->update(['active' => false]);
 
             return true;
         });

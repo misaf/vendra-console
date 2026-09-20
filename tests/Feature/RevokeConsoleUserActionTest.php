@@ -50,3 +50,24 @@ it('does not count a deleted user as another console user', function (): void {
     expect(fn (): bool => resolve(RevokeConsoleUserAction::class)->execute($lastUser))
         ->toThrow(LastConsoleUserException::class);
 });
+
+it('revokes a deleted user even as the last console user, keeping access disabled after restore', function (int $otherConsoleCount): void {
+    $console = Console::factory()->active()->create();
+    $user = $console->user;
+    Console::factory()->active()->count($otherConsoleCount)->create();
+    $user->fresh()->delete();
+
+    expect(resolve(RevokeConsoleUserAction::class)->execute($user))->toBeTrue()
+        ->and($console->refresh()->active)->toBeFalse();
+
+    $user->refresh()->restore();
+
+    expect($user->canAccessPanel(Filament::getPanel('console')))->toBeFalse();
+})->with([0, 1]);
+
+it('reports nothing revoked for an inactive console grant', function (): void {
+    $console = Console::factory()->inactive()->create();
+
+    expect(resolve(RevokeConsoleUserAction::class)->execute($console->user))->toBeFalse()
+        ->and($console->refresh()->active)->toBeFalse();
+});

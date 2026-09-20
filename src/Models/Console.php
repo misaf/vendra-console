@@ -23,7 +23,7 @@ use Misaf\VendraUser\Models\User;
  * @property bool $active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read User $user
+ * @property-read ?User $user
  */
 #[Fillable(['user_id', 'active'])]
 #[UseFactory(ConsoleFactory::class)]
@@ -34,6 +34,8 @@ final class Console extends Model
 
     /**
      * Get the console's user, without tenant scopes.
+     *
+     * Null once the user is soft deleted, while the grant row survives.
      *
      * @return BelongsTo<User, $this>
      */

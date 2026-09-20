@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Support\ConsoleAddress;
+use Misaf\VendraConsole\Support\ConsoleCredentials;
 use RuntimeException;
 
 final class ConsoleSeeder extends Seeder
@@ -34,9 +35,6 @@ final class ConsoleSeeder extends Seeder
             throw new RuntimeException("Console username or email [{$email}] is taken. Run `php artisan vendra-console:user`.", previous: $exception);
         }
 
-        $this->command->info('Console access details');
-        $this->command->table(['Console URL', 'Email', 'Password'], [
-            [ConsoleAddress::url(), $user->email, $password],
-        ]);
+        ConsoleCredentials::report($this->command, 'Console access details', $user->email, $password);
     }
 }

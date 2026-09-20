@@ -12,9 +12,7 @@ use Misaf\VendraUser\Models\User;
 
 function printedConsolePassword(string $output): string
 {
-    $line = Str::of($output)->explode(PHP_EOL)->first(fn (string $line): bool => str_contains($line, 'Password'));
-
-    return Str::afterLast(mb_trim((string) $line), ' ');
+    return Str::of($output)->match('/\|\s*https:\/\/[^|]+\|\s*[^|]+\|\s*(\S+)\s*\|/')->toString();
 }
 
 function grantConsoleAccess(User $user): void

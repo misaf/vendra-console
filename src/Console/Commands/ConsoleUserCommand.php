@@ -19,10 +19,10 @@ use Misaf\VendraConsole\Actions\RevokeConsoleUserAction;
 use Misaf\VendraConsole\Exceptions\LastConsoleUserException;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Support\ConsoleAddress;
+use Misaf\VendraConsole\Support\ConsoleCredentials;
 use Misaf\VendraSupport\Tenancy\TenantSchema;
 use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
 use Misaf\VendraUser\Models\User;
-use Symfony\Component\Console\Formatter\OutputFormatter;
 
 #[Description('Create a console user, issue a new password to an existing one, or revoke console access')]
 #[Signature('vendra-console:user
@@ -98,7 +98,9 @@ final class ConsoleUserCommand extends Command
                 return self::FAILURE;
             }
 
-            return $this->reportPassword('Console user created.', $user, $password);
+            ConsoleCredentials::report($this, 'Console user created.', $user->email, $password);
+
+            return self::SUCCESS;
         }
 
         $hasConsoleAccess = Console::query()->active()->forUser($user)->exists();
@@ -113,11 +115,14 @@ final class ConsoleUserCommand extends Command
             return $this->updateUserPasswordAction->execute($user, $password);
         });
 
-        return $this->reportPassword(
+        ConsoleCredentials::report(
+            $this,
             $hasConsoleAccess ? 'Console user password updated.' : 'Console access granted and password updated.',
-            $user,
+            $user->email,
             $password,
         );
+
+        return self::SUCCESS;
     }
 
     /**
@@ -144,18 +149,6 @@ final class ConsoleUserCommand extends Command
         $this->components->error('The password was not changed.');
 
         return false;
-    }
-
-    private function reportPassword(string $message, User $user, string $password): int
-    {
-        $this->components->info($message);
-        $this->components->twoColumnDetail('URL', ConsoleAddress::url());
-        $this->components->twoColumnDetail('Email', $user->email);
-        $this->components->twoColumnDetail('Password', OutputFormatter::escape($password));
-        $this->newLine();
-        $this->components->warn('This password is shown once. Change it after signing in, or run `php artisan vendra-console:user` to issue a new one.');
-
-        return self::SUCCESS;
     }
 
     private function revoke(?string $email): int
