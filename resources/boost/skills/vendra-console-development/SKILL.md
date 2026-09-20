@@ -64,3 +64,5 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 - Resources with a cluster live in `src/Filament/Clusters/Resources/`; resources without one live in `src/Filament/Resources/`.
 - Every console password form (reseller user accounts, store administrators, reseller creation) uses `Filament\Forms\Components\NewPasswordInput` and `PasswordConfirmationInput`: revealable per panel, required, confirmed, and validated with `Password::default()`. Add per-form extras such as `visibleOn()` or a `GeneratePasswordAction` hint at the call site.
+
+New console users require an explicit username passed to `CreateConsoleUserAction::execute($username, $email, $password)`. The command accepts `--username` and prompts when creating a user interactively; non-interactive creation requires the option. Existing-user operations preserve the username. The seeder explicitly uses `console`; username conflicts fail without suffixes or retries.

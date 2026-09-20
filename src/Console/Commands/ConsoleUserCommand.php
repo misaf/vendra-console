@@ -8,6 +8,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -25,6 +26,7 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
 
 #[Description('Create a console user, issue a new password to an existing one, or revoke console access')]
 #[Signature('vendra-console:user
+        {--username= : Username for a new console user; prompts when omitted}
         {--email= : Email address for the console user; defaults to console@<app host>}
         {--password= : Password to set; a strong one is generated when omitted}
         {--revoke : Revoke console access from the user given by --email}')]
@@ -69,7 +71,32 @@ final class ConsoleUserCommand extends Command
         $user = $this->findPlatformUser($email);
 
         if ($user === null) {
-            $user = $this->createConsoleUserAction->execute($email, $password);
+            $username = $this->option('username');
+
+            if ($username === null && $this->input->isInteractive()) {
+                $username = $this->ask('Username');
+            }
+
+            $username = is_string($username) ? mb_trim($username) : null;
+            $validator = Validator::make(
+                ['username' => $username],
+                ['username' => ['required', 'string', 'max:255']],
+                ['username.required' => 'A username is required to create a console user. Use --username.'],
+            );
+
+            if ($validator->fails()) {
+                $this->components->error($validator->errors()->first());
+
+                return self::FAILURE;
+            }
+
+            try {
+                $user = $this->createConsoleUserAction->execute((string) $username, $email, $password);
+            } catch (UniqueConstraintViolationException) {
+                $this->components->error('The username or email is already taken. Choose another.');
+
+                return self::FAILURE;
+            }
 
             return $this->reportPassword('Console user created.', $user, $password);
         }

@@ -26,22 +26,17 @@ final class ConsoleSeeder extends Seeder
         }
 
         $email = ConsoleAddress::defaultEmail();
-        $password = Str::password(32, symbols: false);
+        $password = Str::password(16, symbols: false);
 
         try {
-            $user = $this->createConsoleUserAction->execute($email, $password);
+            $user = $this->createConsoleUserAction->execute('console', $email, $password);
         } catch (UniqueConstraintViolationException $exception) {
-            throw new RuntimeException("No console user was seeded. [{$email}] is already taken; run `php artisan vendra-console:user --email=<address>` to create one.", previous: $exception);
+            throw new RuntimeException("Console username or email [{$email}] is taken. Run `php artisan vendra-console:user`.", previous: $exception);
         }
 
-        if (! isset($this->command)) {
-            return;
-        }
-
-        $this->command->info('Console user created.');
-        $this->command->line('URL: '.ConsoleAddress::url());
-        $this->command->line("Email: {$user->email}");
-        $this->command->line("Password: {$password}");
-        $this->command->warn('This password is shown once. Change it after signing in, or run `php artisan vendra-console:user` to issue a new one.');
+        $this->command->info('Console access details');
+        $this->command->table(['Console URL', 'Email', 'Password'], [
+            [ConsoleAddress::url(), $user->email, $password],
+        ]);
     }
 }

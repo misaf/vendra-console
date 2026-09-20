@@ -30,3 +30,5 @@ The `misaf/vendra-console` package is the **console (platform admin) panel**. It
 - Filament resources with a cluster live in `src/Filament/Clusters/Resources/`; resources without one live in `src/Filament/Resources/`. The console's resources are uncluttered and live in `src/Filament/Resources/`.
 - Console password forms use `Filament\Forms\Components\NewPasswordInput` and `PasswordConfirmationInput`; add `visibleOn()` or a `GeneratePasswordAction` hint at the call site instead of rebuilding the password `TextInput` chains.
 - Follow Laravel comment style: document with PHPDoc (array shapes, generics, `@see`) and reserve inline comments for genuinely complex logic.
+
+New console users require an explicit username passed to `CreateConsoleUserAction::execute($username, $email, $password)`. The command accepts `--username` and prompts when creating a user interactively; non-interactive creation requires the option. Existing-user operations preserve the username. The seeder explicitly uses `console`; username conflicts fail without suffixes or retries.

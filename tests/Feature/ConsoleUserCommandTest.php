@@ -25,7 +25,7 @@ function grantConsoleAccess(User $user): void
 it('creates a console user with a generated password and prints it', function (): void {
     Config::set('app.url', 'https://vendra.test');
 
-    expect(Artisan::call('vendra-console:user'))->toBe(0);
+    expect(Artisan::call('vendra-console:user', ['--username' => 'chosen_name']))->toBe(0);
 
     $output = Artisan::output();
     $consoleUser = User::query()->sole();
@@ -53,11 +53,12 @@ it('issues a new password to an existing console user without creating another',
 });
 
 it('trims and lowercases the given email before creating a console user', function (): void {
-    $this->artisan('vendra-console:user', ['--email' => ' OPS@Vendra.test ', '--password' => 'the-new-password'])
+    $this->artisan('vendra-console:user', ['--username' => ' chosen_name ', '--email' => ' OPS@Vendra.test ', '--password' => 'the-new-password'])
         ->expectsOutputToContain('ops@vendra.test')
         ->assertSuccessful();
 
-    expect(User::query()->sole()->email)->toBe('ops@vendra.test');
+    expect(User::query()->sole()->email)->toBe('ops@vendra.test')
+        ->and(User::query()->sole()->username)->toBe('chosen_name');
 });
 
 it('rejects an invalid email without creating a console user', function (): void {
@@ -95,17 +96,20 @@ it('keeps an existing console user password when the given password fails the pa
 it('falls back to localhost for the email and console url when the app url has no host', function (): void {
     Config::set('app.url', '');
 
-    expect(Artisan::call('vendra-console:user'))->toBe(0)
+    expect(Artisan::call('vendra-console:user', ['--username' => 'chosen_name']))->toBe(0)
         ->and(Artisan::output())->toContain('console@localhost')
         ->toContain('https://console.localhost');
 });
 
-it('suffixes the username when another platform user already holds it', function (): void {
+it('rejects a username another platform user already holds', function (): void {
     User::factory()->create(['tenant_id' => null, 'username' => 'operations_1', 'email' => 'operations_1@a.test']);
 
-    $this->artisan('vendra-console:user', ['--email' => 'operations_1@b.test'])->assertSuccessful();
+    $this->artisan('vendra-console:user', ['--username' => 'operations_1', '--email' => 'operations_1@b.test'])
+        ->expectsOutputToContain('The username or email is already taken.')
+        ->assertFailed();
 
-    expect(User::query()->where('email', 'operations_1@b.test')->sole()->username)->toBe('operations_2');
+    expect(User::query()->count())->toBe(1)
+        ->and(Console::query()->count())->toBe(0);
 });
 
 it('does not grant console access to an existing user when the prompt is declined', function (): void {
@@ -218,3 +222,28 @@ it('issues a generated password to a console user once the reset is confirmed', 
 
     expect(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeFalse();
 });
+
+it('prompts for a username when creating a console user interactively', function (): void {
+    $this->artisan('vendra-console:user', ['--email' => 'ops@vendra.test'])
+        ->expectsQuestion('Username', 'chosen_name')
+        ->assertSuccessful();
+
+    expect(User::query()->sole()->username)->toBe('chosen_name');
+});
+
+it('requires an explicit username when creating a console user without interaction', function (): void {
+    $this->artisan('vendra-console:user', ['--no-interaction' => true])
+        ->expectsOutputToContain('A username is required')
+        ->assertFailed();
+
+    expect(User::query()->count())->toBe(0)
+        ->and(Console::query()->count())->toBe(0);
+});
+
+it('rejects an invalid username without creating a user', function (string $username): void {
+    $this->artisan('vendra-console:user', ['--username' => $username])
+        ->assertFailed();
+
+    expect(User::query()->count())->toBe(0)
+        ->and(Console::query()->count())->toBe(0);
+})->with(['blank' => '   ', 'too long' => str_repeat('a', 256)]);

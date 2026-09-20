@@ -13,25 +13,25 @@ use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
 it('creates a platform user with console access', function (): void {
-    $user = resolve(CreateConsoleUserAction::class)->execute('ops@vendra.test', 'a-secure-password');
+    $user = resolve(CreateConsoleUserAction::class)->execute('chosen_name', 'ops@vendra.test', 'a-secure-password');
 
     expect($user->email)->toBe('ops@vendra.test')
         ->and($user->tenant_id)->toBeNull()
-        ->and($user->username)->toBe('ops')
+        ->and($user->username)->toBe('chosen_name')
         ->and(Hash::check('a-secure-password', $user->password))->toBeTrue()
         ->and($user->canAccessPanel(Filament::getPanel('console')))->toBeTrue();
 });
 
-it('retries with a suffixed username when a concurrent create claims the username first', function (): void {
+it('rejects a username claimed concurrently without retrying or granting access', function (): void {
     $raceWasFaked = false;
     $concurrentRowRestored = false;
     $baseTransactionLevel = DB::transactionLevel();
     $createConcurrentUser = fn (): User => User::withoutEvents(
-        fn (): User => User::factory()->create(['tenant_id' => null, 'username' => 'ops', 'email' => 'ops@elsewhere.test']),
+        fn (): User => User::factory()->create(['tenant_id' => null, 'username' => 'chosen_name', 'email' => 'ops@elsewhere.test']),
     );
 
     User::creating(function (User $user) use (&$raceWasFaked, $createConcurrentUser): void {
-        if ($raceWasFaked || $user->username !== 'ops') {
+        if ($raceWasFaked || $user->username !== 'chosen_name') {
             return;
         }
 
@@ -53,18 +53,17 @@ it('retries with a suffixed username when a concurrent create claims the usernam
         $createConcurrentUser();
     });
 
-    $user = resolve(CreateConsoleUserAction::class)->execute('ops@vendra.test', 'a-secure-password');
-
-    expect($raceWasFaked)->toBeTrue()
-        ->and($user->username)->toBe('ops_2')
-        ->and(User::query()->count())->toBe(2)
-        ->and(Console::query()->sole()->user_id)->toBe($user->getKey());
+    expect(fn (): User => resolve(CreateConsoleUserAction::class)->execute('chosen_name', 'ops@vendra.test', 'a-secure-password'))
+        ->toThrow(QueryException::class)
+        ->and($raceWasFaked)->toBeTrue()
+        ->and(User::query()->sole()->email)->toBe('ops@elsewhere.test')
+        ->and(Console::query()->count())->toBe(0);
 });
 
 it('lets the unique guard reject an email a platform user already holds', function (): void {
     User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
 
-    expect(fn (): User => resolve(CreateConsoleUserAction::class)->execute('ops@vendra.test', 'a-secure-password'))
+    expect(fn (): User => resolve(CreateConsoleUserAction::class)->execute('chosen_name', 'ops@vendra.test', 'a-secure-password'))
         ->toThrow(QueryException::class)
         ->and(User::query()->count())->toBe(1)
         ->and(Console::query()->count())->toBe(0);
