@@ -12,13 +12,11 @@ use Misaf\VendraUser\Models\User;
 final readonly class GrantConsoleAccessAction
 {
     /**
-     * Returns false when the user already had active access.
-     *
      * @throws InvalidArgumentException
      */
     public function execute(User $user): bool
     {
-        if ($user->tenant_id !== null) {
+        if ($user->hasTenant()) {
             throw new InvalidArgumentException("User [{$user->id}] belongs to a tenant and cannot be a console user.");
         }
 
@@ -35,7 +33,7 @@ final readonly class GrantConsoleAccessAction
                 return false;
             }
 
-            $lockedConsole->forceFill(['active' => true])->save();
+            $lockedConsole->update(['active' => true]);
 
             return true;
         });
