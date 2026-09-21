@@ -12,11 +12,6 @@ use Misaf\VendraUser\Models\User;
 final readonly class RevokeConsoleUserAction
 {
     /**
-     * Deactivate the user's console grant.
-     *
-     * The last-user guard counts only grants whose user still exists, so a
-     * soft-deleted user can be revoked even as the final grant holder.
-     *
      * @throws LastConsoleUserException
      */
     public function execute(User $user): bool

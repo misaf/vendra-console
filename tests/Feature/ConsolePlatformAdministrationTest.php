@@ -48,7 +48,7 @@ beforeEach(function (): void {
 /**
  * Act as a console user; named apart from ConsolePanelTest's helper.
  */
-function actAsPlatformUser(): User
+function actAsAdministeringConsoleUser(): User
 {
     $admin = User::factory()->create(['tenant_id' => null]);
 
@@ -67,7 +67,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($to)->for(Plan::factory()->active()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -82,7 +82,7 @@ describe('assigning stores to resellers', function (): void {
         $reseller = Reseller::factory()->active()->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), ['reseller_id' => null])
@@ -102,7 +102,7 @@ describe('assigning stores to resellers', function (): void {
 
         $store = Store::factory()->create(['reseller_id' => null]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -118,7 +118,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->create();
         $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('assignReseller')->table($store), [
@@ -135,7 +135,7 @@ describe('assigning stores to resellers', function (): void {
         Subscription::factory()->forSubscriber($to)->for(Plan::factory()->active()->maxUnits(2))->create();
         $store = Store::factory()->create(['reseller_id' => $from->getKey()]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(EditStore::class, ['record' => $store->getKey()])
             ->callAction('assignReseller', ['reseller_id' => $to->getKey()])
@@ -149,7 +149,7 @@ describe('operating store lifecycles', function (): void {
     it('suspends and reactivates a store through domain-backed table actions', function (): void {
         $store = Store::factory()->active()->create();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('suspendStore')->table($store))
@@ -167,7 +167,7 @@ describe('operating store lifecycles', function (): void {
     it('suspends and reactivates a store from the active toggle column', function (): void {
         $store = Store::factory()->active()->create();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->call('updateTableColumnState', 'active', (string) $store->getKey(), false)
@@ -185,7 +185,7 @@ describe('operating store lifecycles', function (): void {
     it('disables the active toggle for a store that has not finished provisioning', function (): void {
         $store = Store::factory()->inactive()->provisioningPending()->create();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->loadTable()
@@ -196,7 +196,7 @@ describe('operating store lifecycles', function (): void {
         Queue::fake();
         $store = Store::factory()->provisioningFailed()->create();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('retryStoreProvisioning')->table($store))
@@ -241,7 +241,7 @@ describe('operating store lifecycles', function (): void {
         ]);
         app()->call([new ProvisionStorefrontJob($deployment->id, force: true), 'handle']);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
             ->callAction(TestAction::make('stopStorefront')->table($store))
@@ -280,7 +280,7 @@ describe('platform settings', function (): void {
      | is no tenant in this panel to fall back on.
      */
     it('lets a console user close store creation from the platform settings page', function (): void {
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
             ->assertFormSet(['open' => true])
@@ -292,7 +292,7 @@ describe('platform settings', function (): void {
     });
 
     it('lets a console user rename the platform from the platform settings page', function (): void {
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
             ->assertFormSet(['platform_name' => 'Vendra Console'])
@@ -305,7 +305,7 @@ describe('platform settings', function (): void {
     });
 
     it('rolls back the platform name when saving the store creation settings fails', function (): void {
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
         Event::listen(SavingSettings::class, function (SavingSettings $event): void {
             throw_if($event->settings instanceof StoreCreationSettings, RuntimeException::class, 'Store creation settings could not be saved.');
         });
@@ -319,7 +319,7 @@ describe('platform settings', function (): void {
     });
 
     it('requires a platform name', function (): void {
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
             ->fillForm(['platform_name' => ''])
@@ -330,7 +330,7 @@ describe('platform settings', function (): void {
     });
 
     it('rejects a non-boolean store creation state', function (): void {
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
             ->fillForm(['open' => 'maybe'])
@@ -345,7 +345,7 @@ describe('platform settings', function (): void {
 
         $this->get($url)->assertRedirect();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         $this->get($url)->assertOk();
     });
@@ -366,7 +366,7 @@ describe('platform dashboard', function (): void {
         StorefrontDeployment::factory()->for($active->first())->create(['status' => StorefrontDeploymentStatus::Ready]);
         StorefrontDeployment::factory()->for($active->last())->create(['status' => StorefrontDeploymentStatus::Failed]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(NeedsAttention::class)
             ->assertOk()
@@ -398,7 +398,7 @@ describe('activity visibility', function (): void {
             'event' => 'updated',
         ]);
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListActivityLogs::class)
             ->call('loadTable')
@@ -422,7 +422,7 @@ describe('activity visibility', function (): void {
         ]);
         $offboarded->delete();
 
-        actAsPlatformUser();
+        actAsAdministeringConsoleUser();
 
         livewire(ListActivityLogs::class)
             ->call('loadTable')

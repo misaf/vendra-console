@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Misaf\VendraConsole\Database\Seeders\ConsoleSeeder;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
+use Misaf\VendraUser\Support\UserRules;
 
 it('seeds a console user on a fresh install and prints its generated password', function (): void {
     Config::set('app.url', 'https://www.vendra.test');
@@ -26,7 +27,7 @@ it('seeds a console user on a fresh install and prints its generated password', 
         ->and($consoleUser->hasVerifiedEmail())->toBeTrue()
         ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
         ->and($output)->toContain('https://console.www.vendra.test')
-        ->and($printedPassword)->toHaveLength(16)
+        ->and($printedPassword)->toHaveLength(UserRules::PASSWORD_LENGTH)
         ->and(Hash::check($printedPassword, $consoleUser->password))->toBeTrue();
 });
 

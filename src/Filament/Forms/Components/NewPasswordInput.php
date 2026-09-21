@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Forms\Components;
 
 use Filament\Forms\Components\TextInput;
-use Illuminate\Validation\Rules\Password;
+use Misaf\VendraUser\Support\UserRules;
 
 final class NewPasswordInput extends TextInput
 {
@@ -24,6 +24,6 @@ final class NewPasswordInput extends TextInput
             ->revealable(filament()->arePasswordsRevealable())
             ->required()
             ->confirmed()
-            ->rule(Password::default());
+            ->rules(UserRules::password());
     }
 }

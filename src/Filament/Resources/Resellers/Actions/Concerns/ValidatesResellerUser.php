@@ -13,7 +13,7 @@ trait ValidatesResellerUser
      */
     protected static function resellerUsernameRules(): array
     {
-        return ['alpha_dash', UserRules::unique('username')];
+        return [...UserRules::username(), UserRules::unique('username')];
     }
 
     /**

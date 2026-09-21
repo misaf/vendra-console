@@ -6,7 +6,7 @@ use Filament\Facades\Filament;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
-it('creates an active console for a fresh platform user', function (): void {
+it('creates an active console for a fresh tenantless user', function (): void {
     $console = Console::factory()->active()->create();
 
     expect($console->user->tenant_id)->toBeNull()

@@ -39,9 +39,9 @@ final class AddAdministratorTableAction extends Action
                 TextInput::make('username')
                     ->label(__('vendra-console::attributes.username'))
                     ->required()
-                    ->minLength(3)
-                    ->maxLength(12)
-                    ->rules(['alpha_dash'])
+                    ->minLength(UserRules::USERNAME_MIN_LENGTH)
+                    ->maxLength(UserRules::USERNAME_MAX_LENGTH)
+                    ->rules(UserRules::username())
                     ->rule(fn (RelationManager $livewire): Unique => UserRules::unique('username', self::administratorStore($livewire)->id)),
                 TextInput::make('email')
                     ->label(__('vendra-console::attributes.email'))

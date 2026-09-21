@@ -14,6 +14,7 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\ValidatesR
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Actions\GeneratePasswordAction;
 use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
+use Misaf\VendraUser\Support\UserRules;
 
 final class ResellerForm
 {
@@ -27,8 +28,8 @@ final class ResellerForm
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.username'))
                     ->label(__('vendra-console::attributes.username'))
                     ->live(onBlur: true)
-                    ->minLength(3)
-                    ->maxLength(12)
+                    ->minLength(UserRules::USERNAME_MIN_LENGTH)
+                    ->maxLength(UserRules::USERNAME_MAX_LENGTH)
                     ->rules(self::resellerUsernameRules())
                     ->required(),
 

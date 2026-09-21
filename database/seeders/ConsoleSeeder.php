@@ -6,11 +6,11 @@ namespace Misaf\VendraConsole\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Str;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Support\ConsoleAddress;
 use Misaf\VendraConsole\Support\ConsoleCredentials;
+use Misaf\VendraUser\Support\UserRules;
 use RuntimeException;
 
 final class ConsoleSeeder extends Seeder
@@ -27,7 +27,7 @@ final class ConsoleSeeder extends Seeder
         }
 
         $email = ConsoleAddress::defaultEmail();
-        $password = Str::password(16, symbols: false);
+        $password = UserRules::generatePassword();
 
         try {
             $user = $this->createConsoleUserAction->execute('console', $email, $password);

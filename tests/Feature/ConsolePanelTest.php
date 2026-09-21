@@ -312,7 +312,7 @@ it('creates a reseller whose username and email are only used inside a store', f
     expect(User::query()->whereNull('tenant_id')->where('username', 'shared_name')->exists())->toBeTrue();
 });
 
-it('rejects a reseller username another platform user already holds', function (): void {
+it('rejects a reseller username another tenantless user already holds', function (): void {
     actAsConsoleAdmin();
 
     User::factory()->create(['tenant_id' => null, 'username' => 'taken_name']);

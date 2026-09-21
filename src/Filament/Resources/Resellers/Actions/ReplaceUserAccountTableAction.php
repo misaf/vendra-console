@@ -14,6 +14,7 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsW
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\ValidatesResellerUser;
 use Misaf\VendraReseller\Actions\ReplaceResellerUserAction;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraUser\Support\UserRules;
 
 final class ReplaceUserAccountTableAction extends Action
 {
@@ -35,7 +36,7 @@ final class ReplaceUserAccountTableAction extends Action
             ->hidden(fn (Reseller $record): bool => $record->trashed())
             ->slideOver()
             ->schema([
-                TextInput::make('username')->label(__('vendra-console::attributes.username'))->minLength(3)->maxLength(12)
+                TextInput::make('username')->label(__('vendra-console::attributes.username'))->minLength(UserRules::USERNAME_MIN_LENGTH)->maxLength(UserRules::USERNAME_MAX_LENGTH)
                     ->rules(self::resellerUsernameRules())->required(),
                 TextInput::make('email')->label(__('vendra-console::attributes.email'))->email()->required()
                     ->rules(self::resellerEmailRules()),

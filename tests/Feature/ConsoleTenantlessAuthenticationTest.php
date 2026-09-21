@@ -17,11 +17,11 @@ use Misaf\VendraUser\Models\User;
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
 
-function consolePlatformUser(array $attributes = []): User
+function consoleTenantlessUser(array $attributes = []): User
 {
     $consoleUser = User::factory()->create([
         'tenant_id' => null,
-        'password' => Hash::make('platform-password'),
+        'password' => Hash::make('tenantless-password'),
         ...$attributes,
     ]);
 
@@ -30,7 +30,7 @@ function consolePlatformUser(array $attributes = []): User
     return $consoleUser;
 }
 
-it('authenticates the platform user when a tenant row shares the email', function (): void {
+it('authenticates the tenantless user when a tenant row shares the email', function (): void {
     $tenant = createTestTenant();
     $email = 'console-shared@example.test';
 
@@ -40,7 +40,7 @@ it('authenticates the platform user when a tenant row shares the email', functio
         'password' => Hash::make('tenant-password'),
     ]);
 
-    $consoleUser = consolePlatformUser([
+    $consoleUser = consoleTenantlessUser([
         'username' => 'console_user',
         'email' => $email,
     ]);
@@ -50,7 +50,7 @@ it('authenticates the platform user when a tenant row shares the email', functio
     livewire(Login::class)
         ->fillForm([
             'email' => $email,
-            'password' => 'platform-password',
+            'password' => 'tenantless-password',
         ])
         ->call('authenticate')
         ->assertHasNoFormErrors();
@@ -70,7 +70,7 @@ it('rejects the tenant password and wrong passwords on the console', function ()
         'password' => Hash::make('tenant-password'),
     ]);
 
-    consolePlatformUser([
+    consoleTenantlessUser([
         'username' => 'console_user2',
         'email' => $email,
     ]);
@@ -127,7 +127,7 @@ it('does not let a tenant-only user into the console', function (): void {
         ->and($tenantUser->canAccessPanel(Filament::getPanel('console')))->toBeFalse();
 });
 
-it('restores console sessions only for the platform user via remember token', function (): void {
+it('restores console sessions only for the tenantless user via remember token', function (): void {
     $tenant = createTestTenant();
     $email = 'console-remember@example.test';
 
@@ -137,20 +137,20 @@ it('restores console sessions only for the platform user via remember token', fu
         'remember_token' => 'tenant-remember-token',
     ]);
 
-    $consoleUser = consolePlatformUser([
+    $consoleUser = consoleTenantlessUser([
         'username' => 'console_rem_op',
         'email' => $email,
-        'remember_token' => 'platform-remember-token',
+        'remember_token' => 'tenantless-remember-token',
     ]);
 
     $provider = auth('console')->getProvider();
 
-    expect($provider->retrieveByToken($consoleUser->getKey(), 'platform-remember-token')?->getKey())->toBe($consoleUser->getKey())
+    expect($provider->retrieveByToken($consoleUser->getKey(), 'tenantless-remember-token')?->getKey())->toBe($consoleUser->getKey())
         ->and($provider->retrieveByToken($tenantUser->getKey(), 'tenant-remember-token'))->toBeNull();
 });
 
 it('removes console access when the console is deactivated', function (): void {
-    $consoleUser = consolePlatformUser();
+    $consoleUser = consoleTenantlessUser();
     $panel = Filament::getPanel('console');
 
     expect($consoleUser->canAccessPanel($panel))->toBeTrue();
@@ -161,7 +161,7 @@ it('removes console access when the console is deactivated', function (): void {
         ->and(User::query()->find($consoleUser->getKey()))->not->toBeNull();
 });
 
-it('routes the console password reset flow to the platform identity and store', function (): void {
+it('routes the console password reset flow to the tenantless identity and store', function (): void {
     Notification::fake();
 
     $tenant = createTestTenant();
@@ -173,7 +173,7 @@ it('routes the console password reset flow to the platform identity and store', 
         'password' => Hash::make('tenant-password'),
     ]);
 
-    $consoleUser = consolePlatformUser([
+    $consoleUser = consoleTenantlessUser([
         'username' => 'console_reset_user',
         'email' => $email,
     ]);

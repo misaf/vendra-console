@@ -7,7 +7,7 @@ use Misaf\VendraConsole\Actions\GrantConsoleAccessAction;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
-it('grants console access to an existing platform user once', function (): void {
+it('grants console access to an existing tenantless user once', function (): void {
     $user = User::factory()->create(['tenant_id' => null]);
 
     expect(resolve(GrantConsoleAccessAction::class)->execute($user))->toBeTrue()

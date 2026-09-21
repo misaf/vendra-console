@@ -12,7 +12,7 @@ use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
 
-it('creates a platform user with console access', function (): void {
+it('creates a tenantless user with console access', function (): void {
     $user = resolve(CreateConsoleUserAction::class)->execute('chosen_name', 'ops@vendra.test', 'a-secure-password');
 
     expect($user->email)->toBe('ops@vendra.test')
@@ -60,7 +60,7 @@ it('rejects a username claimed concurrently without retrying or granting access'
         ->and(Console::query()->count())->toBe(0);
 });
 
-it('lets the unique guard reject an email a platform user already holds', function (): void {
+it('lets the unique guard reject an email a tenantless user already holds', function (): void {
     User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
 
     expect(fn (): User => resolve(CreateConsoleUserAction::class)->execute('chosen_name', 'ops@vendra.test', 'a-secure-password'))

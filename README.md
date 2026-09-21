@@ -25,7 +25,7 @@ php artisan migrate
 
 The `consoles` table holds one row per canonical user
 (`misaf/vendra-user`) allowed into the panel, and only active rows grant access; the host application's
-`config/auth.php` points the `console` guard at the platform-scoped
+`config/auth.php` points the `console` guard at the tenantless
 `console` provider and the `console` password broker, whose
 reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. Nothing is
 configured for the first one: on a fresh install `ConsoleSeeder` creates
@@ -35,11 +35,18 @@ console user or issues a new password, generating one unless `--password` is giv
 New users require an explicit username: pass `--username=admin` or enter it at the prompt.
 Non-interactive creation requires `--username`; existing-user operations keep the current username.
 Duplicate usernames fail rather than receive an automatic suffix.
+Usernames must contain 3–12 letters, numbers, dashes, or underscores and be unique among tenantless users that have not been soft-deleted.
+Supplied and generated passwords must pass the application's default password rules; an explicitly empty or whitespace-only password is rejected.
+Generated passwords come from `UserRules::generatePassword()`, so tightening the policy in a provider never leaves the command unable to issue one.
 It asks before granting console access to an existing user who does not already have it
 (the default `console@<app host>` address included), and before replacing a console
-user's password with a generated one; passing `--password` skips that second prompt.
+user's password with a generated one; passing `--password` skips that second prompt and
+`--force` skips both, which is how an unattended run grants access.
+A blank `--email` is rejected rather than treated as the default `console@<app host>` address.
 `php artisan vendra-console:user --revoke --email=…` deactivates the user's console while keeping the
 user, and refuses to deactivate the last active console user; granting access again reactivates it.
+Revoking names the user by `--email` or `--username`, and rejects a run that passes both rather than
+preferring one. Unlike creation, it never prompts: neither `--force` nor `--password` applies.
 
 ## The panel
 
@@ -47,7 +54,7 @@ user, and refuses to deactivate the last active console user; granting access ag
 
 - served on `console.<app host>`, derived from `app.url` — no hard-coded host
 - `console` auth guard against the canonical `User` (`misaf/vendra-user`)
-  through the platform-scoped `console` provider and the
+  through the tenantless `console` provider and the
   `console` password broker, whose reset tokens live in
   `console_password_reset_tokens`; panel access is granted by an active
   `consoles` row, with password reset and required email verification
