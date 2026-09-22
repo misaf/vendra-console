@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Support;
 
+use Filament\Facades\Filament;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -17,7 +18,7 @@ final class ConsoleCredentials
     {
         $command->info($message);
         $command->table(['Console URL', 'Email', 'Password'], [
-            [ConsoleAddress::url(), $email, OutputFormatter::escape($password)],
+            [Filament::getPanel('console')->getLoginUrl(), $email, OutputFormatter::escape($password)],
         ]);
     }
 }

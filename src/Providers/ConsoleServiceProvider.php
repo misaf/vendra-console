@@ -7,7 +7,10 @@ namespace Misaf\VendraConsole\Providers;
 use Composer\InstalledVersions;
 use Illuminate\Foundation\Console\AboutCommand;
 use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
-use Misaf\VendraConsole\Console\Commands\ConsoleUserCommand;
+use Misaf\VendraConsole\Console\Commands\CreateConsoleUserCommand;
+use Misaf\VendraConsole\Console\Commands\GrantConsoleAccessCommand;
+use Misaf\VendraConsole\Console\Commands\IssueConsolePasswordCommand;
+use Misaf\VendraConsole\Console\Commands\RevokeConsoleUserCommand;
 use Misaf\VendraUser\Support\PanelAccessRegistry;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -19,11 +22,17 @@ final class ConsoleServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('vendra-console')
+            ->hasConfigFile()
             ->hasTranslations()
             ->hasMigrations([
                 'create_consoles_table',
             ])
-            ->hasCommand(ConsoleUserCommand::class)
+            ->hasCommands([
+                CreateConsoleUserCommand::class,
+                IssueConsolePasswordCommand::class,
+                GrantConsoleAccessCommand::class,
+                RevokeConsoleUserCommand::class,
+            ])
             ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
                     ->askToStarRepoOnGitHub('misaf/vendra-console');

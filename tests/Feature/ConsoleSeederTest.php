@@ -13,7 +13,7 @@ use Misaf\VendraUser\Models\User;
 use Misaf\VendraUser\Support\UserRules;
 
 it('seeds a console user on a fresh install and prints its generated password', function (): void {
-    Config::set('app.url', 'https://www.vendra.test');
+    Config::set('vendra-console.default_email', 'ops@acme.test');
 
     Artisan::call('db:seed', ['--class' => ConsoleSeeder::class, '--force' => true]);
 
@@ -21,19 +21,17 @@ it('seeds a console user on a fresh install and prints its generated password', 
     $printedPassword = Str::of($output)->match('/\|\s*https:\/\/[^|]+\|\s*[^|]+\|\s*(\S+)\s*\|/')->toString();
     $consoleUser = User::query()->sole();
 
-    expect($consoleUser->email)->toBe('console@www.vendra.test')
+    expect($consoleUser->email)->toBe('ops@acme.test')
         ->and($consoleUser->tenant_id)->toBeNull()
         ->and($consoleUser->username)->toBe('console')
         ->and($consoleUser->hasVerifiedEmail())->toBeTrue()
         ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
-        ->and($output)->toContain('https://console.www.vendra.test')
+        ->and($output)->toContain('https://console.vendra.test/login')
         ->and($printedPassword)->toHaveLength(UserRules::PASSWORD_LENGTH)
         ->and(Hash::check($printedPassword, $consoleUser->password))->toBeTrue();
 });
 
-it('grants the seeded console user active console access', function (): void {
-    Config::set('app.url', 'https://vendra.test');
-
+it('grants the seeded console user active console access at the configured address', function (): void {
     Artisan::call('db:seed', ['--class' => ConsoleSeeder::class, '--force' => true]);
 
     expect(User::query()->sole()->email)->toBe('console@vendra.test')

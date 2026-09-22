@@ -17,9 +17,9 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Config;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Misaf\VendraConsole\Settings\ConsoleSettings;
-use Misaf\VendraConsole\Support\ConsoleAddress;
 use Misaf\VendraLocalization\Http\Middleware\SetLocale;
 use Misaf\VendraSupport\Http\Middleware\AddPanelToRequestJobContext;
 
@@ -43,7 +43,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
             ->homeUrl('/')
             ->authGuard('console')
             ->authPasswordBroker('console')
-            ->domain(ConsoleAddress::domain())
+            ->domain(Config::string('vendra-console.domain'))
             ->login()
             ->passwordReset()
             ->emailVerification(isRequired: true)

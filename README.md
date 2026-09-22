@@ -27,32 +27,50 @@ The `consoles` table holds one row per canonical user
 (`misaf/vendra-user`) allowed into the panel, and only active rows grant access; the host application's
 `config/auth.php` points the `console` guard at the tenantless
 `console` provider and the `console` password broker, whose
-reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. Nothing is
-configured for the first one: on a fresh install `ConsoleSeeder` creates
-`console@<app host>` with the explicit username `console` and a generated password and prints it once to the seed
-output (the container's first-boot log). `php artisan vendra-console:user` creates a
-console user or issues a new password, generating one unless `--password` is given.
-New users require an explicit username: pass `--username=admin` or enter it at the prompt.
-Non-interactive creation requires `--username`; existing-user operations keep the current username.
-Duplicate usernames fail rather than receive an automatic suffix.
-Usernames must contain 3–12 letters, numbers, dashes, or underscores and be unique among tenantless users that have not been soft-deleted.
-Supplied and generated passwords must pass the application's default password rules; an explicitly empty or whitespace-only password is rejected.
-Generated passwords come from `UserRules::generatePassword()`, so tightening the policy in a provider never leaves the command unable to issue one.
-It asks before granting console access to an existing user who does not already have it
-(the default `console@<app host>` address included), and before replacing a console
-user's password with a generated one; passing `--password` skips that second prompt and
-`--force` skips both, which is how an unattended run grants access.
-A blank `--email` is rejected rather than treated as the default `console@<app host>` address.
-`php artisan vendra-console:user --revoke --email=…` deactivates the user's console while keeping the
-user, and refuses to deactivate the last active console user; granting access again reactivates it.
-Revoking names the user by `--email` or `--username`, and rejects a run that passes both rather than
-preferring one. Unlike creation, it never prompts: neither `--force` nor `--password` applies.
+reset tokens live in `console_password_reset_tokens`. Console users hold no tenant or reseller relationship. No credentials are
+configured for the first one: on a fresh install `ConsoleSeeder` creates it at the
+`vendra-console.default_email` address (`VENDRA_CONSOLE_DEFAULT_EMAIL`, default
+`console@vendra.test`) with the explicit username `console` and a generated password, and prints it once to the seed
+output (the container's first-boot log). That address is a plain config value rather than
+something derived from `app.url`, and it is validated by `UserRules::email()` like every
+other address in the application, so a dotless domain such as `console@localhost` is rejected.
+
+Four commands manage console users; each does one job and points at its sibling when the
+user it names is in the wrong state.
+
+- `php artisan vendra-console:user-create` creates a console user with `--username`,
+  `--email` and `--password`. The email defaults to the configured address and a blank
+  `--email` is rejected rather than treated as that default; the password is generated
+  unless `--password` is given. `--username` is required — the command never prompts. It
+  never turns into a password reset or a grant — when the address or username already belongs to a tenantless user, the
+  run fails and names the command to use instead.
+- `php artisan vendra-console:user-password` issues a new password to an existing console
+  user, found by `--username`, `--email` or both, and falling back to the configured
+  address when neither is given. It asks before replacing a password with a generated one;
+  `--password` or `--force` skips that prompt. It never creates a user and never grants
+  access: an unknown user or one without console access fails with a pointer.
+- `php artisan vendra-console:user-grant` grants console access to an existing tenantless
+  user, reactivating a revoked console rather than adding a second row, and optionally sets
+  a password with `--password`. It requires `--email`, `--username` or both, never prompts,
+  and reports a user who already has access without changing anything.
+- `php artisan vendra-console:user-revoke` deactivates the user's console while keeping the
+  user, and refuses to deactivate the last active console user. It names the user the same
+  way and never prompts.
+
+Every command that takes both `--email` and `--username` requires them to resolve to the
+same tenantless user, and rejects a blank identifier. Usernames must contain 3–12 letters,
+numbers, dashes, or underscores and be unique among tenantless users that have not been
+soft-deleted; duplicates fail rather than receive an automatic suffix. Supplied and
+generated passwords must pass the application's default password rules, so an explicitly
+empty or whitespace-only password is rejected. Generated passwords come from
+`UserRules::generatePassword()`, so tightening the policy in a provider never leaves a
+command unable to issue one.
 
 ## The panel
 
 `Providers\ConsolePanelServiceProvider` registers everything:
 
-- served on `console.<app host>`, derived from `app.url` — no hard-coded host
+- served on `vendra-console.domain` (`VENDRA_CONSOLE_DOMAIN`), which the config file defaults to the `console.` subdomain of `APP_URL`'s host
 - `console` auth guard against the canonical `User` (`misaf/vendra-user`)
   through the tenantless `console` provider and the
   `console` password broker, whose reset tokens live in
