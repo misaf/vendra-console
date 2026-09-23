@@ -52,11 +52,10 @@ final class NeedsAttention extends StatsOverviewWidget
                 ->color('danger')
                 ->url(StoreResource::getUrl('index', [
                     'tableFilters' => [
-                        'status' => ['values' => [
-                            StoreStatus::Failed->value,
-                            StoreStatus::Pending->value,
-                            StoreStatus::Provisioning->value,
-                        ]],
+                        'status' => ['values' => array_map(
+                            fn (StoreStatus $status): string => $status->value,
+                            StoreStatusCounts::NEEDING_ATTENTION,
+                        )],
                     ],
                 ])) : null,
             $failedDeployments > 0 ? Stat::make(__('vendra-console::attributes.failed_deployments'), $failedDeployments)
@@ -99,8 +98,17 @@ final class NeedsAttention extends StatsOverviewWidget
         return array_values($stats);
     }
 
+    /**
+     * Count jobs that failed in the last day, when failures are stored in the database.
+     *
+     * Other failed-job drivers keep no table to count, so they report none.
+     */
     private static function recentlyFailedJobs(): int
     {
+        if (! in_array(Config::get('queue.failed.driver'), ['database', 'database-uuids'], true)) {
+            return 0;
+        }
+
         return DB::connection(Config::string('queue.failed.database'))
             ->table(Config::string('queue.failed.table', 'failed_jobs'))
             ->where('failed_at', '>=', now()->subDay())

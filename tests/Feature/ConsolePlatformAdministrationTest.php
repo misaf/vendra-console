@@ -306,7 +306,7 @@ describe('platform settings', function (): void {
 
         livewire(ManagePlatformSettings::class)
             ->assertFormSet(['platform_name' => 'Vendra Console'])
-            ->fillForm(['platform_name' => 'Acme Platform'])
+            ->fillForm(['platform_name' => '  Acme Platform  '])
             ->call('save')
             ->assertHasNoFormErrors();
 
@@ -324,7 +324,7 @@ describe('platform settings', function (): void {
             ->fillForm(['platform_name' => 'Acme Platform', 'open' => false])
             ->call('save'))
             ->toThrow(RuntimeException::class, 'Store creation settings could not be saved.')
-            ->and(resolve(ConsoleSettings::class)->refresh()->platform_name)->toBe('Vendra Console')
+            ->and(resolve(ConsoleSettings::class)->platform_name)->toBe('Vendra Console')
             ->and(resolve(StoreCreationSettings::class)->refresh()->open)->toBeTrue();
     });
 

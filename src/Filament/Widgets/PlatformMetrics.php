@@ -42,18 +42,18 @@ final class PlatformMetrics extends StatsOverviewWidget
                 ]))
                 ->icon(Heroicon::OutlinedGlobeAlt)
                 ->url(StoreResource::getUrl('index'))
-                ->chart($this->dailyTrend(Store::query())),
+                ->chart($this->dailyTrend(Store::query()->withTrashed())),
             Stat::make(__('vendra-console::attributes.active_resellers'), Reseller::query()->active()->count())
                 ->description(__('vendra-console::attributes.resellers_total', ['count' => Reseller::query()->count()]))
                 ->icon(Heroicon::OutlinedBuildingOffice2)
                 ->url(ResellerResource::getUrl('index'))
-                ->chart($this->dailyTrend(Reseller::query())),
+                ->chart($this->dailyTrend(Reseller::query()->withTrashed())),
             Stat::make(__('vendra-console::attributes.active_subscriptions'), Subscription::query()->active()->count())
                 ->icon(Heroicon::OutlinedCheckBadge)
                 ->url(ResellerResource::getUrl('index', [
                     'tableFilters' => ['subscription_health' => ['value' => 'active']],
                 ]))
-                ->chart($this->dailyTrend(Subscription::query(), 'starts_at')),
+                ->chart($this->dailyTrend(Subscription::query()->withTrashed(), 'starts_at')),
             Stat::make(
                 __('vendra-console::attributes.revenue_this_month'),
                 self::revenueBetween(now()->startOfMonth(), now()) ?? __('vendra-console::attributes.no_revenue'),

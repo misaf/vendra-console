@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Models\Console;
@@ -164,4 +167,23 @@ it('lets an administrator take the email of a disabled account', function (): vo
         ->assertNotified(__('vendra-console::messages.administrator_email_updated'));
 
     expect(consoleStoreUser($store, $administrator)->email)->toBe('disabled_admin@example.com');
+});
+
+it('loads administrator roles for the whole table page in one query', function (): void {
+    $store = consoleStoreWithAdministratorRole();
+    $administrators = collect(['first_admin', 'second_admin', 'third_admin'])
+        ->map(fn (string $username): User => consoleStoreAdministrator($store, $username));
+
+    // Count only the store-scoped role lookups, not the console user's own.
+    $roleQueries = 0;
+    DB::listen(function (QueryExecuted $query) use (&$roleQueries): void {
+        $roleQueries += (int) Str::containsAll($query->sql, ['model_has_roles', '"roles"."tenant_id"']);
+    });
+
+    $component = livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable();
+
+    expect($roleQueries)->toBe(1);
+
+    $administrators->each(fn (User $administrator): mixed => $component->assertTableColumnStateSet('administrator', true, $administrator));
 });

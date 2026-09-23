@@ -6,6 +6,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns;
 
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Config;
 use LogicException;
 use Misaf\VendraStore\Models\Store;
@@ -26,9 +27,9 @@ trait InteractsWithAdministratorRecord
     /**
      * Determine if the user administers the store.
      *
-     * Roles are loaded once per record inside the store's context, so a row's
-     * column and actions share one tenant switch, and a record re-read after
-     * a change sees the new roles.
+     * The table loads roles for its whole page up front; a record loaded on its
+     * own (an action's re-read after a change) loads them here inside the
+     * store's context, so it sees the new roles.
      */
     protected static function isAdministrator(Store $store, User $user): bool
     {
@@ -37,6 +38,19 @@ trait InteractsWithAdministratorRecord
         }
 
         return $user->hasRole(Config::string('vendra-permission.admin_role'));
+    }
+
+    /**
+     * Load the roles of a page of users in one query inside the store's context.
+     *
+     * @param  Collection<array-key, User>  $users
+     * @return Collection<array-key, User>
+     */
+    protected static function loadAdministratorRoles(Store $store, Collection $users): Collection
+    {
+        $store->execute(fn (): Collection => $users->load('roles'));
+
+        return $users;
     }
 
     /**

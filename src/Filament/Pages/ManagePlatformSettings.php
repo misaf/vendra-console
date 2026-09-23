@@ -91,12 +91,27 @@ final class ManagePlatformSettings extends SettingsPage
     protected function mutateFormDataBeforeSave(array $data): array
     {
         resolve(ConsoleSettings::class)
-            ->fill(['platform_name' => Arr::get($data, 'platform_name')])
+            ->fill(['platform_name' => mb_trim(Arr::string($data, 'platform_name'))])
             ->save();
 
         unset($data['platform_name']);
 
         return $data;
+    }
+
+    /**
+     * Reload the shared console settings after every save.
+     *
+     * A rolled-back save would otherwise leave the unsaved name on the instance
+     * the panel brand reads for the rest of the request.
+     */
+    public function save(): void
+    {
+        try {
+            parent::save();
+        } finally {
+            resolve(ConsoleSettings::class)->refresh();
+        }
     }
 
     public function getTitle(): string

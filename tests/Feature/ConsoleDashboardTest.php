@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use Filament\Facades\Filament;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -153,6 +155,24 @@ describe('needs attention', function (): void {
             ->assertSeeInOrder([__('vendra-console::attributes.failed_jobs'), '1']);
     });
 
+    it('reports no failed jobs when failures are not stored in the database', function (): void {
+        Config::set('queue.failed.driver', 'null');
+        DB::table('failed_jobs')->insert([
+            'uuid' => (string) Str::uuid(),
+            'connection' => 'redis',
+            'queue' => 'storefronts',
+            'payload' => '{}',
+            'exception' => 'RuntimeException',
+            'failed_at' => now()->subHour(),
+        ]);
+
+        actAsConsoleUser();
+
+        livewire(NeedsAttention::class)
+            ->assertOk()
+            ->assertDontSee(__('vendra-console::attributes.failed_jobs'));
+    });
+
     it('lists resellers with a past-due subscription through the linked filter', function (): void {
         $pastDue = Reseller::factory()->active()->create();
         Subscription::factory()->forSubscriber($pastDue)->for(Plan::factory()->active())->create([
@@ -231,6 +251,31 @@ describe('platform growth chart', function (): void {
             ->and(Arr::get($data, 'datasets'))->toHaveCount(3)
             ->and(Arr::last(Arr::array($data, 'datasets.0.data')))->toBe(2.0);
     })->with([7, 30, 90]);
+
+    it('keeps an offboarded store on the day it was created', function (): void {
+        Store::factory()->active()->create()->delete();
+
+        actAsConsoleUser();
+
+        $component = livewire(PlatformGrowthChart::class)->set('filter', '7');
+
+        $data = (fn (): array => $this->getData())->call($component->instance());
+
+        expect(Arr::last(Arr::array($data, 'datasets.0.data')))->toBe(1.0);
+    });
+
+    it('names the days in the console locale', function (): void {
+        $this->travelTo(Date::parse('2026-03-15 12:00:00'));
+        App::setLocale('de');
+
+        actAsConsoleUser();
+
+        $component = livewire(PlatformGrowthChart::class)->set('filter', '7');
+
+        $data = (fn (): array => $this->getData())->call($component->instance());
+
+        expect(Arr::last(Arr::array($data, 'labels')))->toBe('Mär 15');
+    });
 });
 
 describe('recent activity', function (): void {

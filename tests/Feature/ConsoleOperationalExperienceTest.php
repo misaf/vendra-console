@@ -26,6 +26,7 @@ use Misaf\VendraStore\Jobs\RestartStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontRuntimeHealthReport;
+use Misaf\VendraStore\Support\StoreStatusCounts;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Models\User;
 
@@ -223,11 +224,10 @@ it('links operational dashboard stats to resource filters', function (): void {
     ]);
     $failedStoresUrl = StoreResource::getUrl('index', [
         'tableFilters' => [
-            'status' => ['values' => [
-                StoreStatus::Failed->value,
-                StoreStatus::Pending->value,
-                StoreStatus::Provisioning->value,
-            ]],
+            'status' => ['values' => array_map(
+                fn (StoreStatus $status): string => $status->value,
+                StoreStatusCounts::NEEDING_ATTENTION,
+            )],
         ],
     ]);
 

@@ -114,11 +114,14 @@ The console dashboard (`Filament\Pages\Dashboard`) lists its widgets by
 urgency. `NeedsAttention` shows only what a console user should act on — stores
 still provisioning or failed, failed storefront deployments, past-due
 subscriptions, payments awaiting review, subscriptions ending within a week, and
-jobs that failed in the last day — each linked to the filtered list that
+jobs that failed in the last day (counted only when the failed-job driver stores
+them in the database) — each linked to the filtered list that
 resolves it, and collapses to one all-clear stat when there is nothing.
 `PlatformMetrics` shows store, reseller and subscription totals and this month's
 paid revenue per currency against last month's. `PlatformGrowthChart` plots new
-stores, resellers and subscriptions per day over 7, 30 or 90 days.
+stores and resellers, and subscriptions started (renewals and plan changes
+included), per day over 7, 30 or 90 days. Both count offboarded records too, so
+past days never shrink.
 `RecentActivity` lists the latest audit entries.
 
 `ContainerRuntimeHealth` never contacts the runtime: only the storefront worker

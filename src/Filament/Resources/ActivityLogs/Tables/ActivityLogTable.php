@@ -33,23 +33,7 @@ final class ActivityLogTable
                     ->state(fn (ActivityLog $record): ?string => self::storeName($record->getAttribute(TenantSchema::column())))
                     ->placeholder(__('vendra-console::attributes.platform_owned_store')),
 
-                TextColumn::make('description')
-                    ->label(__('vendra-console::attributes.description'))
-                    ->searchable()
-                    ->wrap(),
-
-                TextColumn::make('event')
-                    ->label(__('vendra-console::attributes.event'))
-                    ->badge()
-                    ->placeholder('—'),
-
-                TextColumn::make('subject_type')
-                    ->label(__('vendra-console::attributes.subject'))
-                    ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : class_basename($state))
-                    ->description(fn (ActivityLog $record): ?string => $record->subject_id === null
-                        ? null
-                        : '#'.$record->subject_id)
-                    ->placeholder('—'),
+                ...self::activityColumns(searchable: true),
 
                 CreatedAtColumn::make()
                     ->sortable(),
@@ -87,6 +71,34 @@ final class ActivityLogTable
                 layout: FiltersLayout::AboveContentCollapsible,
             )
             ->defaultSort(column: 'id', direction: 'desc');
+    }
+
+    /**
+     * Get the columns that describe an entry, shared with the dashboard's recent activity.
+     *
+     * @return list<TextColumn>
+     */
+    public static function activityColumns(bool $searchable = false): array
+    {
+        return [
+            TextColumn::make('description')
+                ->label(__('vendra-console::attributes.description'))
+                ->searchable($searchable)
+                ->wrap(),
+
+            TextColumn::make('event')
+                ->label(__('vendra-console::attributes.event'))
+                ->badge()
+                ->placeholder('—'),
+
+            TextColumn::make('subject_type')
+                ->label(__('vendra-console::attributes.subject'))
+                ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : class_basename($state))
+                ->description(fn (ActivityLog $record): ?string => $record->subject_id === null
+                    ? null
+                    : '#'.$record->subject_id)
+                ->placeholder('—'),
+        ];
     }
 
     /**

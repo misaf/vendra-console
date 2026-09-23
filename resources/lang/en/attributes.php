@@ -124,7 +124,7 @@ return [
     'platform_growth' => 'Platform growth',
     'new_stores' => 'New stores',
     'new_resellers' => 'New resellers',
-    'new_subscriptions' => 'New subscriptions',
+    'subscriptions_started' => 'Subscriptions started',
     'last_days' => 'Last :days days',
     'recent_activity' => 'Recent activity',
 ];

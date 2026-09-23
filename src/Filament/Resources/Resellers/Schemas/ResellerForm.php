@@ -27,6 +27,7 @@ final class ResellerForm
                 TextInput::make('username')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.username'))
                     ->label(__('vendra-console::attributes.username'))
+                    ->extraAttributes(['dir' => 'ltr'])
                     ->live(onBlur: true)
                     ->minLength(UserRules::USERNAME_MIN_LENGTH)
                     ->maxLength(UserRules::USERNAME_MAX_LENGTH)

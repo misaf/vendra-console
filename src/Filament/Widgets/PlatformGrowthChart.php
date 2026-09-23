@@ -44,6 +44,8 @@ final class PlatformGrowthChart extends ChartWidget
     }
 
     /**
+     * Count creations, including records offboarded since, so history never shrinks.
+     *
      * @return array{datasets: list<array{label: string, data: list<float>}>, labels: list<string>}
      */
     protected function getData(): array
@@ -53,14 +55,14 @@ final class PlatformGrowthChart extends ChartWidget
         $labels = [];
 
         for ($offset = $days - 1; $offset >= 0; $offset--) {
-            $labels[] = now()->subDays($offset)->format('M j');
+            $labels[] = now()->subDays($offset)->translatedFormat('M j');
         }
 
         return [
             'datasets' => [
-                ['label' => __('vendra-console::attributes.new_stores'), 'data' => $this->dailyTrend(Store::query(), days: $days)],
-                ['label' => __('vendra-console::attributes.new_resellers'), 'data' => $this->dailyTrend(Reseller::query(), days: $days)],
-                ['label' => __('vendra-console::attributes.new_subscriptions'), 'data' => $this->dailyTrend(Subscription::query(), 'starts_at', $days)],
+                ['label' => __('vendra-console::attributes.new_stores'), 'data' => $this->dailyTrend(Store::query()->withTrashed(), days: $days)],
+                ['label' => __('vendra-console::attributes.new_resellers'), 'data' => $this->dailyTrend(Reseller::query()->withTrashed(), days: $days)],
+                ['label' => __('vendra-console::attributes.subscriptions_started'), 'data' => $this->dailyTrend(Subscription::query()->withTrashed(), 'starts_at', $days)],
             ],
             'labels' => $labels,
         ];

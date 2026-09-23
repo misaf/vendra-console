@@ -179,7 +179,7 @@ it('uses a reseller overview as the record landing page', function (): void {
         'username' => 'overview_owner',
     ]);
     $reseller->user()->associate($user)->save();
-    Subscription::factory()->forSubscriber($reseller)->for($plan)->create();
+    Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['ends_at' => '2026-03-15 09:30:00']);
     Store::factory()->count(2)->create(['reseller_id' => $reseller->getKey()]);
 
     livewire(ListResellers::class)
@@ -188,7 +188,8 @@ it('uses a reseller overview as the record landing page', function (): void {
     livewire(ViewReseller::class, ['record' => $reseller->getKey()])
         ->assertOk()
         ->assertSee($user->username)
-        ->assertSee('Growth');
+        ->assertSee('Growth')
+        ->assertSee('2026-03-15 09:30');
 });
 
 it('isolates console users from application users', function (): void {

@@ -124,7 +124,7 @@ return [
     'platform_growth' => 'رشد پلتفرم',
     'new_stores' => 'فروشگاه‌های جدید',
     'new_resellers' => 'نمایندگان جدید',
-    'new_subscriptions' => 'اشتراک‌های جدید',
+    'subscriptions_started' => 'اشتراک‌های آغازشده',
     'last_days' => ':days روز گذشته',
     'recent_activity' => 'فعالیت‌های اخیر',
 ];

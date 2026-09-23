@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Schemas;
 
+use Carbon\CarbonInterface;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -52,7 +53,8 @@ final class ResellerInfolist
                             ->placeholder('—'),
                         TextEntry::make('current_ends_at')
                             ->label(__('vendra-console::attributes.ends_at'))
-                            ->state(fn (Reseller $record): ?string => self::subscription($record)?->ends_at?->toDayDateTimeString())
+                            ->state(fn (Reseller $record): ?CarbonInterface => self::subscription($record)?->ends_at)
+                            ->dateTime('Y-m-d H:i')
                             ->placeholder('—'),
                     ]),
                 ])
