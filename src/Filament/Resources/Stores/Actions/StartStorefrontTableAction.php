@@ -32,12 +32,16 @@ final class StartStorefrontTableAction extends Action
             ->action(function (Store $record, StartStoreStorefrontAction $startStorefront): void {
                 $deployment = $record->storefrontDeployment;
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    self::run(
-                        fn (): mixed => $startStorefront->execute($deployment),
-                        __('vendra-console::messages.storefront_started'),
-                    );
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                self::run(
+                    fn (): mixed => $startStorefront->execute($deployment),
+                    __('vendra-console::messages.storefront_started'),
+                );
             });
     }
 }

@@ -133,9 +133,10 @@ safe offboarding, and restoration. The deployment resource filters by status,
 store, and request date and exposes confirmed recovery controls without copying
 provisioning logic into Filament. The edit
 page manages store administrators without permitting the final enabled
-administrator to be removed, demoted, or disabled. Reseller edit pages manage
+administrator to be removed, demoted, or disabled. Reseller row actions manage
 user credentials/account replacement and subscription change, renewal,
-extension, cancellation, and reactivation. Each control invokes the owning
+extension, cancellation, and reactivation; a plan change or renewal whose plan
+cannot hold the reseller's current stores is refused with a notification. Each control invokes the owning
 domain package; no meaningful transition is an Eloquent column toggle. Every
 password form uses the shared `NewPasswordInput` and
 `PasswordConfirmationInput` fields.
@@ -148,7 +149,8 @@ the platform when no reseller is chosen. It runs
 lock and quota check as creating a store — a reassignment consumes a slot in the
 receiving reseller's plan — and reports a full plan as a notification rather
 than writing the column anyway. This is why `reseller_id` is not an editable
-form field.
+form field. The action is hidden for offboarded stores, which the domain action
+refuses.
 
 ### Activity
 

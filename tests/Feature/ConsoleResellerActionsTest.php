@@ -84,6 +84,22 @@ it('renews the subscription through the table row action', function (): void {
         ->and($reseller->subscriptions()->active()->count())->toBe(1);
 });
 
+it('blocks a renewal that cannot hold the current stores', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->active()->create();
+    $plan = Plan::factory()->active()->maxUnits(1)->create();
+    Subscription::factory()->forSubscriber($reseller)->for($plan)->create();
+    createTestTenant(['reseller_id' => $reseller->getKey()]);
+    createTestTenant(['reseller_id' => $reseller->getKey()]);
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('renew')->table($reseller))
+        ->assertNotified(__('vendra-console::messages.renewal_blocked'));
+
+    expect($reseller->subscriptions()->count())->toBe(1);
+});
+
 it('toggles a reseller active state from the table through the domain action', function (): void {
     actingConsoleAdmin();
 

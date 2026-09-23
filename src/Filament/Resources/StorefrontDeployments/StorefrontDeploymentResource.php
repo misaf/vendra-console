@@ -73,16 +73,6 @@ final class StorefrontDeploymentResource extends Resource
         return ['slug', 'domain', 'container_name', 'store.name'];
     }
 
-    public static function canViewAny(): bool
-    {
-        return true;
-    }
-
-    public static function canView(Model $record): bool
-    {
-        return true;
-    }
-
     public static function canCreate(): bool
     {
         return false;

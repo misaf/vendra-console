@@ -12,6 +12,7 @@ use Misaf\VendraStore\Contracts\StorefrontProvisioner;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontReference;
+use PDOException;
 use Throwable;
 
 trait InteractsWithStorefrontRuntime
@@ -26,10 +27,11 @@ trait InteractsWithStorefrontRuntime
         } catch (Throwable $exception) {
             report($exception);
 
+            // A database error message carries the SQL and its bindings, so only the title is shown.
             Notification::make()
                 ->danger()
                 ->title(__('vendra-console::messages.operational_action_failed'))
-                ->body($exception->getMessage())
+                ->body($exception instanceof PDOException ? null : $exception->getMessage())
                 ->send();
 
             return;

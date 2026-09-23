@@ -34,12 +34,16 @@ final class StopStorefrontTableAction extends Action
             ->action(function (Store $record, StopStoreStorefrontAction $stopStorefront): void {
                 $deployment = $record->storefrontDeployment;
 
-                if ($deployment instanceof StorefrontDeployment) {
-                    self::run(
-                        fn (): mixed => $stopStorefront->execute($deployment),
-                        __('vendra-console::messages.storefront_stopped'),
-                    );
+                if (! $deployment instanceof StorefrontDeployment) {
+                    self::notifyUnavailable();
+
+                    return;
                 }
+
+                self::run(
+                    fn (): mixed => $stopStorefront->execute($deployment),
+                    __('vendra-console::messages.storefront_stopped'),
+                );
             });
     }
 }

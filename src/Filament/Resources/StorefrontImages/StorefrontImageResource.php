@@ -9,6 +9,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\CreateStorefrontImage;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\EditStorefrontImage;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\ListStorefrontImages;
@@ -59,6 +60,11 @@ final class StorefrontImageResource extends Resource
     public static function table(Table $table): Table
     {
         return StorefrontImagesTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withExists('deployments as in_use');
     }
 
     public static function getPages(): array

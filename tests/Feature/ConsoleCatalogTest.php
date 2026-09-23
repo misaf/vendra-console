@@ -6,14 +6,17 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\DB;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\EditStorefrontImage;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Pages\ListStorefrontImages;
 use Misaf\VendraConsole\Models\Console;
+use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSubscription\Actions\DeletePlanAction;
 use Misaf\VendraSubscription\Models\Plan;
+use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -91,6 +94,48 @@ it('deletes an unused storefront image from the list but not one a deployment us
 
     assertDatabaseMissing('storefront_images', ['id' => $unused->getKey()]);
     assertDatabaseHas('storefront_images', ['id' => $inUse->getKey()]);
+});
+
+it('reports a plan that came into use after the list loaded instead of deleting it', function (): void {
+    $plan = Plan::factory()->create();
+    $planBecameUsed = false;
+
+    // Subscribe to the plan right before the delete checks it, after the list read it as unused.
+    DB::beforeExecuting(function (string $query) use ($plan, &$planBecameUsed): void {
+        if ($planBecameUsed || ! str_contains($query, '"subscriptions"') || str_contains($query, '"in_use"')) {
+            return;
+        }
+
+        $planBecameUsed = true;
+        Subscription::factory()->forSubscriber(Reseller::factory()->create())->for($plan)->create();
+    });
+
+    livewire(ListPlans::class)
+        ->callAction(TestAction::make(DeleteAction::class)->table($plan))
+        ->assertNotified(__('vendra-console::messages.delete_blocked'));
+
+    assertDatabaseHas('plans', ['id' => $plan->getKey(), 'deleted_at' => null]);
+});
+
+it('reports a storefront image that came into use after the list loaded instead of deleting it', function (): void {
+    $image = StorefrontImage::factory()->create();
+    $imageBecameUsed = false;
+
+    // Deploy the image right before the delete checks it, after the list read it as unused.
+    DB::beforeExecuting(function (string $query) use ($image, &$imageBecameUsed): void {
+        if ($imageBecameUsed || ! str_contains($query, '"storefront_deployments"') || str_contains($query, '"in_use"')) {
+            return;
+        }
+
+        $imageBecameUsed = true;
+        StorefrontDeployment::factory()->for($image, 'storefrontImage')->create();
+    });
+
+    livewire(ListStorefrontImages::class)
+        ->callAction(TestAction::make(DeleteAction::class)->table($image))
+        ->assertNotified(__('vendra-console::messages.delete_blocked'));
+
+    assertDatabaseHas('storefront_images', ['id' => $image->getKey()]);
 });
 
 it('updates a storefront image from the edit page', function (): void {

@@ -107,13 +107,6 @@ final class StoreResource extends Resource
         return ['name', 'slug', 'domains.name'];
     }
 
-    public static function getGlobalSearchEloquentQuery(): Builder
-    {
-        return parent::getGlobalSearchEloquentQuery()->with([
-            'domains' => fn (Relation $relation): Relation => $relation->where('active', true),
-        ]);
-    }
-
     /**
      * @return array<string, string>
      */

@@ -10,6 +10,7 @@ use Filament\Support\Icons\Heroicon;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Actions\SubscribeAction;
+use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
 
 final class RenewSubscriptionTableAction extends Action
 {
@@ -36,7 +37,14 @@ final class RenewSubscriptionTableAction extends Action
                     return;
                 }
 
-                resolve(SubscribeAction::class)->execute($record, $plan);
+                try {
+                    resolve(SubscribeAction::class)->execute($record, $plan);
+                } catch (SubscriptionLimitException $exception) {
+                    Notification::make()->danger()->title(__('vendra-console::messages.renewal_blocked'))->body($exception->getMessage())->send();
+
+                    return;
+                }
+
                 self::notifySuccess(__('vendra-console::messages.subscription_renewed'));
             });
     }

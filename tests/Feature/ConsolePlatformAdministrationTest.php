@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraActivityLog\Models\ActivityLog;
@@ -29,7 +32,7 @@ use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
-use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraTenant\Enums\TenantProvisioningStatus;
 use Misaf\VendraUser\Models\User;
@@ -89,6 +92,17 @@ describe('assigning stores to resellers', function (): void {
             ->assertHasNoErrors();
 
         expect($store->fresh()?->reseller_id)->toBeNull();
+    });
+
+    it('hides reseller assignment for an offboarded store', function (): void {
+        $store = Store::factory()->create();
+        $store->delete();
+
+        actAsAdministeringConsoleUser();
+
+        livewire(ListStores::class)
+            ->filterTable('trashed', true)
+            ->assertActionHidden(TestAction::make('assignReseller')->table($store));
     });
 
     /*
@@ -164,32 +178,28 @@ describe('operating store lifecycles', function (): void {
         expect($store->fresh()?->active)->toBeTrue();
     });
 
-    it('suspends and reactivates a store from the active toggle column', function (): void {
+    it('reports a failed database write without its SQL', function (): void {
+        $store = Store::factory()->active()->create();
+        DB::beforeExecuting(function (string $query, array $bindings): void {
+            throw_if(str_starts_with($query, 'update "stores"'), QueryException::class, 'sqlite', $query, $bindings, new PDOException('database is locked'));
+        });
+
+        actAsAdministeringConsoleUser();
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('suspendStore')->table($store))
+            ->assertNotified(Notification::make()->danger()->title(__('vendra-console::messages.operational_action_failed')));
+    });
+
+    it('shows the active state read-only, so suspending always goes through the confirmed row action', function (): void {
         $store = Store::factory()->active()->create();
 
         actAsAdministeringConsoleUser();
 
         livewire(ListStores::class)
-            ->call('updateTableColumnState', 'active', (string) $store->getKey(), false)
-            ->assertNotified(__('vendra-console::messages.store_suspended'));
-
-        expect($store->fresh()?->active)->toBeFalse();
-
-        livewire(ListStores::class)
-            ->call('updateTableColumnState', 'active', (string) $store->getKey(), true)
-            ->assertNotified(__('vendra-console::messages.store_reactivated'));
-
-        expect($store->fresh()?->active)->toBeTrue();
-    });
-
-    it('disables the active toggle for a store that has not finished provisioning', function (): void {
-        $store = Store::factory()->inactive()->provisioningPending()->create();
-
-        actAsAdministeringConsoleUser();
-
-        livewire(ListStores::class)
             ->loadTable()
-            ->assertTableColumnExists('active', fn (IsActiveToggleColumn $column): bool => $column->isDisabled(), $store);
+            ->assertTableColumnExists('active', fn (IsActiveIconColumn $column): bool => true, $store)
+            ->assertActionVisible(TestAction::make('suspendStore')->table($store));
     });
 
     it('queues the existing provisioning recovery job for a failed store', function (): void {

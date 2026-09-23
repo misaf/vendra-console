@@ -30,6 +30,7 @@ trait AssignsReseller
         $this
             ->label(__('vendra-console::actions.assign_reseller'))
             ->icon(Heroicon::OutlinedBuildingOffice2)
+            ->visible(fn (Store $record): bool => ! $record->trashed())
             ->modalDescription(__('vendra-console::messages.assign_reseller_description'))
             ->fillForm(fn (Store $record): array => ['reseller_id' => $record->reseller_id])
             ->schema([

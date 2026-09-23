@@ -9,7 +9,9 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
@@ -82,6 +84,13 @@ final class PlanResource extends Resource
             __('vendra-console::attributes.period') => "{$plan->period_count} ".$plan->period_unit->getLabel(),
             __('vendra-console::attributes.price') => $plan->isFree() ? __('vendra-console::attributes.free') : $plan->formattedPrice(),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withExists([
+            'subscriptions as in_use' => fn (Builder $query): Builder => $query->withoutGlobalScopes([SoftDeletingScope::class]),
+        ]);
     }
 
     public static function getPages(): array
