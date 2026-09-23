@@ -181,7 +181,7 @@ it('does not revoke either user when the identifiers match different users', fun
     expect(Console::query()->active()->count())->toBe(2);
 });
 
-it('rejects both identifiers when only one matches an existing user', function (string $matchingIdentifier): void {
+it('names the identifier that matches no user when the other matches', function (string $matchingIdentifier, string $expectedMessage): void {
     $user = User::factory()->create(['tenant_id' => null, 'username' => 'chosen_name', 'email' => 'ops@vendra.test']);
     grantConsoleAccess($user);
     Console::factory()->active()->create();
@@ -190,8 +190,12 @@ it('rejects both identifiers when only one matches an existing user', function (
         '--email' => $matchingIdentifier === 'email' ? $user->email : 'missing@vendra.test',
         '--username' => $matchingIdentifier === 'username' ? $user->username : 'missing_user',
     ])
-        ->expectsOutputToContain('The --email and --username options identify different users.')
+        ->expectsOutputToContain($expectedMessage)
+        ->doesntExpectOutputToContain('identify different users')
         ->assertFailed();
 
     expect(Console::query()->active()->forUser($user)->exists())->toBeTrue();
-})->with(['email', 'username']);
+})->with([
+    'unknown username' => ['email', 'No tenantless user has the username [missing_user].'],
+    'unknown email' => ['username', 'No tenantless user has the email [missing@vendra.test].'],
+]);

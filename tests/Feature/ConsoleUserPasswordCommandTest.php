@@ -82,7 +82,7 @@ it('does not reset passwords when email and username identify different users', 
         ->and(User::query()->count())->toBe(2);
 });
 
-it('rejects both identifiers when only one matches an existing user', function (string $matchingIdentifier): void {
+it('names the identifier that matches no user when the other matches', function (string $matchingIdentifier, string $expectedMessage): void {
     $user = User::factory()->create(['tenant_id' => null, 'username' => 'chosen_name', 'email' => 'ops@vendra.test']);
     grantConsoleAccess($user);
     $password = $user->password;
@@ -92,13 +92,17 @@ it('rejects both identifiers when only one matches an existing user', function (
         '--username' => $matchingIdentifier === 'username' ? $user->username : 'missing_user',
         '--no-interaction' => true,
     ])
-        ->expectsOutputToContain('The --email and --username options identify different users.')
+        ->expectsOutputToContain($expectedMessage)
+        ->doesntExpectOutputToContain('identify different users')
         ->assertFailed();
 
     expect($user->refresh()->password)->toBe($password)
         ->and(Console::query()->active()->forUser($user)->exists())->toBeTrue();
     $this->assertDatabaseCount('users', 1);
-})->with(['email', 'username']);
+})->with([
+    'unknown username' => ['email', 'No tenantless user has the username [missing_user].'],
+    'unknown email' => ['username', 'No tenantless user has the email [missing@vendra.test].'],
+]);
 
 it('resets only the tenantless user password inside a tenant context', function (bool $authenticatedTenantUser): void {
     $consoleUser = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);

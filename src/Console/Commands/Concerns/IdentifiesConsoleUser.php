@@ -8,12 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Misaf\VendraUser\Models\User;
 
-/**
- * Normalize and look up the user the --email and --username options name.
- *
- * The commands keep their own messages and decide what a missing or mismatched
- * user means for them.
- */
 trait IdentifiesConsoleUser
 {
     private function givenEmail(): ?string
@@ -31,9 +25,7 @@ trait IdentifiesConsoleUser
     }
 
     /**
-     * Both supplied identifiers must resolve to the same user.
-     *
-     * @return array{user: ?User, mismatched: bool}
+     * @return array{user: ?User, mismatched: bool, unmatched: 'email'|'username'|null}
      */
     private function findIdentifiedUser(?string $email, ?string $username): array
     {
@@ -48,18 +40,29 @@ trait IdentifiesConsoleUser
                 }
             })
             // Keep matching consistent with the database's collation.
-            ->selectRaw('users.*, email = ? AND username = ? AS matches_identifiers', [$email, $username])
+            ->selectRaw('users.*, email = ? AS matches_email, username = ? AS matches_username', [$email, $username])
             ->get();
 
-        $user = $users->first();
-        $mismatched = $email !== null && $username !== null && $user !== null
-            && ($users->count() !== 1 || ! $user->getAttribute('matches_identifiers'));
+        $emailUser = $email === null ? null : $users->first(fn (User $user): bool => (bool) $user->getAttribute('matches_email'));
+        $usernameUser = $username === null ? null : $users->first(fn (User $user): bool => (bool) $user->getAttribute('matches_username'));
 
-        $user?->offsetUnset('matches_identifiers');
+        $users->each(function (User $user): void {
+            $user->offsetUnset('matches_email');
+            $user->offsetUnset('matches_username');
+        });
+
+        $unmatched = match (true) {
+            $email !== null && $emailUser === null => 'email',
+            $username !== null && $usernameUser === null => 'username',
+            default => null,
+        };
+
+        $mismatched = $emailUser !== null && $usernameUser !== null && ! $emailUser->is($usernameUser);
 
         return [
-            'user' => $user,
+            'user' => $unmatched === null && ! $mismatched ? $emailUser ?? $usernameUser : null,
             'mismatched' => $mismatched,
+            'unmatched' => $unmatched,
         ];
     }
 }

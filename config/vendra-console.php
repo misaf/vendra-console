@@ -10,11 +10,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | The address given to the first console user on a fresh install, and the
-    | one "vendra-console:user-create" assigns when it is run without "--email"
-    | ("vendra-console:user-password" falls back to it the same way). It
-    | is validated by the same shared user rules every other address in the
-    | application passes, so it must be a valid address: a dotless domain
-    | such as "console@localhost" is rejected.
+    | one "vendra-console:user-password" falls back to when it is run without
+    | "--email" or "--username". It is validated by the same shared user rules
+    | every other address in the application passes, so it must be a valid
+    | address: a dotless domain such as "console@localhost" is rejected.
     |
     */
 

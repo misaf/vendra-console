@@ -8,7 +8,6 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Console\Commands\Concerns\IdentifiesConsoleUser;
@@ -18,7 +17,7 @@ use Misaf\VendraUser\Support\UserRules;
 #[Description('Create a console user')]
 #[Signature('vendra-console:user-create
         {--username= : Username for the new console user}
-        {--email= : Email address for the new console user; defaults to the vendra-console.default_email config value}
+        {--email= : Email address for the new console user}
         {--password= : Password to set; a strong one is generated when omitted}')]
 final class CreateConsoleUserCommand extends Command
 {
@@ -26,7 +25,7 @@ final class CreateConsoleUserCommand extends Command
 
     public function handle(): int
     {
-        $email = $this->givenEmail() ?? Config::string('vendra-console.default_email');
+        $email = $this->givenEmail();
         $username = $this->givenUsername();
         $password = $this->option('password');
         $password = is_string($password) ? $password : UserRules::generatePassword();
@@ -39,7 +38,7 @@ final class CreateConsoleUserCommand extends Command
                 'password' => ['required', ...UserRules::password()],
             ],
             [
-                'email.required' => 'The --email option cannot be blank.',
+                'email.required' => 'An email is required to create a console user. Use --email.',
                 'username.required' => 'A username is required to create a console user. Use --username.',
             ],
         );
@@ -50,7 +49,7 @@ final class CreateConsoleUserCommand extends Command
             return self::FAILURE;
         }
 
-        ['user' => $existingUser] = $this->findIdentifiedUser($email, $username);
+        ['user' => $existingUser] = $this->findIdentifiedUser($email, null);
 
         if ($existingUser !== null) {
             $this->components->error("[{$existingUser->email}] already exists.");

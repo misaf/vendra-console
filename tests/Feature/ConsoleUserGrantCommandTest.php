@@ -68,15 +68,20 @@ it('reports a user who already has console access without changing anything', fu
         ->and(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeTrue();
 });
 
-it('updates the password of a user who already has console access', function (): void {
-    $consoleUser = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);
+it('points at the password command instead of changing the password of a user who already has console access', function (): void {
+    $consoleUser = User::factory()->create([
+        'tenant_id' => null,
+        'email' => 'ops@vendra.test',
+        'password' => Hash::make('the-old-password'),
+    ]);
     grantConsoleAccess($consoleUser);
 
     $this->artisan('vendra-console:user-grant', ['--email' => 'ops@vendra.test', '--password' => 'the-new-password'])
-        ->expectsOutputToContain('Console user password updated.')
-        ->assertSuccessful();
+        ->expectsOutputToContain('[ops@vendra.test] already has console access. The password was not changed.')
+        ->expectsOutputToContain('vendra-console:user-password')
+        ->assertFailed();
 
-    expect(Hash::check('the-new-password', $consoleUser->refresh()->password))->toBeTrue()
+    expect(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeTrue()
         ->and(Console::query()->forUser($consoleUser)->count())->toBe(1);
 });
 
@@ -113,6 +118,23 @@ it('does not grant console access when the identifiers match different users', f
 
     expect(Console::query()->count())->toBe(0);
 });
+
+it('names the identifier that matches no user instead of reporting a mismatch', function (string $matchingIdentifier, string $expectedMessage): void {
+    $user = User::factory()->create(['tenant_id' => null, 'username' => 'chosen_name', 'email' => 'ops@vendra.test']);
+
+    $this->artisan('vendra-console:user-grant', [
+        '--email' => $matchingIdentifier === 'email' ? $user->email : 'missing@vendra.test',
+        '--username' => $matchingIdentifier === 'username' ? $user->username : 'missing_user',
+    ])
+        ->expectsOutputToContain($expectedMessage)
+        ->doesntExpectOutputToContain('identify different users')
+        ->assertFailed();
+
+    expect(Console::query()->count())->toBe(0);
+})->with([
+    'unknown username' => ['email', 'No tenantless user has the username [missing_user].'],
+    'unknown email' => ['username', 'No tenantless user has the email [missing@vendra.test].'],
+]);
 
 it('rejects a password that fails the password rules without granting console access', function (string $password): void {
     $user = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test']);

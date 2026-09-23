@@ -21,25 +21,27 @@ it('constructs the command without resolving its actions', function (): void {
 it('creates a console user with a generated password and prints it', function (): void {
     Config::set('app.url', 'https://vendra.test');
 
-    expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name']))->toBe(0);
+    expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name', '--email' => 'ops@vendra.test']))->toBe(0);
 
     $output = Artisan::output();
     $consoleUser = User::query()->sole();
 
-    expect($output)->toContain('console@vendra.test')
+    expect($output)->toContain('ops@vendra.test')
+        ->toContain('https://console.vendra.test/login')
         ->and($consoleUser->canAccessPanel(Filament::getPanel('console')))->toBeTrue()
         ->and(Hash::check(printedConsolePassword($output), $consoleUser->password))->toBeTrue();
 });
 
-it('rejects an invalid default email when creating a console user', function (string $defaultEmail): void {
-    Config::set('vendra-console.default_email', $defaultEmail);
+it('requires an email instead of falling back to the configured default address', function (): void {
+    Config::set('vendra-console.default_email', 'ops@elsewhere.test');
 
     $this->artisan('vendra-console:user-create', ['--username' => 'chosen_name', '--password' => 'the-new-password'])
+        ->expectsOutputToContain('An email is required to create a console user. Use --email.')
         ->assertFailed();
 
     $this->assertDatabaseCount('users', 0);
     $this->assertDatabaseCount('consoles', 0);
-})->with(['blank' => '', 'invalid' => 'console@localhost']);
+});
 
 it('trims and lowercases the given email before creating a console user', function (): void {
     $this->artisan('vendra-console:user-create', ['--username' => ' chosen_name ', '--email' => ' OPS@Vendra.test ', '--password' => 'the-new-password'])
@@ -73,7 +75,7 @@ it('generates a password that satisfies the application password rules', functio
     Password::defaults(fn () => Password::min(40));
 
     try {
-        expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name']))->toBe(0);
+        expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name', '--email' => 'ops@vendra.test']))->toBe(0);
 
         $password = printedConsolePassword(Artisan::output());
 
@@ -82,20 +84,6 @@ it('generates a password that satisfies the application password rules', functio
     } finally {
         Password::$defaultCallback = $passwordDefaults;
     }
-});
-
-it('takes the default email from config and prints the console panel login url', function (): void {
-    Config::set('vendra-console.default_email', 'ops@elsewhere.test');
-
-    expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name']))->toBe(0)
-        ->and(User::query()->sole()->email)->toBe('ops@elsewhere.test')
-        ->and(Artisan::output())->toContain('ops@elsewhere.test')
-        ->toContain('https://console.vendra.test/login');
-});
-
-it('ships a default email the shared user rules accept', function (): void {
-    expect(Artisan::call('vendra-console:user-create', ['--username' => 'chosen_name']))->toBe(0)
-        ->and(User::query()->sole()->email)->toBe('console@vendra.test');
 });
 
 it('rejects an email the shared user rules reject', function (): void {
@@ -130,20 +118,8 @@ it('points at the sibling commands when the email already belongs to a user', fu
         ->and(Console::query()->count())->toBe(0);
 });
 
-it('reports the default address when it already belongs to another user', function (): void {
-    Config::set('app.url', 'https://vendra.test');
-    User::factory()->create(['tenant_id' => null, 'username' => 'existing_one', 'email' => 'console@vendra.test']);
-
-    $this->artisan('vendra-console:user-create', ['--username' => 'chosen_name'])
-        ->expectsOutputToContain('console@vendra.test')
-        ->assertFailed();
-
-    expect(User::query()->count())->toBe(1)
-        ->and(Console::query()->count())->toBe(0);
-});
-
 it('requires an explicit username to create a console user', function (): void {
-    $this->artisan('vendra-console:user-create')
+    $this->artisan('vendra-console:user-create', ['--email' => 'ops@vendra.test'])
         ->expectsOutputToContain('A username is required')
         ->assertFailed();
 
@@ -152,7 +128,8 @@ it('requires an explicit username to create a console user', function (): void {
 });
 
 it('rejects an invalid username without creating a user', function (string $username): void {
-    $this->artisan('vendra-console:user-create', ['--username' => $username])
+    $this->artisan('vendra-console:user-create', ['--username' => $username, '--email' => 'ops@vendra.test'])
+        ->expectsOutputToContain('username')
         ->assertFailed();
 
     expect(User::query()->count())->toBe(0)
@@ -166,7 +143,7 @@ it('rejects an invalid username without creating a user', function (string $user
 ]);
 
 it('accepts usernames at the allowed length boundaries', function (string $username): void {
-    $this->artisan('vendra-console:user-create', ['--username' => $username])
+    $this->artisan('vendra-console:user-create', ['--username' => $username, '--email' => 'ops@vendra.test'])
         ->assertSuccessful();
 
     expect(User::query()->sole()->username)->toBe($username);
@@ -178,17 +155,15 @@ it('allows a username held by a tenant user or a soft-deleted tenantless user', 
     User::factory()->create(['username' => 'chosen_name']);
     forgetCurrentTestTenant();
 
-    $this->artisan('vendra-console:user-create', ['--username' => 'chosen_name'])
+    $this->artisan('vendra-console:user-create', ['--username' => 'chosen_name', '--email' => 'ops@vendra.test'])
         ->assertSuccessful();
 
     expect(User::query()->whereNull('tenant_id')->sole()->username)->toBe('chosen_name');
 });
 
-it('rejects a blank email instead of falling back to the default console address', function (string $email): void {
-    Config::set('app.url', 'https://vendra.test');
-
+it('rejects a blank email', function (string $email): void {
     $this->artisan('vendra-console:user-create', ['--username' => 'chosen_name', '--email' => $email])
-        ->expectsOutputToContain('The --email option cannot be blank.')
+        ->expectsOutputToContain('An email is required to create a console user. Use --email.')
         ->assertFailed();
 
     expect(User::query()->count())->toBe(0)

@@ -51,7 +51,7 @@ final class RevokeConsoleUserCommand extends Command
             return self::FAILURE;
         }
 
-        ['user' => $user, 'mismatched' => $mismatched] = $this->findIdentifiedUser($email, $username);
+        ['user' => $user, 'mismatched' => $mismatched, 'unmatched' => $unmatched] = $this->findIdentifiedUser($email, $username);
 
         if ($mismatched) {
             $this->components->error('The --email and --username options identify different users.');
@@ -60,7 +60,7 @@ final class RevokeConsoleUserCommand extends Command
         }
 
         if ($user === null) {
-            $this->components->error($email !== null
+            $this->components->error($unmatched === 'email'
                 ? "No tenantless user has the email [{$email}]."
                 : "No tenantless user has the username [{$username}].");
 
