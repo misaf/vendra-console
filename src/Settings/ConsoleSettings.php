@@ -15,9 +15,6 @@ final class ConsoleSettings extends Settings
         return 'console';
     }
 
-    /**
-     * Use the platform repository, since these settings have no tenant.
-     */
     public static function repository(): string
     {
         return 'global';

@@ -77,8 +77,7 @@ it('points at the password command instead of changing the password of a user wh
     grantConsoleAccess($consoleUser);
 
     $this->artisan('vendra-console:user-grant', ['--email' => 'ops@vendra.test', '--password' => 'the-new-password'])
-        ->expectsOutputToContain('[ops@vendra.test] already has console access. The password was not changed.')
-        ->expectsOutputToContain('vendra-console:user-password')
+        ->expectsOutputToContain('[ops@vendra.test] already has console access. The password was not changed. Use vendra-console:user-password to issue a new password.')
         ->assertFailed();
 
     expect(Hash::check('the-old-password', $consoleUser->refresh()->password))->toBeTrue()
@@ -94,15 +93,14 @@ it('requires an email or a username to grant console access', function (array $o
 
     expect(Console::query()->count())->toBe(0);
 })->with([
-    'neither' => [[]],
+    'neither' => [['--no-interaction' => true]],
     'blank email' => [['--email' => '   ']],
     'blank username' => [['--username' => '   ']],
 ]);
 
 it('points at the create command when no tenantless user matches', function (): void {
     $this->artisan('vendra-console:user-grant', ['--username' => 'no_such_user'])
-        ->expectsOutputToContain('No tenantless user has the username [no_such_user].')
-        ->expectsOutputToContain('vendra-console:user-create')
+        ->expectsOutputToContain('No tenantless user has the username [no_such_user]. Use vendra-console:user-create to create one.')
         ->assertFailed();
 
     expect(Console::query()->count())->toBe(0);
@@ -158,4 +156,27 @@ it('grants console access to a tenantless user inside a tenant context', functio
 
     expect(Console::query()->forUser($user)->sole()->active)->toBeTrue()
         ->and(Console::query()->forUser($tenantUser)->exists())->toBeFalse();
+});
+
+it('searches tenantless users without console access when an interactive run names no user', function (): void {
+    grantConsoleAccess(User::factory()->create(['tenant_id' => null, 'email' => 'ops-console@vendra.test', 'username' => 'ops_console']));
+    $user = User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test', 'username' => 'ops_user']);
+    makeCurrentTestTenant();
+    User::factory()->create(['email' => 'ops-tenant@vendra.test', 'username' => 'ops_tenant']);
+    forgetCurrentTestTenant();
+
+    $this->artisan('vendra-console:user-grant')
+        ->expectsSearch('Which user should get console access?', 'ops@vendra.test', 'ops', ['ops@vendra.test' => 'ops@vendra.test (ops_user)'])
+        ->expectsOutputToContain('Console access granted to [ops@vendra.test].')
+        ->assertSuccessful();
+
+    expect(Console::query()->active()->forUser($user)->exists())->toBeTrue();
+});
+
+it('fails instead of searching when every tenantless user already has console access', function (): void {
+    grantConsoleAccess(User::factory()->create(['tenant_id' => null]));
+
+    $this->artisan('vendra-console:user-grant')
+        ->expectsOutputToContain('Every tenantless user already has console access. Use vendra-console:user-create to create one.')
+        ->assertFailed();
 });

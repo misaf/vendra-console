@@ -23,7 +23,6 @@ use Misaf\VendraUser\Models\User;
  * @property bool $active
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * @property-read ?User $user
  */
 #[Fillable(['user_id', 'active'])]
 #[UseFactory(ConsoleFactory::class)]
@@ -33,10 +32,6 @@ final class Console extends Model
     use HasFactory;
 
     /**
-     * Get the console's user, without tenant scopes.
-     *
-     * Null once the user is soft deleted, while the grant row survives.
-     *
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
@@ -64,6 +59,16 @@ final class Console extends Model
     protected function active(Builder $query): Builder
     {
         return $query->where('active', true);
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    #[Scope]
+    protected function inactive(Builder $query): Builder
+    {
+        return $query->where('active', false);
     }
 
     /**

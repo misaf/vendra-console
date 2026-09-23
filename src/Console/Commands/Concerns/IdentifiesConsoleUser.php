@@ -6,63 +6,90 @@ namespace Misaf\VendraConsole\Console\Commands\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraUser\Models\User;
+
+use function Laravel\Prompts\search;
 
 trait IdentifiesConsoleUser
 {
+    private const int USER_SEARCH_LIMIT = 10;
+
+    /**
+     * Search for the user by email or username when an interactive run names neither.
+     *
+     * The chosen email is written back into --email, so it is validated like the option.
+     * With no user to choose from, the run fails with the given message instead.
+     */
+    private function searchForMissingUser(string $label, bool $withConsoleAccess, string $noUserMessage): bool
+    {
+        if (! $this->input->isInteractive() || $this->option('email') !== null || $this->option('username') !== null) {
+            return true;
+        }
+
+        if ($this->searchUsers('', $withConsoleAccess) === []) {
+            $this->components->error($noUserMessage);
+
+            return false;
+        }
+
+        $this->input->setOption('email', search(
+            label: $label,
+            placeholder: 'Search by email or username',
+            options: fn (string $value): array => $this->searchUsers($value, $withConsoleAccess),
+            scroll: self::USER_SEARCH_LIMIT,
+        ));
+
+        return true;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function searchUsers(string $value, bool $withConsoleAccess): array
+    {
+        $activeConsoleUserIds = Console::query()->active()->select('user_id');
+
+        return User::query()
+            ->tenantless()
+            ->when(
+                $withConsoleAccess,
+                fn (Builder $query): Builder => $query->whereIn('id', $activeConsoleUserIds),
+                fn (Builder $query): Builder => $query->whereNotIn('id', $activeConsoleUserIds),
+            )
+            ->when(mb_trim($value) !== '', fn (Builder $query): Builder => $query->where(
+                fn (Builder $query): Builder => $query
+                    ->whereLike('email', '%'.mb_trim($value).'%')
+                    ->orWhereLike('username', '%'.mb_trim($value).'%'),
+            ))
+            ->orderBy('email')
+            ->limit(self::USER_SEARCH_LIMIT)
+            ->get(['email', 'username'])
+            ->mapWithKeys(fn (User $user): array => [$user->email => "{$user->email} ({$user->username})"])
+            ->all();
+    }
+
     private function givenEmail(): ?string
     {
         $email = $this->option('email');
 
-        return is_string($email) ? Str::lower(mb_trim($email)) : null;
+        return is_string($email) ? $this->normalizeEmail($email) : null;
     }
 
     private function givenUsername(): ?string
     {
         $username = $this->option('username');
 
-        return is_string($username) ? mb_trim($username) : null;
+        return is_string($username) ? $this->normalizeUsername($username) : null;
     }
 
-    /**
-     * @return array{user: ?User, mismatched: bool, unmatched: 'email'|'username'|null}
-     */
-    private function findIdentifiedUser(?string $email, ?string $username): array
+    private function normalizeEmail(string $email): string
     {
-        $users = User::query()->tenantless()
-            ->where(function (Builder $query) use ($email, $username): void {
-                if ($email !== null) {
-                    $query->where('email', $email);
-                }
+        return Str::lower(mb_trim($email));
+    }
 
-                if ($username !== null) {
-                    $query->orWhere('username', $username);
-                }
-            })
-            // Keep matching consistent with the database's collation.
-            ->selectRaw('users.*, email = ? AS matches_email, username = ? AS matches_username', [$email, $username])
-            ->get();
-
-        $emailUser = $email === null ? null : $users->first(fn (User $user): bool => (bool) $user->getAttribute('matches_email'));
-        $usernameUser = $username === null ? null : $users->first(fn (User $user): bool => (bool) $user->getAttribute('matches_username'));
-
-        $users->each(function (User $user): void {
-            $user->offsetUnset('matches_email');
-            $user->offsetUnset('matches_username');
-        });
-
-        $unmatched = match (true) {
-            $email !== null && $emailUser === null => 'email',
-            $username !== null && $usernameUser === null => 'username',
-            default => null,
-        };
-
-        $mismatched = $emailUser !== null && $usernameUser !== null && ! $emailUser->is($usernameUser);
-
-        return [
-            'user' => $unmatched === null && ! $mismatched ? $emailUser ?? $usernameUser : null,
-            'mismatched' => $mismatched,
-            'unmatched' => $unmatched,
-        ];
+    private function normalizeUsername(string $username): string
+    {
+        return mb_trim($username);
     }
 }

@@ -17,6 +17,7 @@ return new class extends Migration
                 ->constrained()
                 ->restrictOnDelete();
             $table->boolean('active')
+                ->default(false)
                 ->index();
             $table->timestampsTz();
         });

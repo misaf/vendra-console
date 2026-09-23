@@ -10,10 +10,6 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
 
 final class ConsoleCredentials
 {
-    /**
-     * Both the command and the seeder issue a generated password, so they
-     * share one presentation instead of formatting it apart.
-     */
     public static function report(Command $command, string $message, string $email, string $password): void
     {
         $command->info($message);

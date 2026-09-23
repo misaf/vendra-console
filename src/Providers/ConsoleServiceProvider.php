@@ -27,7 +27,7 @@ final class ConsoleServiceProvider extends PackageServiceProvider
             ->hasMigrations([
                 'create_consoles_table',
             ])
-            ->hasCommands([
+            ->hasConsoleCommands([
                 CreateConsoleUserCommand::class,
                 IssueConsolePasswordCommand::class,
                 GrantConsoleAccessCommand::class,

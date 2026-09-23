@@ -10,16 +10,12 @@ use Illuminate\Support\Facades\Config;
 use Misaf\VendraConsole\Actions\CreateConsoleUserAction;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraConsole\Support\ConsoleCredentials;
-use Misaf\VendraUser\Support\UserRules;
-use RuntimeException;
+use Misaf\VendraUser\Support\PasswordGenerator;
 
 final class ConsoleSeeder extends Seeder
 {
     public function __construct(private readonly CreateConsoleUserAction $createConsoleUserAction) {}
 
-    /**
-     * @throws RuntimeException
-     */
     public function run(): void
     {
         if (Console::query()->active()->exists()) {
@@ -27,12 +23,14 @@ final class ConsoleSeeder extends Seeder
         }
 
         $email = Config::string('vendra-console.default_email');
-        $password = UserRules::generatePassword();
+        $password = PasswordGenerator::generate();
 
         try {
             $user = $this->createConsoleUserAction->execute('console', $email, $password);
-        } catch (UniqueConstraintViolationException $exception) {
-            throw new RuntimeException("Console username or email [{$email}] is taken. Run `php artisan vendra-console:user-create`.", previous: $exception);
+        } catch (UniqueConstraintViolationException) {
+            $this->command->error("The email [{$email}] or the username [console] already belongs to a tenantless user. Use vendra-console:user-grant to give that user console access, or vendra-console:user-create with a different email and username.");
+
+            return;
         }
 
         ConsoleCredentials::report($this->command, 'Console access details', $user->email, $password);

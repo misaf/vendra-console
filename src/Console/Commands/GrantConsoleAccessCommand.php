@@ -11,44 +11,47 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Misaf\VendraConsole\Actions\GrantConsoleAccessAction;
 use Misaf\VendraConsole\Console\Commands\Concerns\IdentifiesConsoleUser;
+use Misaf\VendraConsole\Console\Commands\Concerns\ReadsGivenPassword;
 use Misaf\VendraConsole\Support\ConsoleCredentials;
 use Misaf\VendraUser\Actions\UpdateUserPasswordAction;
+use Misaf\VendraUser\Models\User;
 use Misaf\VendraUser\Support\UserRules;
 
 #[Description('Grant console access to an existing tenantless user')]
 #[Signature('vendra-console:user-grant
         {--username= : Username of the user to grant console access to}
-        {--email= : Email address of the user to grant console access to}
-        {--password= : Password to set when access is granted; the current one is kept when omitted}')]
+        {--email= : Email address of the user to grant console access to; searched for when neither identifier is given}
+        {--password= : Password to set when access is granted, asked for without echo when given no value; the current one is kept when omitted}')]
 final class GrantConsoleAccessCommand extends Command
 {
     use IdentifiesConsoleUser;
+    use ReadsGivenPassword;
 
     public function handle(): int
     {
+        if (! $this->searchForMissingUser('Which user should get console access?', withConsoleAccess: false, noUserMessage: 'Every tenantless user already has console access. Use vendra-console:user-create to create one.')) {
+            return self::FAILURE;
+        }
+
         $email = $this->givenEmail();
         $username = $this->givenUsername();
-        $password = $this->option('password');
-        $password = is_string($password) ? $password : null;
+        $password = $this->givenPassword();
 
         $validator = Validator::make(
+            ['email' => $email, 'username' => $username, 'password' => $password],
             [
-                // A supplied but blank option names nobody, so it cannot stand in for the other.
-                'identifier' => $email ?? $username,
-                'email' => $email,
-                'username' => $username,
-                'password' => $password,
+                // Keep required_without ahead of exclude_if, which stops the rest of a null field's rules.
+                'email' => ['bail', 'required_without:username', 'exclude_if:email,null', 'filled', ...UserRules::email(), UserRules::exists('email')],
+                'username' => ['bail', 'required_without:email', 'exclude_if:username,null', 'filled', ...UserRules::username(), UserRules::exists('username')],
+                'password' => ['bail', 'exclude_if:password,null', 'filled', ...UserRules::password()],
             ],
             [
-                'identifier' => ['required'],
-                'email' => [$email === null ? 'nullable' : 'required', ...UserRules::email()],
-                'username' => ['bail', $username === null ? 'nullable' : 'required', ...UserRules::username()],
-                'password' => [$password === null ? 'nullable' : 'required', ...UserRules::password()],
-            ],
-            [
-                'identifier.required' => __('vendra-console::commands.grant_requires_identifier'),
-                'email.required' => __('vendra-console::commands.grant_requires_identifier'),
-                'username.required' => __('vendra-console::commands.grant_requires_identifier'),
+                'email.exists' => 'No tenantless user has the email [:input]. Use vendra-console:user-create to create one.',
+                'username.exists' => 'No tenantless user has the username [:input]. Use vendra-console:user-create to create one.',
+                'email.filled' => 'Granting console access requires --email or --username.',
+                'email.required_without' => 'Granting console access requires --email or --username.',
+                'username.filled' => 'Granting console access requires --email or --username.',
+                'username.required_without' => 'Granting console access requires --email or --username.',
             ],
         );
 
@@ -58,19 +61,11 @@ final class GrantConsoleAccessCommand extends Command
             return self::FAILURE;
         }
 
-        ['user' => $user, 'mismatched' => $mismatched, 'unmatched' => $unmatched] = $this->findIdentifiedUser($email, $username);
-
-        if ($mismatched) {
-            $this->components->error('The --email and --username options identify different users.');
-
-            return self::FAILURE;
-        }
+        // Each identifier exists on its own, so no user matching both means they name different users.
+        $user = User::query()->tenantless()->identifiedBy($email, $username)->first();
 
         if ($user === null) {
-            $this->components->error($unmatched === 'email'
-                ? "No tenantless user has the email [{$email}]."
-                : "No tenantless user has the username [{$username}].");
-            $this->line('  Use vendra-console:user-create to create one.');
+            $this->components->error('The --email and --username options identify different users.');
 
             return self::FAILURE;
         }
@@ -94,8 +89,7 @@ final class GrantConsoleAccessCommand extends Command
         }
 
         if (! $granted) {
-            $this->components->error("[{$user->email}] already has console access. The password was not changed.");
-            $this->line('  Use vendra-console:user-password to issue a new password.');
+            $this->components->error("[{$user->email}] already has console access. The password was not changed. Use vendra-console:user-password to issue a new password.");
 
             return self::FAILURE;
         }
