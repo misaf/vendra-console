@@ -16,19 +16,12 @@ use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StoreStatusCounts;
-use Misaf\VendraSubscription\Enums\SubscriptionPaymentStatus;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSubscription\Models\SubscriptionPayment;
 
 final class NeedsAttention extends StatsOverviewWidget
 {
-    private const array PAYMENT_STATUSES_NEEDING_REVIEW = [
-        SubscriptionPaymentStatus::RequiresAction,
-        SubscriptionPaymentStatus::NeedsReconciliation,
-        SubscriptionPaymentStatus::RefundFailed,
-    ];
-
     protected ?string $pollingInterval = '60s';
 
     protected function getHeading(): string
@@ -39,10 +32,10 @@ final class NeedsAttention extends StatsOverviewWidget
     protected function getStats(): array
     {
         $storesNeedingAttention = StoreStatusCounts::for()->needingAttention();
-        $failedDeployments = StorefrontDeployment::query()->where('status', StorefrontDeploymentStatus::Failed)->count();
+        $failedDeployments = StorefrontDeployment::query()->failed()->count();
         $pastDueSubscriptions = Subscription::query()->where('status', SubscriptionStatus::PastDue)->count();
         $endingSoon = Subscription::query()->endingWithin(7)->count();
-        $paymentsNeedingReview = SubscriptionPayment::query()->whereIn('status', self::PAYMENT_STATUSES_NEEDING_REVIEW)->count();
+        $paymentsNeedingReview = SubscriptionPayment::query()->needingReview()->count();
         $failedJobs = self::recentlyFailedJobs();
 
         $stats = array_filter([

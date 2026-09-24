@@ -16,7 +16,6 @@ use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Filament\Concerns\BuildsDailyTrend;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Support\StoreStatusCounts;
-use Misaf\VendraSubscription\Enums\SubscriptionPaymentStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSubscription\Models\SubscriptionPayment;
 use Throwable;
@@ -69,8 +68,7 @@ final class PlatformMetrics extends StatsOverviewWidget
     private static function revenueBetween(CarbonInterface $from, CarbonInterface $until): ?string
     {
         $totals = SubscriptionPayment::query()
-            ->where('status', SubscriptionPaymentStatus::Paid)
-            ->whereBetween('paid_at', [$from, $until])
+            ->paidBetween($from, $until)
             ->selectRaw('currency_code, sum(amount) as total')
             ->groupBy('currency_code')
             ->orderBy('currency_code')
