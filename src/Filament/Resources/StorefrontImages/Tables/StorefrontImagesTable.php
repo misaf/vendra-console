@@ -39,7 +39,8 @@ final class StorefrontImagesTable
                     ->label(__('vendra-console::attributes.storefront_image_notes'))
                     ->wrap()
                     ->placeholder('—')
-                    ->limit(60),
+                    ->limit(60)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 IsActiveIconColumn::make(),
 

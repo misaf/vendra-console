@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers;
 
+use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\QueryBuilder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AddAdministratorTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ChangeAdministratorEmailTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ChangeAdministratorPasswordTableAction;
@@ -21,8 +21,17 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Actions\Concerns\InteractsWith
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\DemoteAdministratorTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\DisableAdministratorTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\EnableAdministratorTableAction;
-use Misaf\VendraConsole\Filament\Resources\Stores\Actions\PromoteAdministratorTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RemoveAdministratorTableAction;
+use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
+use Misaf\VendraUser\Filament\Tables\Columns\EmailColumn;
+use Misaf\VendraUser\Filament\Tables\Columns\EmailVerifiedAtColumn;
+use Misaf\VendraUser\Filament\Tables\Columns\UsernameColumn;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\EmailConstraint;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\EmailVerifiedAtConstraint;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\UsernameConstraint;
 use Misaf\VendraUser\Models\User;
 
 final class AdministratorsRelationManager extends RelationManager
@@ -30,6 +39,8 @@ final class AdministratorsRelationManager extends RelationManager
     use InteractsWithAdministratorRecord;
 
     protected static string $relationship = 'users';
+
+    protected static string|BackedEnum|null $icon = Heroicon::OutlinedUsers;
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
@@ -39,29 +50,35 @@ final class AdministratorsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query
-                ->withoutGlobalScopes([SoftDeletingScope::class])
-                ->afterQuery(fn (Collection $users): Collection => self::loadAdministratorRoles(self::administratorStore($this), $users)))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $this->onlyAdministrators($query))
             ->columns([
-                TextColumn::make('username')
-                    ->label(__('vendra-console::attributes.username'))
-                    ->searchable(),
+                RowIndexColumn::make(),
 
-                TextColumn::make('email')
-                    ->label(__('vendra-console::attributes.email'))
-                    ->searchable(),
+                UsernameColumn::make(),
 
-                IconColumn::make('administrator')
-                    ->label(__('vendra-console::attributes.administrator'))
-                    ->boolean()
-                    ->state(fn (User $record): bool => self::isAdministrator(self::administratorStore($this), $record)),
+                EmailColumn::make(),
 
-                IconColumn::make('enabled')
-                    ->label(__('vendra-console::attributes.enabled'))
-                    ->boolean()
+                EmailVerifiedAtColumn::make(),
+
+                IsActiveIconColumn::make()
                     ->state(fn (User $record): bool => ! $record->trashed()),
+
+                CreatedAtColumn::make(),
+
+                UpdatedAtColumn::make(),
             ])
-            ->filters([TrashedFilter::make()])
+            ->filters(
+                [
+                    TrashedFilter::make()->default(true),
+                    QueryBuilder::make()
+                        ->constraints([
+                            UsernameConstraint::make(),
+                            EmailConstraint::make(),
+                            EmailVerifiedAtConstraint::make(),
+                        ]),
+                ],
+                layout: FiltersLayout::AboveContentCollapsible,
+            )
             ->headerActions([AddAdministratorTableAction::make()])
             ->recordActions([
                 ActionGroup::make([
@@ -70,7 +87,6 @@ final class AdministratorsRelationManager extends RelationManager
                         ChangeAdministratorEmailTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
-                        PromoteAdministratorTableAction::make(),
                         DemoteAdministratorTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
@@ -81,6 +97,16 @@ final class AdministratorsRelationManager extends RelationManager
                         RemoveAdministratorTableAction::make(),
                     ])->dropdown(false),
                 ]),
-            ]);
+            ])
+            ->defaultSort(column: 'id', direction: 'desc');
+    }
+
+    /**
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    private function onlyAdministrators(Builder $query): Builder
+    {
+        return $query->administratorOf(self::administratorStore($this));
     }
 }

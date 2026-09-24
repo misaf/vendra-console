@@ -13,7 +13,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\CreateStore;
@@ -95,7 +94,7 @@ final class StoreResource extends Resource
     {
         return parent::getEloquentQuery()->with([
             'storefrontDeployment',
-            'domains' => fn (Relation $relation): Relation => $relation->where('active', true),
+            'primaryDomain',
         ]);
     }
 
@@ -113,10 +112,9 @@ final class StoreResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         $store = self::store($record);
-        $domainName = $store->domains->pluck('name')->first();
 
         return [
-            __('vendra-console::attributes.domain') => is_string($domainName) ? $domainName : '—',
+            __('vendra-console::attributes.domain') => $store->primaryDomain->name ?? '—',
         ];
     }
 

@@ -140,9 +140,8 @@ it('globally searches console resources', function (): void {
         ]))
         ->create();
     $store = Store::factory()->create(['name' => 'Search Store']);
-    StoreDomain::factory()->for($store)->create([
+    StoreDomain::factory()->for($store)->primary()->create([
         'name' => 'global-search-store.test',
-        'active' => true,
     ]);
 
     $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
@@ -496,7 +495,7 @@ it('validates store domains during creation', function (): void {
     $reseller = Reseller::factory()->active()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(3))->create();
     $existingStore = Store::factory()->create();
-    StoreDomain::factory()->for($existingStore)->create(['name' => 'taken.test', 'active' => true]);
+    StoreDomain::factory()->for($existingStore)->primary()->create(['name' => 'taken.test']);
 
     livewire(CreateStore::class)
         ->fillForm([
@@ -523,7 +522,7 @@ it('lets a console admin replace a domain and shows the old one in trashed histo
     actAsConsoleAdmin();
 
     $store = Store::factory()->create(['active' => true]);
-    $original = StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
+    $original = StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
 
     livewire(ListStores::class)
         ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'new.test'])
@@ -545,7 +544,7 @@ it('uses a store overview as the console record landing page', function (): void
     actAsConsoleAdmin();
 
     $store = Store::factory()->create(['name' => 'Console overview store']);
-    StoreDomain::factory()->for($store)->create(['name' => 'overview.test', 'active' => true]);
+    StoreDomain::factory()->for($store)->primary()->create(['name' => 'overview.test']);
     StorefrontDeployment::factory()->for($store)->create(['domain' => 'shop.overview.test', 'desired_state' => StorefrontDesiredState::Stopped]);
 
     livewire(ListStores::class)
@@ -555,7 +554,6 @@ it('uses a store overview as the console record landing page', function (): void
         ->assertOk()
         ->assertSee('Console overview store')
         ->assertSee('overview.test')
-        ->assertSee('shop.overview.test')
         ->assertSee(StorefrontDesiredState::Stopped->getLabel());
 });
 
@@ -623,8 +621,8 @@ it('rejects a replacement domain already active on another store', function (): 
     actAsConsoleAdmin();
 
     $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
-    StoreDomain::factory()->for(Store::factory()->create())->create(['name' => 'taken.test', 'active' => true]);
+    StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
+    StoreDomain::factory()->for(Store::factory()->create())->primary()->create(['name' => 'taken.test']);
 
     livewire(ListStores::class)
         ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])
@@ -638,7 +636,7 @@ it('rejects a replacement domain another store runs its storefront on', function
 
     StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'taken.test']);
     $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->create(['name' => 'old.test', 'active' => true]);
+    StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
 
     livewire(ListStores::class)
         ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])

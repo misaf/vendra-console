@@ -21,6 +21,7 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsDefaultIconColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\NameColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
@@ -34,9 +35,7 @@ final class PlanTable
             ->columns([
                 RowIndexColumn::make(),
 
-                TextColumn::make('name')
-                    ->label(__('vendra-console::attributes.name'))
-                    ->icon(Heroicon::Tag)
+                NameColumn::make()
                     ->searchable()
                     ->sortable(),
 

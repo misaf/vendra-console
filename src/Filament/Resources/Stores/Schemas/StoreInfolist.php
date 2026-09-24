@@ -33,16 +33,12 @@ final class StoreInfolist
                                 ? __('vendra-console::attributes.platform_owned_store')
                                 : Reseller::query()->withTrashed()->find($state)?->displayName() ?? '—'),
                         TextEntry::make('active_domain')->label(__('vendra-console::attributes.domain'))
-                            ->state(fn (Store $record): ?string => $record->domains->first()?->name)
+                            ->state(fn (Store $record): ?string => $record->primaryDomain?->name)
                             ->placeholder('—'),
                         TextEntry::make('admin_url')->label(__('vendra-console::attributes.admin_url'))
                             ->state(fn (Store $record): string => $record->adminUrl())
                             ->url(fn (Store $record): string => $record->adminUrl())
                             ->openUrlInNewTab()->copyable(),
-                        TextEntry::make('storefront_url')->label(__('vendra-console::attributes.storefront_url'))
-                            ->state(fn (Store $record): ?string => $record->storefrontDeployment?->domain)
-                            ->url(fn (Store $record): ?string => $record->storefrontDeployment?->url())
-                            ->openUrlInNewTab()->copyable()->placeholder('—'),
                         IsActiveEntry::make(),
                     ]),
                     DescriptionEntry::make()->placeholder('—'),

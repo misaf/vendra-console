@@ -22,7 +22,6 @@ return [
     'offboard_reseller' => 'Offboard reseller',
     'offboard_resellers' => 'Offboard resellers',
     'offboard_store' => 'Offboard store',
-    'promote_administrator' => 'Promote administrator',
     'reactivate_store' => 'Reactivate store',
     'reactivate_subscription' => 'Reactivate subscription',
     'redeploy_storefront' => 'Redeploy storefront',

@@ -22,7 +22,6 @@ return [
     'offboard_reseller' => 'Konto deaktivieren',
     'offboard_resellers' => 'Konten deaktivieren',
     'offboard_store' => 'Store stilllegen',
-    'promote_administrator' => 'Zum Administrator befördern',
     'reactivate_store' => 'Store reaktivieren',
     'reactivate_subscription' => 'Abonnement reaktivieren',
     'redeploy_storefront' => 'Storefront neu bereitstellen',

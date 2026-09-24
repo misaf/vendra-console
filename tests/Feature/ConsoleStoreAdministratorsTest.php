@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
-use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\EditStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
+use Misaf\VendraUser\Actions\DemoteTenantAdministratorAction;
 use Misaf\VendraUser\Models\User;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -62,38 +60,36 @@ function consoleStoreUserIsAdministrator(Store $store, User $user): bool
     return $store->execute(fn (): bool => consoleStoreUser($store, $user)->hasRole(Config::string('vendra-permission.admin_role')));
 }
 
-it('demotes and promotes a store administrator through row actions', function (): void {
+it('demotes a store administrator off the list while keeping them in the store', function (): void {
     $store = consoleStoreWithAdministratorRole();
     consoleStoreAdministrator($store, 'first_admin');
     $second = consoleStoreAdministrator($store, 'second_admin');
 
     livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
         ->callAction(TestAction::make('demoteAdministrator')->table($second))
-        ->assertNotified(__('vendra-console::messages.administrator_demoted'));
+        ->assertNotified(__('vendra-console::messages.administrator_demoted'))
+        ->assertCanNotSeeTableRecords([$second]);
 
-    expect(consoleStoreUserIsAdministrator($store, $second))->toBeFalse();
-
-    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
-        ->callAction(TestAction::make('promoteAdministrator')->table($second))
-        ->assertNotified(__('vendra-console::messages.administrator_promoted'));
-
-    expect(consoleStoreUserIsAdministrator($store, $second))->toBeTrue();
+    expect(consoleStoreUserIsAdministrator($store, $second))->toBeFalse()
+        ->and($second->tenants()->whereKey($store->getKey())->exists())->toBeTrue();
 });
 
-it('flips the promote and demote actions once the role changes', function (): void {
+it('lists only users holding the admin role of this store', function (): void {
     $store = consoleStoreWithAdministratorRole();
-    consoleStoreAdministrator($store, 'first_admin');
-    $second = consoleStoreAdministrator($store, 'second_admin');
+    $administrator = consoleStoreAdministrator($store, 'store_admin');
+    $member = consoleStoreAdministrator($store, 'store_member');
+    consoleStoreAdministrator($store, 'other_admin_keeps_last');
+    resolve(DemoteTenantAdministratorAction::class)->execute($store, $member);
+
+    $otherStore = consoleStoreWithAdministratorRole();
+    $otherAdministrator = consoleStoreAdministrator($otherStore, 'other_store_admin');
+    $otherAdministrator->tenants()->attach($store->getKey());
 
     livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
-        ->assertActionVisible(TestAction::make('demoteAdministrator')->table($second))
-        ->assertActionHidden(TestAction::make('promoteAdministrator')->table($second))
-        ->callAction(TestAction::make('demoteAdministrator')->table($second))
-        ->assertActionHidden(TestAction::make('demoteAdministrator')->table($second))
-        ->assertActionVisible(TestAction::make('promoteAdministrator')->table($second))
-        ->callAction(TestAction::make('promoteAdministrator')->table($second))
-        ->assertActionVisible(TestAction::make('demoteAdministrator')->table($second))
-        ->assertActionHidden(TestAction::make('promoteAdministrator')->table($second));
+        ->loadTable()
+        ->assertCanSeeTableRecords([$administrator])
+        ->assertCanNotSeeTableRecords([$member, $otherAdministrator]);
 });
 
 it('keeps the last store administrator when demoting or removing them', function (): void {
@@ -169,21 +165,35 @@ it('lets an administrator take the email of a disabled account', function (): vo
     expect(consoleStoreUser($store, $administrator)->email)->toBe('disabled_admin@example.com');
 });
 
-it('loads administrator roles for the whole table page in one query', function (): void {
+it('filters store administrators by whether their email is verified', function (string $operator, bool $expectVerified): void {
     $store = consoleStoreWithAdministratorRole();
-    $administrators = collect(['first_admin', 'second_admin', 'third_admin'])
-        ->map(fn (string $username): User => consoleStoreAdministrator($store, $username));
+    $verified = consoleStoreAdministrator($store, 'verified_admin');
+    $unverified = consoleStoreAdministrator($store, 'unverified_admin');
+    $store->execute(fn (): bool => consoleStoreUser($store, $unverified)->forceFill(['email_verified_at' => null])->save());
 
-    // Count only the store-scoped role lookups, not the console user's own.
-    $roleQueries = 0;
-    DB::listen(function (QueryExecuted $query) use (&$roleQueries): void {
-        $roleQueries += (int) Str::containsAll($query->sql, ['model_has_roles', '"roles"."tenant_id"']);
-    });
+    [$shown, $hidden] = $expectVerified ? [$verified, $unverified] : [$unverified, $verified];
 
-    $component = livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
-        ->loadTable();
+    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
+        ->filterTable('queryBuilder', ['rules' => [
+            'rule' => ['type' => 'email_verified_at', 'data' => ['operator' => $operator, 'settings' => []]],
+        ]])
+        ->assertCanSeeTableRecords([$shown])
+        ->assertCanNotSeeTableRecords([$hidden]);
+})->with([
+    'verified' => ['isFilled', true],
+    'unverified' => ['isFilled.inverse', false],
+]);
 
-    expect($roleQueries)->toBe(1);
+it('lists disabled administrators as inactive by default', function (): void {
+    $store = consoleStoreWithAdministratorRole();
+    $disabled = consoleStoreAdministrator($store, 'disabled_admin');
+    $administrator = consoleStoreAdministrator($store, 'active_admin');
+    $store->execute(fn (): ?bool => consoleStoreUser($store, $disabled)->delete());
 
-    $administrators->each(fn (User $administrator): mixed => $component->assertTableColumnStateSet('administrator', true, $administrator));
+    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
+        ->assertCanSeeTableRecords([consoleStoreUser($store, $disabled), $administrator])
+        ->assertTableColumnStateSet('active', false, consoleStoreUser($store, $disabled))
+        ->assertTableColumnStateSet('active', true, $administrator);
 });

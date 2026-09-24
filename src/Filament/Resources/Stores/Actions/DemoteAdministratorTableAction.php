@@ -25,8 +25,7 @@ final class DemoteAdministratorTableAction extends Action
 
         $this
             ->label(__('vendra-console::actions.demote_administrator'))
-            ->visible(fn (User $record, RelationManager $livewire): bool => ! $record->trashed()
-                && self::isAdministrator(self::administratorStore($livewire), $record))
+            ->visible(fn (User $record): bool => ! $record->trashed())
             ->action(fn (User $record, RelationManager $livewire, DemoteTenantAdministratorAction $demoteAdministrator) => self::guardLastAdministrator(
                 fn (): mixed => $demoteAdministrator->execute(self::administratorStore($livewire), $record),
                 __('vendra-console::messages.administrator_demoted'),

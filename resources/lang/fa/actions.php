@@ -22,7 +22,6 @@ return [
     'offboard_reseller' => 'خروج حساب',
     'offboard_resellers' => 'خروج حساب‌ها',
     'offboard_store' => 'خارج‌کردن فروشگاه',
-    'promote_administrator' => 'ارتقا به مدیر',
     'reactivate_store' => 'فعال‌سازی دوباره فروشگاه',
     'reactivate_subscription' => 'فعال‌سازی دوباره اشتراک',
     'redeploy_storefront' => 'استقرار دوباره فروشگاه',
