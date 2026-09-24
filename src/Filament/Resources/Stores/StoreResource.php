@@ -95,6 +95,7 @@ final class StoreResource extends Resource
         return parent::getEloquentQuery()->with([
             'storefrontDeployment',
             'primaryDomain',
+            'aliasDomains',
         ]);
     }
 

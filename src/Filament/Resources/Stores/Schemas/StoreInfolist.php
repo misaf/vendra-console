@@ -27,7 +27,7 @@ final class StoreInfolist
                 ->schema([
                     Grid::make(3)->schema([
                         NameEntry::make(),
-                        SlugEntry::make()->label(__('vendra-console::attributes.slug'))->copyable(),
+                        SlugEntry::make()->copyable(),
                         TextEntry::make('reseller_id')->label(__('vendra-console::navigation.reseller'))
                             ->formatStateUsing(fn (?int $state): string => $state === null
                                 ? __('vendra-console::attributes.platform_owned_store')

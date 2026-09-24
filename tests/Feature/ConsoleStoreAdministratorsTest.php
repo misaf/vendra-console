@@ -92,6 +92,20 @@ it('lists only users holding the admin role of this store', function (): void {
         ->assertCanNotSeeTableRecords([$member, $otherAdministrator]);
 });
 
+it('lists the newest administrators first by user rather than by membership', function (): void {
+    $store = consoleStoreWithAdministratorRole();
+    $older = consoleStoreAdministrator($store, 'older_admin');
+    $newer = consoleStoreAdministrator($store, 'newer_admin');
+
+    // Rejoining gives the older user the newest store_user row.
+    $older->tenants()->detach($store->getKey());
+    $older->tenants()->attach($store->getKey());
+
+    livewire(AdministratorsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
+        ->assertCanSeeTableRecords([$newer, $older], inOrder: true);
+});
+
 it('keeps the last store administrator when demoting or removing them', function (): void {
     $store = consoleStoreWithAdministratorRole();
     $administrator = consoleStoreAdministrator($store, 'only_admin');

@@ -16,11 +16,14 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AddDomainAliasTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\AssignResellerTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\MakeDomainPrimaryTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\OffboardStoreTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReactivateStoreTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReconcileStorefrontTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RedeployStorefrontTableAction;
+use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RemoveDomainAliasTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\ReplaceDomainTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RestartStorefrontTableAction;
 use Misaf\VendraConsole\Filament\Resources\Stores\Actions\RestoreStoreTableAction;
@@ -115,6 +118,9 @@ final class StoreTable
                     ActionGroup::make([
                         AssignResellerTableAction::make(),
                         ReplaceDomainTableAction::make(),
+                        AddDomainAliasTableAction::make(),
+                        MakeDomainPrimaryTableAction::make(),
+                        RemoveDomainAliasTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
                         ViewDeploymentTableAction::make(),

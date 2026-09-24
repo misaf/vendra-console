@@ -15,7 +15,6 @@ return [
     'reseller_overview' => 'نمای کلی حساب',
     'user_account' => 'حساب کاربر',
     'store_identity' => 'نمای کلی ملک',
-    'slug' => 'شناسه مستأجر',
     'desired_state' => 'وضعیت مطلوب',
     'provisioning_error' => 'هشدار راه‌اندازی',
     'platform' => 'پلتفرم',

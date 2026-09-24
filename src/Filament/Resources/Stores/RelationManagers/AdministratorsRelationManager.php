@@ -98,7 +98,7 @@ final class AdministratorsRelationManager extends RelationManager
                     ])->dropdown(false),
                 ]),
             ])
-            ->defaultSort(column: 'id', direction: 'desc');
+            ->defaultSort(column: 'users.id', direction: 'desc');
     }
 
     /**

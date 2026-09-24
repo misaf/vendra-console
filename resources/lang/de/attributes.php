@@ -15,7 +15,6 @@ return [
     'reseller_overview' => 'Kontoübersicht',
     'user_account' => 'Benutzerkonto',
     'store_identity' => 'Store-Übersicht',
-    'slug' => 'Mandantenkennung',
     'desired_state' => 'Sollzustand',
     'provisioning_error' => 'Bereitstellungswarnung',
     'platform' => 'Plattform',

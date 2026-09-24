@@ -540,6 +540,35 @@ it('lets a console admin replace a domain and shows the old one in trashed histo
         ->assertCanSeeTableRecords([$original]);
 });
 
+it('lets a console admin add a domain alias, make it primary and remove the old one', function (): void {
+    actAsConsoleAdmin();
+
+    $store = Store::factory()->create(['active' => true]);
+    StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
+
+    livewire(ListStores::class)
+        ->assertTableActionHidden('makeDomainPrimary', $store)
+        ->callAction(TestAction::make('addDomainAlias')->table($store), ['domain' => 'Alias.test'])
+        ->assertHasNoErrors();
+
+    $alias = $store->aliasDomains()->sole();
+
+    expect($alias->name)->toBe('alias.test');
+
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('makeDomainPrimary')->table($store), ['domain' => $alias->getKey()])
+        ->assertHasNoErrors();
+
+    expect($store->primaryDomain()->value('name'))->toBe('alias.test')
+        ->and($store->aliasDomains()->pluck('name')->all())->toBe(['main.test']);
+
+    livewire(ListStores::class)
+        ->callAction(TestAction::make('removeDomainAlias')->table($store), ['domain' => $store->aliasDomains()->value('id')])
+        ->assertHasNoErrors();
+
+    expect($store->aliasDomains()->exists())->toBeFalse();
+});
+
 it('uses a store overview as the console record landing page', function (): void {
     actAsConsoleAdmin();
 

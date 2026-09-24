@@ -15,7 +15,6 @@ return [
     'reseller_overview' => 'Reseller overview',
     'user_account' => 'User account',
     'store_identity' => 'Store overview',
-    'slug' => 'Tenant identifier',
     'desired_state' => 'Desired state',
     'provisioning_error' => 'Provisioning warning',
     'platform' => 'Platform',
