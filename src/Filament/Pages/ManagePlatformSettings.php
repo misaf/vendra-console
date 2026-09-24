@@ -52,9 +52,9 @@ final class ManagePlatformSettings extends SettingsPage
                 Section::make(__('vendra-console::attributes.platform'))
                     ->description(__('vendra-console::attributes.platform_description'))
                     ->schema([
-                        TextInput::make('platform_name')
-                            ->label(__('vendra-console::attributes.platform_name'))
-                            ->helperText(__('vendra-console::attributes.platform_name_hint'))
+                        TextInput::make('brand_name')
+                            ->label(__('vendra-console::attributes.brand_name'))
+                            ->helperText(__('vendra-console::attributes.brand_name_hint'))
                             ->required()
                             ->string()
                             ->maxLength(255),
@@ -80,7 +80,7 @@ final class ManagePlatformSettings extends SettingsPage
     {
         return [
             ...$data,
-            'platform_name' => resolve(ConsoleSettings::class)->platform_name,
+            'brand_name' => resolve(ConsoleSettings::class)->brand_name,
         ];
     }
 
@@ -91,10 +91,10 @@ final class ManagePlatformSettings extends SettingsPage
     protected function mutateFormDataBeforeSave(array $data): array
     {
         resolve(ConsoleSettings::class)
-            ->fill(['platform_name' => mb_trim(Arr::string($data, 'platform_name'))])
+            ->fill(['brand_name' => mb_trim(Arr::string($data, 'brand_name'))])
             ->save();
 
-        unset($data['platform_name']);
+        unset($data['brand_name']);
 
         return $data;
     }

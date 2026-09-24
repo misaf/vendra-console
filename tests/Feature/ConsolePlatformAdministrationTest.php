@@ -269,7 +269,7 @@ describe('operating store lifecycles', function (): void {
 
 describe('platform settings', function (): void {
     it('brands the console from the platform settings', function (): void {
-        resolve(ConsoleSettings::class)->fill(['platform_name' => 'Acme Operations'])->save();
+        resolve(ConsoleSettings::class)->fill(['brand_name' => 'Acme Operations'])->save();
 
         expect(Filament::getPanel('console')->getBrandName())->toBe('Acme Operations');
     });
@@ -305,12 +305,12 @@ describe('platform settings', function (): void {
         actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
-            ->assertFormSet(['platform_name' => 'Vendra Console'])
-            ->fillForm(['platform_name' => '  Acme Platform  '])
+            ->assertFormSet(['brand_name' => 'Vendra Console'])
+            ->fillForm(['brand_name' => '  Acme Platform  '])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        expect(resolve(ConsoleSettings::class)->platform_name)->toBe('Acme Platform')
+        expect(resolve(ConsoleSettings::class)->brand_name)->toBe('Acme Platform')
             ->and(resolve(StoreCreationSettings::class)->open)->toBeTrue();
     });
 
@@ -321,10 +321,10 @@ describe('platform settings', function (): void {
         });
 
         expect(fn () => livewire(ManagePlatformSettings::class)
-            ->fillForm(['platform_name' => 'Acme Platform', 'open' => false])
+            ->fillForm(['brand_name' => 'Acme Platform', 'open' => false])
             ->call('save'))
             ->toThrow(RuntimeException::class, 'Store creation settings could not be saved.')
-            ->and(resolve(ConsoleSettings::class)->platform_name)->toBe('Vendra Console')
+            ->and(resolve(ConsoleSettings::class)->brand_name)->toBe('Vendra Console')
             ->and(resolve(StoreCreationSettings::class)->refresh()->open)->toBeTrue();
     });
 
@@ -332,11 +332,11 @@ describe('platform settings', function (): void {
         actAsAdministeringConsoleUser();
 
         livewire(ManagePlatformSettings::class)
-            ->fillForm(['platform_name' => ''])
+            ->fillForm(['brand_name' => ''])
             ->call('save')
-            ->assertHasFormErrors(['platform_name' => 'required']);
+            ->assertHasFormErrors(['brand_name' => 'required']);
 
-        expect(resolve(ConsoleSettings::class)->platform_name)->toBe('Vendra Console');
+        expect(resolve(ConsoleSettings::class)->brand_name)->toBe('Vendra Console');
     });
 
     it('rejects a non-boolean store creation state', function (): void {

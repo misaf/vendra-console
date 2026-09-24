@@ -8,7 +8,7 @@ use Spatie\LaravelSettings\Settings;
 
 final class ConsoleSettings extends Settings
 {
-    public string $platform_name;
+    public string $brand_name;
 
     public static function group(): string
     {

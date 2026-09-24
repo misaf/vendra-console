@@ -10,6 +10,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
@@ -432,6 +433,9 @@ it('lets a console admin create a store without a managed storefront', function 
 
     assertDatabaseHas('store_domains', ['name' => 'local-source.test']);
     assertDatabaseMissing('storefront_deployments', ['domain' => 'local-source.test']);
+    expect(session('filament.notifications.0.body'))
+        ->toContain('Administrator username:')
+        ->not->toContain(__('vendra-store::messages.storefront_requested'));
 });
 
 it('suggests storefront identity from the store domain', function (): void {
@@ -467,6 +471,49 @@ it('requests a storefront when a console admin creates a store', function (): vo
         'domain' => 'console-flowers.test',
         'status' => 'ready',
     ]);
+    expect(session('filament.notifications.0.body'))
+        ->toContain(__('vendra-store::messages.storefront_requested'));
+});
+
+it('explains when a new storefront must wait for runtime configuration', function (): void {
+    actAsConsoleAdmin();
+    Config::set('container.drivers.docker.host', '');
+
+    livewire(CreateStore::class)
+        ->fillForm([
+            'domain' => 'waiting-store.test',
+            'email' => 'admin@waiting-store.test',
+            ...consoleStorefrontFormData(),
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    assertDatabaseHas('storefront_deployments', [
+        'domain' => 'waiting-store.test',
+        'status' => 'pending',
+    ]);
+    expect(session('filament.notifications.0.body'))
+        ->toContain(__('vendra-store::messages.storefront_waiting_for_runtime'));
+});
+
+it('does not report credentials when storefront creation fails and rolls back', function (): void {
+    actAsConsoleAdmin();
+
+    DB::listen(function ($query): void {
+        throw_if(str_contains($query->sql, 'insert into "storefront_deployments"'), RuntimeException::class, 'Deployment write failed.');
+    });
+
+    expect(fn () => livewire(CreateStore::class)
+        ->fillForm([
+            'domain' => 'failed-store.test',
+            'email' => 'admin@failed-store.test',
+            ...consoleStorefrontFormData(),
+        ])
+        ->call('create'))
+        ->toThrow(RuntimeException::class, 'Deployment write failed.');
+
+    assertDatabaseMissing('store_domains', ['name' => 'failed-store.test']);
+    expect(session('filament.notifications'))->toBeNull();
 });
 
 it('blocks store creation once the reseller reaches its plan limit', function (): void {

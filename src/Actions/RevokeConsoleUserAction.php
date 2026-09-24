@@ -25,11 +25,9 @@ final readonly class RevokeConsoleUserAction
                 return false;
             }
 
-            $liveConsoleUserIds = $activeConsoles->load('user')
-                ->filter(fn (Console $activeConsole): bool => $activeConsole->user !== null)
-                ->pluck('user_id');
+            $liveConsoleUserIds = Console::query()->active()->whereHas('user')->pluck('user_id');
 
-            if ($liveConsoleUserIds->all() === [$user->getKey()]) {
+            if ($liveConsoleUserIds->containsOneItem() && $liveConsoleUserIds->contains($user->getKey())) {
                 throw LastConsoleUserException::forUser($user->email);
             }
 
