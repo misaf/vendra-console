@@ -39,7 +39,8 @@ it('deactivates the default plan from the table and hands the default to another
 
     livewire(ListPlans::class)
         ->loadTable()
-        ->call('updateTableColumnState', 'active', (string) $default->getKey(), false);
+        ->callAction(TestAction::make('deactivatePlan')->table($default))
+        ->assertNotified(__('vendra-console::messages.deactivated'));
 
     expect($default->refresh()->active)->toBeFalse()
         ->and($default->is_default)->toBeFalse()
@@ -77,7 +78,8 @@ it('deactivates a storefront image from the table', function (): void {
 
     livewire(ListStorefrontImages::class)
         ->loadTable()
-        ->call('updateTableColumnState', 'active', (string) $image->getKey(), false);
+        ->callAction(TestAction::make('deactivateStorefrontImage')->table($image))
+        ->assertNotified(__('vendra-console::messages.deactivated'));
 
     expect($image->refresh()->active)->toBeFalse();
 });

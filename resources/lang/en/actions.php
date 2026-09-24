@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'activate' => 'Activate',
     'assign_reseller' => 'Assign reseller',
     'change_plan' => 'Change plan',
     'change_user_password' => 'Change user password',
@@ -16,6 +17,7 @@ return [
     'demote_administrator' => 'Demote administrator',
     'disable_account' => 'Disable account',
     'enable_account' => 'Enable account',
+    'deactivate' => 'Deactivate',
     'extend_subscription' => 'Extend subscription',
     'offboard_reseller' => 'Offboard reseller',
     'offboard_resellers' => 'Offboard resellers',

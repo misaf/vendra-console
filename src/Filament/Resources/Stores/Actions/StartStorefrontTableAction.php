@@ -39,7 +39,9 @@ final class StartStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $startStorefront->execute($deployment),
+                    function () use ($startStorefront, $deployment): void {
+                        $startStorefront->execute($deployment);
+                    },
                     __('vendra-console::messages.storefront_started'),
                 );
             });

@@ -41,7 +41,9 @@ final class StopStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $stopStorefront->execute($deployment),
+                    function () use ($stopStorefront, $deployment): void {
+                        $stopStorefront->execute($deployment);
+                    },
                     __('vendra-console::messages.storefront_stopped'),
                 );
             });

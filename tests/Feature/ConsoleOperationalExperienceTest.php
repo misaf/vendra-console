@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ListStorefrontDeployments;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ViewStorefrontDeployment;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Widgets\StorefrontRuntimeObservation;
 use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ListStores;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource;
 use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
@@ -144,6 +145,29 @@ it('queues reconcile and restart on the storefront worker and reads logs through
         ->not->toContain('restart');
 });
 
+it('observes the storefront runtime in a lazy widget instead of on every page render', function (): void {
+    $deployment = StorefrontDeployment::factory()->create([
+        'status' => StorefrontDeploymentStatus::Ready,
+        'slug' => 'observed-runtime',
+    ]);
+    $runtime = fakeExistingStorefront();
+
+    actAsOperationalConsoleUser();
+
+    livewire(ViewStorefrontDeployment::class, ['record' => $deployment->id])
+        ->assertOk()
+        ->assertSeeLivewire(StorefrontRuntimeObservation::class);
+
+    expect($runtime->transport->requests)->toBeEmpty();
+
+    livewire(StorefrontRuntimeObservation::class, ['record' => $deployment])
+        ->assertOk()
+        ->assertSee(__('vendra-console::attributes.runtime_state_running'))
+        ->assertSee('ghcr.io/misaf/vendra-storefront-florist@sha256:abc123');
+
+    expect($runtime->transport->requests)->not->toBeEmpty();
+});
+
 it('degrades deployment inspection and actions when the runtime is unavailable', function (): void {
     $deployment = StorefrontDeployment::factory()->create([
         'status' => StorefrontDeploymentStatus::Ready,
@@ -156,6 +180,9 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
     actAsOperationalConsoleUser();
 
     livewire(ViewStorefrontDeployment::class, ['record' => $deployment->id])
+        ->assertOk();
+
+    livewire(StorefrontRuntimeObservation::class, ['record' => $deployment])
         ->assertOk()
         ->assertSee('The fake runtime is configured as unreachable.');
 

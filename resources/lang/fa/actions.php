@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'activate' => 'فعال‌کردن',
     'assign_reseller' => 'تخصیص حساب',
     'change_plan' => 'تغییر طرح',
     'change_user_password' => 'تغییر رمز عبور کاربر',
@@ -16,6 +17,7 @@ return [
     'demote_administrator' => 'برداشتن دسترسی مدیریت',
     'disable_account' => 'غیرفعال‌کردن حساب',
     'enable_account' => 'فعال‌کردن حساب',
+    'deactivate' => 'غیرفعال‌کردن',
     'extend_subscription' => 'تمدید اشتراک',
     'offboard_reseller' => 'خروج حساب',
     'offboard_resellers' => 'خروج حساب‌ها',

@@ -173,6 +173,16 @@ it('searches tenantless users without console access when an interactive run nam
     expect(Console::query()->active()->forUser($user)->exists())->toBeTrue();
 });
 
+it('matches the search term literally and ignores its case', function (): void {
+    User::factory()->create(['tenant_id' => null, 'email' => 'ops@vendra.test', 'username' => 'ops_user']);
+    User::factory()->create(['tenant_id' => null, 'email' => 'opsx@vendra.test', 'username' => 'opsxuser']);
+
+    $this->artisan('vendra-console:user-grant')
+        ->expectsSearch('Which user should get console access?', 'ops@vendra.test', 'OPS_', ['ops@vendra.test' => 'ops@vendra.test (ops_user)'])
+        ->expectsOutputToContain('Console access granted to [ops@vendra.test].')
+        ->assertSuccessful();
+});
+
 it('fails instead of searching when every tenantless user already has console access', function (): void {
     grantConsoleAccess(User::factory()->create(['tenant_id' => null]));
 

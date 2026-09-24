@@ -103,7 +103,7 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 | Resource | Delegates to |
 | --- | --- |
 | `StoreResource` | `Misaf\VendraStore`'s provisioning, lifecycle, storefront, domain, billing-reseller, and offboarding actions; administrator membership delegates to `misaf/vendra-user` |
-| `StorefrontDeploymentResource` | Read-only deployment history and live observation through `StorefrontProvisioner`; recovery delegates to `vendra-store` actions |
+| `StorefrontDeploymentResource` | Read-only deployment history, with live observation through `StorefrontProvisioner` in the lazy `StorefrontRuntimeObservation` footer widget; recovery delegates to `vendra-store` actions |
 | `ResellerResource` | `Misaf\VendraReseller`'s reseller/user account actions and `misaf/vendra-subscription`'s lifecycle actions |
 | `PlanResource` | `misaf/vendra-subscription`'s plan model |
 | `ActivityLogResource` | `misaf/vendra-activity-log`'s model, read-only and across every tenant |

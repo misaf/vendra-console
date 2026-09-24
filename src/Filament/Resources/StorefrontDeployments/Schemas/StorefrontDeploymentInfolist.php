@@ -8,12 +8,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Misaf\VendraStore\Contracts\StorefrontProvisioner;
-use Misaf\VendraStore\Models\StorefrontDeployment;
-use Misaf\VendraStore\Support\StorefrontObservation;
-use Misaf\VendraStore\Support\StorefrontReference;
 use Misaf\VendraSupport\Filament\Infolists\Components\SlugEntry;
-use Throwable;
 
 final class StorefrontDeploymentInfolist
 {
@@ -72,44 +67,6 @@ final class StorefrontDeploymentInfolist
                             ]),
                     ])
                     ->columnSpanFull(),
-
-                Section::make(__('vendra-console::attributes.runtime_observation'))
-                    ->description(__('vendra-console::attributes.runtime_observation_description'))
-                    ->schema([
-                        TextEntry::make('runtime_observation')
-                            ->hiddenLabel()
-                            ->state(fn (StorefrontDeployment $record, StorefrontProvisioner $provisioner): array => self::runtimeObservation($record, $provisioner))
-                            ->listWithLineBreaks()
-                            ->columnSpanFull(),
-                    ])
-                    ->columnSpanFull(),
             ]);
-    }
-
-    /** @return list<string> */
-    private static function runtimeObservation(
-        StorefrontDeployment $deployment,
-        StorefrontProvisioner $provisioner,
-    ): array {
-        try {
-            $observation = $provisioner->observe(StorefrontReference::for($deployment));
-
-            return self::observationLines($observation);
-        } catch (Throwable $exception) {
-            report($exception);
-
-            return [__('vendra-console::messages.runtime_unavailable_message', ['message' => $exception->getMessage()])];
-        }
-    }
-
-    /** @return list<string> */
-    private static function observationLines(StorefrontObservation $observation): array
-    {
-        return [
-            __('vendra-console::attributes.runtime_state_value', ['state' => __("vendra-console::attributes.runtime_state_{$observation->state->value}")]),
-            __('vendra-console::attributes.container_name_value', ['name' => $observation->containerName ?? '—']),
-            __('vendra-console::attributes.image_value', ['image' => $observation->image ?? '—']),
-            __('vendra-console::attributes.domain_value', ['domain' => $observation->domain ?? '—']),
-        ];
     }
 }

@@ -44,6 +44,8 @@ return [
     'network_unavailable' => 'Das erforderliche Netzwerk ist nicht verfügbar',
     'no_recent_logs' => 'Keine aktuellen Logs',
     'record_unavailable' => 'Der Datensatz ist nicht mehr verfügbar',
+    'activated' => 'Aktiviert',
+    'deactivated' => 'Deaktiviert',
     'delete_blocked' => 'Löschen blockiert',
     'operational_action_failed' => 'Betriebsaktion fehlgeschlagen',
     'runtime_connected' => 'Verbunden · API :api · :version',

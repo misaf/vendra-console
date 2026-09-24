@@ -38,7 +38,7 @@ final class ChangeAdministratorEmailTableAction extends Action
                     ->rule(fn (User $record, RelationManager $livewire): Unique => UserRules::unique('email', self::administratorStore($livewire)->id, $record->id)),
             ])
             ->action(function (User $record, array $data, UpdateUserEmailAction $updateEmail): void {
-                $updateEmail->execute($record, (string) Arr::get($data, 'email'));
+                $updateEmail->execute($record, Arr::string($data, 'email'));
                 self::notifySuccess(__('vendra-console::messages.administrator_email_updated'));
             });
     }

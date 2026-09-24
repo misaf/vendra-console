@@ -44,6 +44,8 @@ return [
     'network_unavailable' => 'شبکه مورد نیاز در دسترس نیست',
     'no_recent_logs' => 'لاگ جدیدی وجود ندارد',
     'record_unavailable' => 'رکورد دیگر در دسترس نیست',
+    'activated' => 'فعال شد',
+    'deactivated' => 'غیرفعال شد',
     'delete_blocked' => 'حذف مسدود شد',
     'operational_action_failed' => 'عملیات ناموفق بود',
     'runtime_connected' => 'متصل · API :api · :version',

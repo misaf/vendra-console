@@ -119,25 +119,7 @@ final class StoreTable
                         ->label(__('vendra-console::attributes.operational_status'))
                         ->multiple()
                         ->options(StoreStatus::class)
-                        ->query(function (Builder $query, array $data): Builder {
-                            $statuses = [];
-
-                            foreach ((array) (Arr::get($data, 'values', [])) as $value) {
-                                if (is_string($value) && ($status = StoreStatus::tryFrom($value)) instanceof StoreStatus) {
-                                    $statuses[] = $status;
-                                }
-                            }
-
-                            if ($statuses === []) {
-                                return $query;
-                            }
-
-                            return $query->where(function (Builder $query) use ($statuses): void {
-                                foreach ($statuses as $status) {
-                                    $query->orWhere(fn (Builder $query): Builder => $query->withStatus($status));
-                                }
-                            });
-                        }),
+                        ->query(fn (Builder $query, array $data): Builder => self::filterByStatuses($query, Arr::get($data, 'values', []))),
 
                     TrashedFilter::make(),
                 ],
@@ -186,5 +168,22 @@ final class StoreTable
     private static function resellerNames(): Collection
     {
         return once(fn (): Collection => collect(Reseller::displayNames(Reseller::query()->withTrashed())));
+    }
+
+    /**
+     * @param  Builder<Store>  $query
+     * @return Builder<Store>
+     */
+    private static function filterByStatuses(Builder $query, mixed $values): Builder
+    {
+        $statuses = [];
+
+        foreach ((array) $values as $value) {
+            if (is_string($value) && ($status = StoreStatus::tryFrom($value)) instanceof StoreStatus) {
+                $statuses[] = $status;
+            }
+        }
+
+        return $statuses === [] ? $query : $query->withAnyStatus($statuses);
     }
 }

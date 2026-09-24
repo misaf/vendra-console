@@ -39,7 +39,9 @@ final class RestartStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $restartStorefront->execute($deployment),
+                    function () use ($restartStorefront, $deployment): void {
+                        $restartStorefront->execute($deployment);
+                    },
                     __('vendra-console::messages.storefront_restarted'),
                 );
             });

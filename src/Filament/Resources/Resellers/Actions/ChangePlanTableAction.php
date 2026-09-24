@@ -36,7 +36,7 @@ final class ChangePlanTableAction extends Action
                 ->options(fn (): array => Plan::query()->active()->pluck('name', 'id')->all())->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {
                 try {
-                    resolve(SubscribeAction::class)->execute($record, Plan::query()->findOrFail((int) Arr::get($data, 'plan_id')));
+                    resolve(SubscribeAction::class)->execute($record, Plan::query()->findOrFail(Arr::integer($data, 'plan_id')));
                 } catch (SubscriptionLimitException $exception) {
                     Notification::make()->danger()->title(__('vendra-console::messages.downgrade_blocked'))->body($exception->getMessage())->send();
 

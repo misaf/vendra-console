@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use InvalidArgumentException;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\CreateReseller;
@@ -80,7 +80,7 @@ final class ResellerResource extends Resource
             ->withCount('stores')
             ->with([
                 'user',
-                'subscriptions' => fn (MorphMany $relation): MorphMany => $relation
+                'subscriptions' => fn (Relation $relation): Relation => $relation
                     ->with('plan')
                     ->latest('starts_at'),
             ]);

@@ -15,6 +15,7 @@ use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
+use Misaf\VendraSupport\Support\ContainsSearch;
 use Misaf\VendraSupport\Tenancy\TenantSchema;
 
 final class ActivityLogTable
@@ -47,9 +48,7 @@ final class ActivityLogTable
                     SelectFilter::make($tenantColumn)
                         ->label(__('vendra-console::navigation.store'))
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $search): array => Store::query()
-                            ->withTrashed()
-                            ->whereLike('name', "%{$search}%")
+                        ->getSearchResultsUsing(fn (string $search): array => ContainsSearch::apply(Store::query()->withTrashed(), ['name'], $search)
                             ->orderBy('name')
                             ->limit(50)
                             ->pluck('name', 'id')

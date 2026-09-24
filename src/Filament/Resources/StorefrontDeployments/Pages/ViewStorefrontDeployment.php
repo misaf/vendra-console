@@ -10,6 +10,7 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Restart
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\RetryDeploymentPageAction;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\ViewLogsPageAction;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\StorefrontDeploymentResource;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Widgets\StorefrontRuntimeObservation;
 
 final class ViewStorefrontDeployment extends ViewRecord
 {
@@ -22,6 +23,13 @@ final class ViewStorefrontDeployment extends ViewRecord
             RetryDeploymentPageAction::make(),
             ReconcileDeploymentPageAction::make(),
             RestartDeploymentPageAction::make(),
+        ];
+    }
+
+    protected function getFooterWidgets(): array
+    {
+        return [
+            StorefrontRuntimeObservation::class,
         ];
     }
 }

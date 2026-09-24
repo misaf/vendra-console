@@ -36,7 +36,7 @@ final class ChangeUserPasswordTableAction extends Action
             ->action(function (Reseller $record, array $data): void {
                 resolve(UpdateUserPasswordAction::class)->execute(
                     $record->user,
-                    (string) Arr::get($data, 'password'),
+                    Arr::string($data, 'password'),
                 );
                 self::notifySuccess(__('vendra-console::messages.user_password_updated'));
             });

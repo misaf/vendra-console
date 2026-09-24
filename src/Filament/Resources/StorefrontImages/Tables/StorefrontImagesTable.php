@@ -10,11 +10,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
+use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Actions\ActivateStorefrontImageTableAction;
+use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Actions\DeactivateStorefrontImageTableAction;
 use Misaf\VendraConsole\Filament\Resources\StorefrontImages\Actions\DeleteStorefrontImageTableAction;
-use Misaf\VendraStore\Actions\UpdateStorefrontImageAction;
-use Misaf\VendraStore\Models\StorefrontImage;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
@@ -41,12 +41,7 @@ final class StorefrontImagesTable
                     ->placeholder('—')
                     ->limit(60),
 
-                IsActiveToggleColumn::make()
-                    ->updateStateUsing(function (StorefrontImage $record, bool $state, UpdateStorefrontImageAction $updateImage): bool {
-                        $updateImage->execute($record, ['active' => $state]);
-
-                        return $state;
-                    }),
+                IsActiveIconColumn::make(),
 
                 CreatedAtColumn::make()
                     ->sortable(),
@@ -63,6 +58,8 @@ final class StorefrontImagesTable
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+                    DeactivateStorefrontImageTableAction::make(),
+                    ActivateStorefrontImageTableAction::make(),
                     DeleteStorefrontImageTableAction::make(),
                 ]),
             ])

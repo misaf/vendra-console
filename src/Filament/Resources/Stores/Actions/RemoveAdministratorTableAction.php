@@ -29,7 +29,9 @@ final class RemoveAdministratorTableAction extends Action
             ->requiresConfirmation()
             ->visible(fn (User $record): bool => ! $record->trashed())
             ->action(fn (User $record, RelationManager $livewire, RemoveTenantAdministratorAction $removeAdministrator) => self::guardLastAdministrator(
-                fn (): mixed => $removeAdministrator->execute(self::administratorStore($livewire), $record),
+                function () use ($removeAdministrator, $livewire, $record): void {
+                    $removeAdministrator->execute(self::administratorStore($livewire), $record);
+                },
                 __('vendra-console::messages.administrator_removed'),
             ));
     }

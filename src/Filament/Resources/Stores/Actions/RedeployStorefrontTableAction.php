@@ -39,7 +39,9 @@ final class RedeployStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $redeployStorefront->execute($deployment),
+                    function () use ($redeployStorefront, $deployment): void {
+                        $redeployStorefront->execute($deployment);
+                    },
                     __('vendra-console::messages.storefront_redeployment_queued'),
                 );
             });

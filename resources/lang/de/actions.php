@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'activate' => 'Aktivieren',
     'assign_reseller' => 'Konto zuweisen',
     'change_plan' => 'Tarif ändern',
     'change_user_password' => 'Benutzer-Passwort ändern',
@@ -16,6 +17,7 @@ return [
     'demote_administrator' => 'Administrator herabstufen',
     'disable_account' => 'Konto deaktivieren',
     'enable_account' => 'Konto aktivieren',
+    'deactivate' => 'Deaktivieren',
     'extend_subscription' => 'Abonnement verlängern',
     'offboard_reseller' => 'Konto deaktivieren',
     'offboard_resellers' => 'Konten deaktivieren',

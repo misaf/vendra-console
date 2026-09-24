@@ -31,7 +31,9 @@ trait ReconcilesDeployment
                 RequestStorefrontReconciliationAction $requestReconciliation,
             ): void {
                 self::run(
-                    fn (): mixed => $requestReconciliation->execute($record),
+                    function () use ($requestReconciliation, $record): void {
+                        $requestReconciliation->execute($record);
+                    },
                     __('vendra-console::messages.storefront_reconciled'),
                 );
             });

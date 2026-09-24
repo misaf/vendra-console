@@ -54,9 +54,9 @@ final class AddAdministratorTableAction extends Action
             ->action(function (array $data, RelationManager $livewire, AddTenantAdministratorAction $addAdministrator): void {
                 $addAdministrator->execute(
                     self::administratorStore($livewire),
-                    (string) Arr::get($data, 'username'),
-                    (string) Arr::get($data, 'email'),
-                    (string) Arr::get($data, 'password'),
+                    Arr::string($data, 'username'),
+                    Arr::string($data, 'email'),
+                    Arr::string($data, 'password'),
                 );
 
                 self::notifySuccess(__('vendra-console::messages.administrator_added'));

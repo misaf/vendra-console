@@ -12,13 +12,14 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Misaf\VendraConsole\Filament\Resources\Plans\Actions\ActivatePlanTableAction;
+use Misaf\VendraConsole\Filament\Resources\Plans\Actions\DeactivatePlanTableAction;
 use Misaf\VendraConsole\Filament\Resources\Plans\Actions\DeletePlanTableAction;
 use Misaf\VendraConsole\Filament\Resources\Plans\Actions\RestorePlanTableAction;
-use Misaf\VendraSubscription\Actions\UpdatePlanAction;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsDefaultIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
@@ -56,12 +57,7 @@ final class PlanTable
                         ? __('vendra-console::attributes.free')
                         : $record->formattedPrice()),
 
-                IsActiveToggleColumn::make()
-                    ->updateStateUsing(function (Plan $record, bool $state, UpdatePlanAction $updatePlan): bool {
-                        $updatePlan->execute($record, ['active' => $state]);
-
-                        return $state;
-                    }),
+                IsActiveIconColumn::make(),
 
                 CreatedAtColumn::make()
                     ->sortable(),
@@ -89,6 +85,10 @@ final class PlanTable
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
+
+                    DeactivatePlanTableAction::make(),
+
+                    ActivatePlanTableAction::make(),
 
                     DeletePlanTableAction::make(),
 

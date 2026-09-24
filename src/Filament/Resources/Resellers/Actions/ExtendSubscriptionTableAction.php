@@ -42,7 +42,7 @@ final class ExtendSubscriptionTableAction extends Action
                     return;
                 }
 
-                resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse((string) Arr::get($data, 'ends_at')));
+                resolve(ExtendSubscriptionAction::class)->execute($subscription, Date::parse(Arr::string($data, 'ends_at')));
                 self::notifySuccess(__('vendra-console::messages.subscription_extended'));
             });
     }

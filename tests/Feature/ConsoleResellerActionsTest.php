@@ -14,6 +14,7 @@ use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -100,18 +101,23 @@ it('blocks a renewal that cannot hold the current stores', function (): void {
     expect($reseller->subscriptions()->count())->toBe(1);
 });
 
-it('toggles a reseller active state from the table through the domain action', function (): void {
+it('deactivates and reactivates a reseller from the table through the domain action', function (): void {
     actingConsoleAdmin();
 
     $reseller = Reseller::factory()->create(['active' => true]);
 
     livewire(ListResellers::class)
-        ->call('updateTableColumnState', 'active', (string) $reseller->getKey(), false);
+        ->assertTableColumnExists('active', fn (IsActiveIconColumn $column): bool => true, $reseller)
+        ->assertActionHidden(TestAction::make('activateReseller')->table($reseller))
+        ->callAction(TestAction::make('deactivateReseller')->table($reseller))
+        ->assertNotified(__('vendra-console::messages.deactivated'));
 
     expect($reseller->refresh()->active)->toBeFalse();
 
     livewire(ListResellers::class)
-        ->call('updateTableColumnState', 'active', (string) $reseller->getKey(), true);
+        ->assertActionHidden(TestAction::make('deactivateReseller')->table($reseller))
+        ->callAction(TestAction::make('activateReseller')->table($reseller))
+        ->assertNotified(__('vendra-console::messages.activated'));
 
     expect($reseller->refresh()->active)->toBeTrue();
 });

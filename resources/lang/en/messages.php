@@ -44,6 +44,8 @@ return [
     'network_unavailable' => 'The required network is unavailable',
     'no_recent_logs' => 'No recent logs',
     'record_unavailable' => 'The record is no longer available',
+    'activated' => 'Activated',
+    'deactivated' => 'Deactivated',
     'delete_blocked' => 'Delete blocked',
     'operational_action_failed' => 'Operational action failed',
     'runtime_connected' => 'Connected · API :api · :version',

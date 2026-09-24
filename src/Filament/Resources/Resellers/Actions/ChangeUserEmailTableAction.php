@@ -36,7 +36,7 @@ final class ChangeUserEmailTableAction extends Action
                     ->rules(fn (Reseller $record): array => self::resellerEmailRules($record->user_id)),
             ])
             ->action(function (Reseller $record, array $data): void {
-                resolve(UpdateResellerUserEmailAction::class)->execute($record, (string) Arr::get($data, 'email'));
+                resolve(UpdateResellerUserEmailAction::class)->execute($record, Arr::string($data, 'email'));
                 self::notifySuccess(__('vendra-console::messages.user_email_updated'));
             });
     }

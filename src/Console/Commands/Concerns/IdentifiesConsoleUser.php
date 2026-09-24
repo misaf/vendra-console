@@ -7,6 +7,7 @@ namespace Misaf\VendraConsole\Console\Commands\Concerns;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Misaf\VendraConsole\Models\Console;
+use Misaf\VendraSupport\Support\ContainsSearch;
 use Misaf\VendraUser\Models\User;
 
 use function Laravel\Prompts\search;
@@ -57,11 +58,7 @@ trait IdentifiesConsoleUser
                 fn (Builder $query): Builder => $query->whereIn('id', $activeConsoleUserIds),
                 fn (Builder $query): Builder => $query->whereNotIn('id', $activeConsoleUserIds),
             )
-            ->when(mb_trim($value) !== '', fn (Builder $query): Builder => $query->where(
-                fn (Builder $query): Builder => $query
-                    ->whereLike('email', '%'.mb_trim($value).'%')
-                    ->orWhereLike('username', '%'.mb_trim($value).'%'),
-            ))
+            ->when(mb_trim($value) !== '', fn (Builder $query): Builder => ContainsSearch::apply($query, ['email', 'username'], mb_trim($value)))
             ->orderBy('email')
             ->limit(self::USER_SEARCH_LIMIT)
             ->get(['email', 'username'])

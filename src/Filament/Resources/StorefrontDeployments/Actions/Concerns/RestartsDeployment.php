@@ -32,7 +32,9 @@ trait RestartsDeployment
                 RestartStoreStorefrontAction $restart,
             ): void {
                 self::run(
-                    fn (): mixed => $restart->execute($record),
+                    function () use ($restart, $record): void {
+                        $restart->execute($record);
+                    },
                     __('vendra-console::messages.storefront_restarted'),
                 );
             });

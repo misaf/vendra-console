@@ -46,9 +46,9 @@ final class ReplaceUserAccountTableAction extends Action
             ->action(function (Reseller $record, array $data): void {
                 resolve(ReplaceResellerUserAction::class)->execute(
                     $record,
-                    (string) Arr::get($data, 'username'),
-                    (string) Arr::get($data, 'email'),
-                    (string) Arr::get($data, 'password'),
+                    Arr::string($data, 'username'),
+                    Arr::string($data, 'email'),
+                    Arr::string($data, 'password'),
                 );
                 self::notifySuccess(__('vendra-console::messages.user_account_replaced'));
             });

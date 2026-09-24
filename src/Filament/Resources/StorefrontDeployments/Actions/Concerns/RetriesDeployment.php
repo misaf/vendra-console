@@ -32,7 +32,9 @@ trait RetriesDeployment
                 RetryFailedStorefrontDeploymentAction $retry,
             ): void {
                 self::run(
-                    fn (): mixed => $retry->execute($record),
+                    function () use ($retry, $record): void {
+                        $retry->execute($record);
+                    },
                     __('vendra-console::messages.storefront_retry_queued'),
                 );
             });

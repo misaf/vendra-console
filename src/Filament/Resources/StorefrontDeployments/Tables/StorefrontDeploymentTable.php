@@ -20,6 +20,7 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\Restart
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\RetryDeploymentTableAction;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Actions\ViewLogsTableAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
+use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 
 final class StorefrontDeploymentTable
@@ -112,9 +113,7 @@ final class StorefrontDeploymentTable
                             DatePicker::make('until')
                                 ->label(__('vendra-console::attributes.until_date')),
                         ])
-                        ->query(fn (Builder $query, array $data): Builder => $query
-                            ->when(Arr::get($data, 'from', null), fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '>=', $date))
-                            ->when(Arr::get($data, 'until', null), fn (Builder $query, string $date): Builder => $query->whereDate('requested_at', '<=', $date))),
+                        ->query(fn (Builder $query, array $data): Builder => self::filterByRequestedDate($query, Arr::get($data, 'from', null), Arr::get($data, 'until', null))),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
             )
@@ -132,5 +131,17 @@ final class StorefrontDeploymentTable
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');
+    }
+
+    /**
+     * @param  Builder<StorefrontDeployment>  $query
+     * @return Builder<StorefrontDeployment>
+     */
+    private static function filterByRequestedDate(Builder $query, mixed $from, mixed $until): Builder
+    {
+        return $query->requestedBetween(
+            is_string($from) && $from !== '' ? $from : null,
+            is_string($until) && $until !== '' ? $until : null,
+        );
     }
 }

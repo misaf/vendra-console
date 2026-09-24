@@ -15,6 +15,7 @@ use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ListStore
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Pages\ViewStorefrontDeployment;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Schemas\StorefrontDeploymentInfolist;
 use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Tables\StorefrontDeploymentTable;
+use Misaf\VendraConsole\Filament\Resources\StorefrontDeployments\Widgets\StorefrontRuntimeObservation;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 
 final class StorefrontDeploymentResource extends Resource
@@ -86,6 +87,13 @@ final class StorefrontDeploymentResource extends Resource
     public static function canDelete(Model $record): bool
     {
         return false;
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            StorefrontRuntimeObservation::class,
+        ];
     }
 
     public static function getPages(): array

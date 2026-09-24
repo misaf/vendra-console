@@ -39,7 +39,9 @@ final class ReconcileStorefrontTableAction extends Action
                 }
 
                 self::run(
-                    fn (): mixed => $requestReconciliation->execute($deployment),
+                    function () use ($requestReconciliation, $deployment): void {
+                        $requestReconciliation->execute($deployment);
+                    },
                     __('vendra-console::messages.storefront_reconciled'),
                 );
             });

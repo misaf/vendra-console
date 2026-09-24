@@ -32,7 +32,7 @@ final class ChangeAdministratorPasswordTableAction extends Action
                 PasswordConfirmationInput::make(),
             ])
             ->action(function (User $record, array $data, UpdateUserPasswordAction $updatePassword): void {
-                $updatePassword->execute($record, (string) Arr::get($data, 'password'));
+                $updatePassword->execute($record, Arr::string($data, 'password'));
                 self::notifySuccess(__('vendra-console::messages.administrator_password_updated'));
             });
     }

@@ -15,10 +15,12 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ActivateResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CancelSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangePlanTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserEmailTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserPasswordTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\DeactivateResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ExtendSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerBulkAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerTableAction;
@@ -26,11 +28,10 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscript
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
-use Misaf\VendraReseller\Actions\SetResellerActiveAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
-use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveToggleColumn;
+use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
@@ -57,9 +58,7 @@ final class ResellerTable
                     ->label(__('vendra-console::attributes.stores_count'))
                     ->alignCenter(),
 
-                IsActiveToggleColumn::make()
-                    ->disabled(fn (Reseller $record): bool => $record->trashed())
-                    ->updateStateUsing(fn (Reseller $record, bool $state, SetResellerActiveAction $setActive): bool => $setActive->execute($record, $state)->active),
+                IsActiveIconColumn::make(),
 
                 CreatedAtColumn::make()
                     ->sortable(),
@@ -82,25 +81,7 @@ final class ResellerTable
                             'past_due' => SubscriptionStatus::PastDue->getLabel(),
                             'none' => __('vendra-console::attributes.no_active_subscription'),
                         ])
-                        ->query(fn (Builder $query, array $data): Builder => match (Arr::get($data, 'value', null)) {
-                            'active' => $query->whereHas(
-                                'subscriptions',
-                                fn (Builder $query): Builder => $query->active(),
-                            ),
-                            'expiring_soon' => $query->whereHas(
-                                'subscriptions',
-                                fn (Builder $query): Builder => $query->endingWithin(7),
-                            ),
-                            'past_due' => $query->whereHas(
-                                'subscriptions',
-                                fn (Builder $query): Builder => $query->where('status', SubscriptionStatus::PastDue),
-                            ),
-                            'none' => $query->whereDoesntHave(
-                                'subscriptions',
-                                fn (Builder $query): Builder => $query->active(),
-                            ),
-                            default => $query,
-                        }),
+                        ->query(fn (Builder $query, array $data): Builder => self::filterBySubscription($query, Arr::get($data, 'value', null))),
 
                     TrashedFilter::make(),
                 ],
@@ -121,6 +102,10 @@ final class ResellerTable
                         CancelSubscriptionTableAction::make(),
                         ReactivateSubscriptionTableAction::make(),
                     ])->dropdown(false),
+                    ActionGroup::make([
+                        DeactivateResellerTableAction::make(),
+                        ActivateResellerTableAction::make(),
+                    ])->dropdown(false),
                     ActionGroup::make([OffboardResellerTableAction::make()])->dropdown(false),
                 ]),
             ])
@@ -131,5 +116,20 @@ final class ResellerTable
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');
+    }
+
+    /**
+     * @param  Builder<Reseller>  $query
+     * @return Builder<Reseller>
+     */
+    private static function filterBySubscription(Builder $query, mixed $value): Builder
+    {
+        return match ($value) {
+            'active' => $query->withActiveSubscription(),
+            'expiring_soon' => $query->withSubscriptionEndingWithin(7),
+            'past_due' => $query->withPastDueSubscription(),
+            'none' => $query->withoutActiveSubscription(),
+            default => $query,
+        };
     }
 }
