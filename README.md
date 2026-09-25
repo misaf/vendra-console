@@ -199,6 +199,14 @@ no plan, and every subscription, payment and invoice keeps the currency it was
 created in. `Support\PlatformCurrencies` lists the options and keeps a
 record's own code selectable after its currency is deactivated.
 
+### Languages and translations
+
+`Resources\Languages\LanguageResource` and
+`Resources\LanguageLines\LanguageLineResource` manage the platform's tenantless
+languages and translation overrides. They reuse `misaf/vendra-language`'s
+forms, tables, and synchronization action. Store languages and translations
+remain separate from platform rows.
+
 ### Assigning a store to a reseller
 
 The `Assign reseller` row action moves a store to another reseller, or back to

@@ -11,11 +11,20 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Misaf\VendraConsole\Filament\Resources\Currencies\Pages\ListCurrencies;
+use Misaf\VendraConsole\Filament\Resources\LanguageLines\Pages\CreateLanguageLine;
+use Misaf\VendraConsole\Filament\Resources\LanguageLines\Pages\EditLanguageLine;
+use Misaf\VendraConsole\Filament\Resources\LanguageLines\Pages\ListLanguageLines;
+use Misaf\VendraConsole\Filament\Resources\LanguageLines\Pages\ViewLanguageLine;
+use Misaf\VendraConsole\Filament\Resources\Languages\Pages\CreateLanguage;
+use Misaf\VendraConsole\Filament\Resources\Languages\Pages\EditLanguage;
+use Misaf\VendraConsole\Filament\Resources\Languages\Pages\ListLanguages;
+use Misaf\VendraConsole\Filament\Resources\Languages\Pages\ViewLanguage;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
@@ -39,6 +48,10 @@ use Misaf\VendraCurrency\Actions\InstallCurrenciesAction;
 use Misaf\VendraCurrency\Actions\SetDefaultCurrencyAction;
 use Misaf\VendraCurrency\Database\Factories\CurrencyFactory;
 use Misaf\VendraCurrency\Models\Currency;
+use Misaf\VendraLanguage\Database\Factories\LanguageFactory;
+use Misaf\VendraLanguage\Database\Factories\LanguageLineFactory;
+use Misaf\VendraLanguage\Models\Language;
+use Misaf\VendraLanguage\Models\LanguageLine;
 use Misaf\VendraReseller\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
@@ -1077,6 +1090,91 @@ it('manages platform currencies apart from store currencies', function (): void 
     expect(platformCurrency('EUR')->is_default)->toBeTrue()
         ->and(platformCurrency('USD')->is_default)->toBeFalse()
         ->and($storeEuro->refresh()->is_default)->toBeTrue();
+});
+
+it('manages platform languages apart from store languages', function (): void {
+    $store = createTestTenant();
+    $storeEnglish = LanguageFactory::new()->createOne(['tenant_id' => $store?->getKey(), 'locale' => 'en']);
+
+    actAsConsoleAdmin();
+
+    livewire(CreateLanguage::class)
+        ->fillForm(['locale' => 'en', 'active' => true])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $platformEnglish = Language::query()->whereNull('tenant_id')->where('locale', 'en')->sole();
+    $platformGerman = Language::query()->create(['locale' => 'de', 'position' => 2]);
+
+    livewire(ListLanguages::class)
+        ->loadTable()
+        ->assertCanSeeTableRecords([$platformEnglish, $platformGerman])
+        ->assertCanNotSeeTableRecords([$storeEnglish])
+        ->assertActionExists('syncLanguageLines')
+        ->callAction(TestAction::make('setDefault')->table($platformGerman));
+
+    expect($platformGerman->refresh()->is_default)->toBeTrue()
+        ->and($platformEnglish->refresh()->is_default)->toBeFalse()
+        ->and($storeEnglish->refresh()->is_default)->toBeTrue();
+});
+
+it('manages platform translations apart from store translations', function (): void {
+    $store = createTestTenant();
+    $storeLine = LanguageLineFactory::new()->createOne([
+        'tenant_id' => $store?->getKey(),
+        'namespace' => 'vendra-language',
+        'group' => 'navigation',
+        'key' => 'language',
+        'text' => ['en' => 'Store language'],
+    ]);
+
+    actAsConsoleAdmin();
+    Language::query()->create(['locale' => 'en', 'position' => 1]);
+
+    Cache::forget(LanguageLine::getCacheKey('navigation', 'en', 'vendra-language'));
+
+    expect(LanguageLine::getTranslationsForGroup('en', 'navigation', 'vendra-language'))
+        ->not->toHaveKey('language');
+
+    livewire(CreateLanguageLine::class)
+        ->fillForm([
+            'namespace' => 'vendra-language',
+            'group' => 'navigation',
+            'key' => 'language',
+            'text' => ['en' => 'Platform language'],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $platformLine = LanguageLine::query()->whereNull('tenant_id')
+        ->where('namespace', 'vendra-language')
+        ->where('group', 'navigation')
+        ->where('key', 'language')
+        ->sole();
+
+    livewire(ListLanguageLines::class)
+        ->loadTable()
+        ->assertCanSeeTableRecords([$platformLine])
+        ->assertCanNotSeeTableRecords([$storeLine])
+        ->assertActionExists('syncLanguageLines')
+        ->callAction('syncLanguageLines')
+        ->assertNotified();
+
+    expect($storeLine->refresh()->text)->toBe(['en' => 'Store language'])
+        ->and($platformLine->refresh()->text['en'])->toBe('Platform language');
+});
+
+it('opens platform language and translation records in the console', function (): void {
+    actAsConsoleAdmin();
+    Filament::getPanel('console')->strictAuthorization();
+
+    $language = Language::query()->create(['locale' => 'en', 'position' => 1]);
+    $line = LanguageLineFactory::new()->createOne();
+
+    livewire(ViewLanguage::class, ['record' => $language->getKey()])->assertOk();
+    livewire(EditLanguage::class, ['record' => $language->getKey()])->assertOk();
+    livewire(ViewLanguageLine::class, ['record' => $line->getKey()])->assertOk();
+    livewire(EditLanguageLine::class, ['record' => $line->getKey()])->assertOk();
 });
 
 it('prices plans in platform currencies and keeps a plan currency when the default changes', function (): void {

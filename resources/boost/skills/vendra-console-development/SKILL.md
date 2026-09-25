@@ -13,6 +13,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 - Keep changes inside this package's boundary and preserve its public contracts.
 - `PlanForm` edits plan features (`PlanFeature`) and per-store limits (`PlanLimit`, under `limits`); `CreatePlan`/`EditPlan` normalize them with `PlanForm::normalizeLimits()` so empty limits stay unlimited. Lowering a plan is allowed, but `EditPlan` warns after a save that leaves resellers on the plan over it (`Misaf\VendraReseller\Support\ResellersOverPlan`), and the reseller table's `over_plan` filter lists every reseller whose stores no longer fit its active plan.
 - `Resources\Currencies\CurrencyResource` manages the platform's tenantless currencies with `vendra-currency`'s form, table and install action, scoping `getEloquentQuery()` through `TenantAwareness::constrainToCurrentTenant()`. `PlanForm`'s currency and `CreditWalletTableAction`'s currency are selects over `Support\PlatformCurrencies`, never free text; a plan keeps its currency when the platform default changes.
+- `Resources\Languages\LanguageResource` and `Resources\LanguageLines\LanguageLineResource` manage tenantless platform languages and translations. Reuse `vendra-language`'s forms, tables, and sync action, and pass the console resource to shared actions for authorization.
 - `ChangePlanTableAction` disables and labels plans a reseller's stores have outgrown (`PlanCoverage::covers()`); the current plan stays selectable to drop a scheduled change. `RenewSubscriptionTableAction` charges and describes the plan `PlanCoverage::renewalPlan()` returns and notes an outgrown scheduled downgrade. The reseller table and view show `PlanFeature::PrioritySupport` from the active plan (`has_priority_support`, a `withExists` on the resource query) and filter by it. The table reuses `vendra-user`'s `UsernameColumn`, `EmailColumn` and `EmailVerifiedAtColumn` and their query-builder constraints, named with the `user.` relationship prefix.
 - Add or update focused Pest coverage, then run `php artisan test --compact --testsuite=vendra-console` from the project root.
 
@@ -36,7 +37,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Tenancy
 
 - The console panel runs **outside** the tenant middleware stack; a console user works across all tenants.
-- Never assume a current tenant, and never scope console queries with tenant-aware helpers. Where a listing must be per-tenant, join explicitly.
+- Never assume a current tenant. Scope platform-owned currency and language records to tenantless rows; leave cross-tenant operational listings unscoped where intended. Where a listing must be per-tenant, join explicitly.
 
 ## Panel Wiring
 
