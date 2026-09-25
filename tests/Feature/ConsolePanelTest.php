@@ -106,21 +106,6 @@ function consoleStorefrontFormData(): array
     return [
         'storefront_image_id' => StorefrontImage::factory()->active()->create()->id,
         'storefront_slug' => 'console-flowers',
-        'storefront_name_en' => 'Console Flowers',
-        'storefront_name_fa' => 'گل‌فروشی کنسول',
-        'storefront_business_type' => 'Florist',
-        'storefront_price_currency' => 'IRR',
-        'storefront_locality' => 'Tehran',
-        'storefront_country' => 'IR',
-        'storefront_mobile_phone' => '09120000000',
-        'storefront_office_phone' => '02100000000',
-        'storefront_contact_email' => 'contact@console-flowers.test',
-        'storefront_hours_open' => '08:00',
-        'storefront_hours_close' => '21:00',
-        'storefront_map_query' => '35.7,51.4',
-        'storefront_whatsapp_phone' => '+989120000000',
-        'storefront_telegram_username' => 'consoleflowers',
-        'storefront_instagram_username' => 'consoleflowers',
     ];
 }
 
@@ -443,20 +428,16 @@ it('creates a store for a reseller within its plan limit', function (): void {
     expect(StorefrontDeployment::query()->count())->toBe(1);
 });
 
-it('uses a wizard when creating a store and florist storefront', function (): void {
+it('asks only for store and deployment identity when creating a store', function (): void {
     actAsConsoleAdmin();
 
     $component = livewire(CreateStore::class);
 
-    expect($component->instance()->hasSkippableSteps())->toBeTrue();
-
     $component
-        ->assertWizardCurrentStep(1)
-        ->assertWizardStepExists(2)
-        ->assertWizardStepExists(3)
-        ->assertWizardStepExists(4)
         ->assertFormFieldExists('create_storefront')
-        ->assertSee(__('vendra-store::attributes.storefront_map_query'))
+        ->assertFormFieldExists('storefront_image_id')
+        ->assertFormFieldExists('storefront_slug')
+        ->assertFormFieldDoesNotExist('storefront_mobile_phone')
         // The reseller is optional, so it must not appear among the errors.
         ->assertFormFieldExists('reseller_id')
         ->call('create')
@@ -464,15 +445,7 @@ it('uses a wizard when creating a store and florist storefront', function (): vo
             'domain' => 'required',
             'email' => 'required',
             'storefront_slug' => 'required',
-            'storefront_name_en' => 'required',
-            'storefront_name_fa' => 'required',
-            'storefront_mobile_phone' => 'required',
-            'storefront_office_phone' => 'required',
-            'storefront_contact_email' => 'required',
-            'storefront_hours_open' => 'required',
-            'storefront_hours_close' => 'required',
-            'storefront_locality' => 'required',
-            'storefront_map_query' => 'required',
+            'storefront_image_id' => 'required',
         ])
         ->assertHasNoFormErrors(['reseller_id']);
 });
@@ -497,19 +470,16 @@ it('lets a console admin create a store without a managed storefront', function 
         ->not->toContain(__('vendra-store::messages.storefront_requested'));
 });
 
-it('suggests storefront identity from the store domain', function (): void {
+it('suggests the storefront slug from the store domain', function (): void {
     actAsConsoleAdmin();
 
     livewire(CreateStore::class)
         ->set('data.domain', 'Rose-Garden.Example')
         ->assertHasNoFormErrors(['domain'])
-        ->assertFormSet([
-            'storefront_slug' => 'rose-garden',
-            'storefront_name_en' => 'Rose Garden',
-        ]);
+        ->assertFormSet(['storefront_slug' => 'rose-garden']);
 });
 
-it('requests a storefront when a console admin creates a store', function (): void {
+it('creates a storefront with sample details for its administrator to update', function (): void {
     actAsConsoleAdmin();
     $reseller = Reseller::factory()->active()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
@@ -528,13 +498,15 @@ it('requests a storefront when a console admin creates a store', function (): vo
     assertDatabaseHas('storefront_deployments', [
         'slug' => 'console-flowers',
         'domain' => 'console-flowers.test',
-        'status' => 'ready',
     ]);
+    $deployment = StorefrontDeployment::query()->where('domain', 'console-flowers.test')->firstOrFail();
+    expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('console.flowers@gmail.com')
+        ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000');
     expect(session('filament.notifications.0.body'))
         ->toContain(__('vendra-store::messages.storefront_requested'));
 });
 
-it('explains when a new storefront must wait for runtime configuration', function (): void {
+it('reports a missing runtime after creating sample storefront details', function (): void {
     actAsConsoleAdmin();
     Config::set('container.drivers.docker.host', '');
 
@@ -680,6 +652,7 @@ it('edits store details without directly mutating operational identity fields', 
     $originalSlug = $store->slug;
 
     livewire(EditStore::class, ['record' => $store->getKey()])
+        ->assertFormFieldDoesNotExist('storefront_mobile_phone')
         ->fillForm([
             'name' => 'Updated store',
             'description' => 'Operational description.',
@@ -744,7 +717,7 @@ it('rejects an alias domain already active on another store or running another s
     expect($store->aliasDomains()->exists())->toBeFalse();
 })->with(['taken.test', 'running.test']);
 
-it('rejects an incomplete storefront before provisioning the store', function (): void {
+it('creates a store without asking for storefront contact details', function (): void {
     actAsConsoleAdmin();
 
     livewire(CreateStore::class)
@@ -753,13 +726,14 @@ it('rejects an incomplete storefront before provisioning the store', function ()
             'email' => 'admin@incomplete.test',
             'active' => true,
             ...consoleStorefrontFormData(),
-            'storefront_locality' => '',
         ])
         ->call('create')
-        ->assertHasFormErrors(['storefront_locality' => 'required']);
+        ->assertHasNoFormErrors();
 
-    assertDatabaseMissing('store_domains', ['name' => 'incomplete.test']);
-    expect(StorefrontDeployment::query()->count())->toBe(0);
+    assertDatabaseHas('store_domains', ['name' => 'incomplete.test']);
+    assertDatabaseHas('storefront_deployments', ['domain' => 'incomplete.test']);
+    expect(Arr::get(StorefrontDeployment::query()->where('domain', 'incomplete.test')->firstOrFail()->configuration, 'contact.mobilePhone'))
+        ->toBe('00000000000');
 });
 
 it('rejects an inactive storefront image before provisioning the store', function (): void {

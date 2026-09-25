@@ -257,6 +257,11 @@ does not record or provision a managed storefront, which supports storefront
 source running outside Docker. The reseller panel continues to require a
 managed storefront.
 
+Store creation asks for the domain, administrator email, and managed storefront
+identity. The managed storefront starts with sample contact, location, and social
+details and deploys when the runtime is configured. The store administrator
+replaces those details in Admin General Settings.
+
 ## Layering
 
 This is the topmost layer:

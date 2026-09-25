@@ -7,20 +7,19 @@ namespace Misaf\VendraConsole\Filament\Resources\Stores\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraStore\Filament\Schemas\StorefrontConfigurationFields;
 use Misaf\VendraStore\Models\StoreDomain;
 use Misaf\VendraUser\Support\UserRules;
 
 final class StoreForm
 {
-    /**
-     * Creation uses `CreateStore`'s wizard instead.
-     */
     public static function configure(Schema $schema): Schema
     {
         return $schema
@@ -36,6 +35,17 @@ final class StoreForm
                     ->rows(4)
                     ->maxLength(2000)
                     ->visibleOn('edit')
+                    ->columnSpanFull(),
+
+                ...self::storeFields(),
+
+                StorefrontConfigurationFields::creationToggle(default: true)
+                    ->visibleOn('create'),
+
+                Grid::make(2)
+                    ->schema(StorefrontConfigurationFields::creationIdentityFields(optional: true))
+                    ->visible(fn (Get $get): bool => $get('create_storefront') === true)
+                    ->visibleOn('create')
                     ->columnSpanFull(),
             ])
             ->columns(2);
@@ -78,9 +88,6 @@ final class StoreForm
                         $set('storefront_slug', Str::slug($domainLabel));
                     }
 
-                    if (blank($get('storefront_name_en'))) {
-                        $set('storefront_name_en', Str::headline($domainLabel));
-                    }
                 })
                 ->helperText(__('vendra-console::attributes.domain_helper_text'))
                 ->label(__('vendra-console::attributes.domain'))
@@ -96,13 +103,7 @@ final class StoreForm
                 ->visibleOn('create'),
 
             TextInput::make('email')
-                ->afterStateUpdated(function (?string $state, Get $get, Set $set, Livewire $livewire): void {
-                    $livewire->validateOnly('data.email');
-
-                    if (filled($state) && blank($get('storefront_contact_email'))) {
-                        $set('storefront_contact_email', $state);
-                    }
-                })
+                ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.email'))
                 ->label(__('vendra-console::attributes.email'))
                 ->email()
                 ->autocomplete('email')
