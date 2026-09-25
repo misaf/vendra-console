@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Misaf\VendraConsole\Filament\Resources\Resellers\Actions;
 
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns\InteractsWithResellerRecord;
+use Misaf\VendraConsole\Support\PlatformCurrencies;
 use Misaf\VendraReseller\Actions\CreditResellerWalletAction;
 use Misaf\VendraReseller\Models\Reseller;
 
@@ -40,14 +41,13 @@ final class CreditWalletTableAction extends Action
                     ->minValue(1)
                     ->required()
                     ->dehydrateStateUsing(fn (int|string $state): int => (int) $state),
-                TextInput::make('currency_code')
+                Select::make('currency_code')
                     ->label(__('vendra-console::attributes.currency'))
-                    ->default(fn (Reseller $record): ?string => self::displayedLatestSubscription($record)?->currency_code)
-                    ->length(3)
-                    ->alpha()
-                    ->required()
-                    ->dehydrateStateUsing(fn (string $state): string => Str::upper($state))
-                    ->placeholder('USD'),
+                    ->options(fn (Reseller $record): array => self::currencyOptions($record))
+                    ->default(fn (Reseller $record): ?string => self::displayedLatestSubscription($record)->currency_code ?? PlatformCurrencies::defaultCode())
+                    ->native(false)
+                    ->searchable()
+                    ->required(),
                 Textarea::make('note')
                     ->label(__('vendra-console::attributes.credit_note'))
                     ->helperText(__('vendra-console::attributes.credit_note_hint'))
@@ -64,5 +64,18 @@ final class CreditWalletTableAction extends Action
 
                 self::notifySuccess(__('vendra-console::messages.wallet_credited'));
             });
+    }
+
+    /**
+     * Offer the platform's currencies and any the reseller is already billed or holds a balance in.
+     *
+     * @return array<string, string>
+     */
+    private static function currencyOptions(Reseller $reseller): array
+    {
+        return PlatformCurrencies::options([
+            self::displayedLatestSubscription($reseller)?->currency_code,
+            ...$reseller->walletCurrencyCodes(),
+        ]);
     }
 }

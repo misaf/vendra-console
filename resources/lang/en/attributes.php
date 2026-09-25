@@ -46,6 +46,7 @@ return [
     'price' => 'Price',
     'price_hint' => 'Amount in minor units (e.g. cents). 0 = free.',
     'currency' => 'Currency',
+    'plan_currency_hint' => "Choose from the platform's currencies. Changing the default currency later does not change existing plans, subscriptions or invoices.",
     'free' => 'Free',
     'trial_days' => 'Trial days',
     'entitlements' => 'Plan entitlements',

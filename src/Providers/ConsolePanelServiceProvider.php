@@ -23,6 +23,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraLocalization\Http\Middleware\SetLocale;
 use Misaf\VendraSupport\Http\Middleware\AddPanelToRequestJobContext;
+use Misaf\VendraUser\Filament\Pages\Auth\EditProfile;
 
 final class ConsolePanelServiceProvider extends PanelProvider
 {
@@ -71,7 +72,7 @@ final class ConsolePanelServiceProvider extends PanelProvider
                 provider: SpatieGoogleFontProvider::class,
             )
             ->path('')
-            ->profile()
+            ->profile(EditProfile::class)
             ->topNavigation();
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\Select;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
+use Misaf\VendraConsole\Filament\Resources\Currencies\Pages\ListCurrencies;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\CreatePlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\ListPlans;
@@ -33,6 +35,10 @@ use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelati
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
 use Misaf\VendraConsole\Filament\Resources\Stores\Widgets\StoreStatusOverview;
 use Misaf\VendraConsole\Models\Console;
+use Misaf\VendraCurrency\Actions\InstallCurrenciesAction;
+use Misaf\VendraCurrency\Actions\SetDefaultCurrencyAction;
+use Misaf\VendraCurrency\Database\Factories\CurrencyFactory;
+use Misaf\VendraCurrency\Models\Currency;
 use Misaf\VendraReseller\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
@@ -47,6 +53,7 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
+use Misaf\VendraUser\Filament\Pages\Auth\EditProfile;
 use Misaf\VendraUser\Models\User;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -1019,4 +1026,91 @@ it('counts every store by status above the console store list', function (): voi
         ->and($stats->get(StoreStatus::Suspended->getLabel())?->getValue())->toBe(1)
         ->and($stats->get(__('vendra-store::attributes.failed_storefronts'))?->getValue())->toBe(1)
         ->and(urldecode((string) $stats->get(StoreStatus::Suspended->getLabel())?->getUrl()))->toContain('filters[status][values][0]=suspended');
+});
+
+it('edits the console profile without a name field and changes the password through the user action', function (): void {
+    $user = actAsConsoleAdmin();
+    $user->forceFill(['password' => Hash::make('old-password'), 'remember_token' => 'old-token'])->save();
+
+    livewire(EditProfile::class)
+        ->assertFormFieldDoesNotExist('name')
+        ->assertFormFieldIsDisabled('username')
+        ->assertFormFieldIsDisabled('email')
+        ->assertSchemaStateSet(['username' => $user->username, 'email' => $user->email])
+        ->fillForm([
+            'password' => 'new-password-123',
+            'passwordConfirmation' => 'new-password-123',
+            'currentPassword' => 'old-password',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $user->refresh();
+
+    expect(Hash::check('new-password-123', $user->password))->toBeTrue()
+        ->and($user->remember_token)->not->toBe('old-token');
+});
+
+function platformCurrency(string $code): Currency
+{
+    return Currency::query()->platform()->where('code', $code)->sole();
+}
+
+it('manages platform currencies apart from store currencies', function (): void {
+    $store = createTestTenant();
+    $storeEuro = CurrencyFactory::new()->active()->code('EUR')->createOne(['tenant_id' => $store?->getKey(), 'position' => 1]);
+
+    actAsConsoleAdmin();
+
+    livewire(ListCurrencies::class)
+        ->call('loadTable')
+        ->assertCanNotSeeTableRecords([$storeEuro])
+        ->callAction('installCurrencies', ['codes' => ['USD', 'EUR']])
+        ->assertHasNoFormErrors();
+
+    livewire(ListCurrencies::class)
+        ->call('loadTable')
+        ->assertCanSeeTableRecords([platformCurrency('USD'), platformCurrency('EUR')])
+        ->assertCanNotSeeTableRecords([$storeEuro])
+        ->callAction(TestAction::make('setDefault')->table(platformCurrency('EUR')));
+
+    expect(platformCurrency('EUR')->is_default)->toBeTrue()
+        ->and(platformCurrency('USD')->is_default)->toBeFalse()
+        ->and($storeEuro->refresh()->is_default)->toBeTrue();
+});
+
+it('prices plans in platform currencies and keeps a plan currency when the default changes', function (): void {
+    resolve(InstallCurrenciesAction::class)->execute(['USD', 'EUR']);
+
+    actAsConsoleAdmin();
+
+    livewire(CreatePlan::class)
+        ->assertSchemaStateSet(['currency_code' => 'USD'])
+        ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['USD', 'EUR'])
+        ->fillForm([
+            'name' => 'Growth',
+            'max_units' => 3,
+            'period_unit' => 'month',
+            'period_count' => 1,
+            'price' => 1_500,
+            'active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $plan = Plan::query()->where('name', 'Growth')->sole();
+    $subscription = Subscription::factory()->for($plan)->create(['price' => $plan->price, 'currency_code' => $plan->currency_code]);
+
+    resolve(SetDefaultCurrencyAction::class)->execute(platformCurrency('EUR'));
+    platformCurrency('USD')->update(['active' => false]);
+
+    expect($plan->refresh()->currency_code)->toBe('USD')
+        ->and($subscription->refresh()->currency_code)->toBe('USD');
+
+    livewire(EditPlan::class, ['record' => $plan->getKey()])
+        ->assertSchemaStateSet(['currency_code' => 'USD'])
+        ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['EUR', 'USD']);
+
+    livewire(CreatePlan::class)
+        ->assertSchemaStateSet(['currency_code' => 'EUR']);
 });

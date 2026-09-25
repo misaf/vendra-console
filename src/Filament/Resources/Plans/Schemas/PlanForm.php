@@ -12,9 +12,10 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
+use Misaf\VendraConsole\Support\PlatformCurrencies;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
+use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSupport\Enums\PlanFeature;
 use Misaf\VendraSupport\Enums\PlanLimit;
 use Misaf\VendraSupport\Filament\Forms\Components\DescriptionTextarea;
@@ -77,12 +78,15 @@ final class PlanForm
                     ->live()
                     ->required(),
 
-                TextInput::make('currency_code')
+                Select::make('currency_code')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.currency_code'))
                     ->label(__('vendra-console::attributes.currency'))
-                    ->length(3)
-                    ->alpha()
-                    ->live(onBlur: true)
+                    ->helperText(__('vendra-console::attributes.plan_currency_hint'))
+                    ->options(fn (?Plan $record): array => PlatformCurrencies::options([$record?->currency_code]))
+                    ->default(fn (): ?string => PlatformCurrencies::defaultCode())
+                    ->native(false)
+                    ->searchable()
+                    ->live()
                     ->required(function (Get $get): bool {
                         $price = $get('price');
 
@@ -91,9 +95,7 @@ final class PlanForm
                         }
 
                         return is_string($price) && (int) $price > 0;
-                    })
-                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? Str::upper($state) : null)
-                    ->placeholder('USD'),
+                    }),
 
                 TextInput::make('trial_days')
                     ->afterStateUpdated(fn (Livewire $livewire) => $livewire->validateOnly('data.trial_days'))

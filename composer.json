@@ -30,6 +30,7 @@
         "illuminate/support": "^13.0",
         "misaf/laravel-email-verification-emailable": "^2.0",
         "misaf/vendra-activity-log": "self.version",
+        "misaf/vendra-currency": "self.version",
         "misaf/vendra-localization": "self.version",
         "misaf/vendra-store": "self.version",
         "misaf/vendra-reseller": "self.version",

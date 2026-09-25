@@ -316,7 +316,7 @@ it('credits a reseller wallet through the table row action and shows the balance
     livewire(ListResellers::class)
         ->callAction(TestAction::make('creditWallet')->table($reseller), [
             'amount' => 5_000,
-            'currency_code' => 'usd',
+            'currency_code' => 'USD',
             'note' => 'Bank transfer 1234',
         ])
         ->assertHasNoFormErrors()

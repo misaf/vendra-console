@@ -182,11 +182,22 @@ email and email verification (reusing `vendra-user`'s columns) and filters by
 them with a query builder over the `user` relationship. The
 `Credit wallet` row action records a payment the reseller made outside the
 platform through `Misaf\VendraReseller\Actions\CreditResellerWalletAction`
-(amount in minor units, currency, and a required note), and the reseller
+(amount in minor units, a platform currency or one the reseller already
+holds, and a required note), and the reseller
 overview lists the wallet balance per currency. Each control invokes the owning
 domain package; no meaningful transition is an Eloquent column toggle. Every
 password form uses the shared `NewPasswordInput` and
 `PasswordConfirmationInput` fields.
+
+### Currencies
+
+`Resources\Currencies\CurrencyResource` manages the platform's currencies, the
+tenantless `currencies` rows, reusing `misaf/vendra-currency`'s form, table and
+catalog install. A plan's currency is picked from them (the platform default
+comes preselected) and stays with the plan: changing the default later changes
+no plan, and every subscription, payment and invoice keeps the currency it was
+created in. `Support\PlatformCurrencies` lists the options and keeps a
+record's own code selectable after its currency is deactivated.
 
 ### Assigning a store to a reseller
 

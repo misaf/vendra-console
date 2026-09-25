@@ -46,6 +46,7 @@ return [
     'price' => 'Preis',
     'price_hint' => 'Betrag in kleinster Einheit (z. B. Cent). 0 = kostenlos.',
     'currency' => 'Währung',
+    'plan_currency_hint' => 'Aus den Währungen der Plattform wählen. Eine spätere Änderung der Standardwährung ändert bestehende Tarife, Abonnements und Rechnungen nicht.',
     'free' => 'Kostenlos',
     'trial_days' => 'Testtage',
     'entitlements' => 'Tarifleistungen',
