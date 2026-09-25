@@ -7,6 +7,7 @@ namespace Misaf\VendraConsole\Filament\Resources\Resellers\Actions\Concerns;
 use Filament\Notifications\Notification;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSubscription\Support\MoneyFormatter;
 
 trait InteractsWithResellerRecord
 {
@@ -24,6 +25,34 @@ trait InteractsWithResellerRecord
         $subscription = $reseller->subscriptions->sortByDesc('starts_at')->first();
 
         return $subscription instanceof Subscription ? $subscription : null;
+    }
+
+    /**
+     * Refuse a charge the wallet cannot cover, rather than starting a period
+     * whose payment fails and cancels it.
+     */
+    protected static function walletCovers(Reseller $reseller, int $amount, ?string $currencyCode): bool
+    {
+        if ($amount === 0 || $currencyCode === null) {
+            return true;
+        }
+
+        $balance = $reseller->walletBalance($currencyCode);
+
+        if ($balance >= $amount) {
+            return true;
+        }
+
+        Notification::make()
+            ->danger()
+            ->title(__('vendra-console::messages.insufficient_wallet_balance'))
+            ->body(__('vendra-console::messages.insufficient_wallet_balance_body', [
+                'amount' => MoneyFormatter::format($amount, $currencyCode),
+                'balance' => MoneyFormatter::format($balance, $currencyCode),
+            ]))
+            ->send();
+
+        return false;
     }
 
     protected static function notifySuccess(string $title): void

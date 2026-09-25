@@ -20,6 +20,7 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CancelSubscriptionT
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangePlanTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserEmailTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ChangeUserPasswordTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\CreditWalletTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\DeactivateResellerTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ExtendSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerBulkAction;
@@ -101,6 +102,7 @@ final class ResellerTable
                         ExtendSubscriptionTableAction::make(),
                         CancelSubscriptionTableAction::make(),
                         ReactivateSubscriptionTableAction::make(),
+                        CreditWalletTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
                         DeactivateResellerTableAction::make(),

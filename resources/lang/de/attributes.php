@@ -119,4 +119,10 @@ return [
     'subscriptions_started' => 'Gestartete Abonnements',
     'last_days' => 'Letzte :days Tage',
     'recent_activity' => 'Letzte Aktivitäten',
+    'amount' => 'Betrag',
+    'amount_hint' => 'Betrag in kleinster Einheit (z. B. Cent).',
+    'credit_note' => 'Notiz',
+    'credit_note_hint' => 'Wie der Reseller bezahlt hat, z. B. eine Überweisungsreferenz. Wird an der Transaktion gespeichert.',
+    'wallet' => 'Guthaben',
+    'wallet_balance' => 'Kontostand',
 ];

@@ -5,9 +5,12 @@ declare(strict_types=1);
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
 use Misaf\VendraConsole\Filament\Widgets\PlatformMetrics;
 use Misaf\VendraConsole\Models\Console;
+use Misaf\VendraReseller\Actions\CreditResellerWalletAction;
 use Misaf\VendraReseller\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Filament\Pages\Auth\Login;
 use Misaf\VendraReseller\Models\Reseller;
@@ -15,6 +18,7 @@ use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
+use Misaf\VendraTransaction\Database\Factories\TransactionGatewayFactory;
 use Misaf\VendraUser\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -72,25 +76,92 @@ it('blocks a plan change that cannot hold the current stores', function (): void
     expect($reseller->activeSubscription()?->plan_id)->toBe($currentPlan->getKey());
 });
 
-it('renews the subscription through the table row action', function (): void {
+it('schedules a cheaper plan for the end of the period through the table row action', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->active()->create();
+    $plan = Plan::factory()->active()->priced(6_000)->create();
+    $current = Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['price' => $plan->price, 'currency_code' => $plan->currency_code]);
+    $cheaper = Plan::factory()->active()->priced(3_000)->create();
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => $cheaper->getKey()])
+        ->assertNotified(__('vendra-console::messages.plan_change_scheduled', ['plan' => $cheaper->name]));
+
+    expect($reseller->subscriptions()->count())->toBe(1)
+        ->and($current->refresh()->scheduled_plan_id)->toBe($cheaper->getKey());
+});
+
+it('refuses an upgrade the wallet cannot cover and charges it once credited', function (): void {
+    actingConsoleAdmin();
+    Queue::fake();
+    TransactionGatewayFactory::new()->active()->internal()->create();
+
+    $reseller = Reseller::factory()->active()->create();
+    consoleResellerUserFor($reseller);
+    $plan = Plan::factory()->active()->priced(3_000)->maxUnits(1)->create();
+    Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['price' => $plan->price, 'currency_code' => $plan->currency_code]);
+    $upgrade = Plan::factory()->active()->priced(6_000)->maxUnits(5)->create();
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => $upgrade->getKey()])
+        ->assertNotified(__('vendra-console::messages.insufficient_wallet_balance'));
+
+    expect($reseller->subscriptions()->count())->toBe(1);
+
+    resolve(CreditResellerWalletAction::class)->execute($reseller, 6_000, $upgrade->currency_code, 'Bank transfer');
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('changePlan')->table($reseller), ['plan_id' => $upgrade->getKey()])
+        ->assertNotified(__('vendra-console::messages.plan_change_pending_payment', ['plan' => $upgrade->name]));
+
+    expect($reseller->subscriptions()->where('status', SubscriptionStatus::PendingPayment)->sole()->plan_id)->toBe($upgrade->getKey());
+});
+
+it('renews a lapsed subscription from where it ended through the table row action', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->active()->create();
+    $expired = Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->graceDays(5))->expired()->create();
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('renew')->table($reseller));
+
+    $renewal = $reseller->subscriptions()->active()->sole();
+
+    expect($renewal->isNot($expired))->toBeTrue()
+        ->and($renewal->starts_at->equalTo($expired->ends_at))->toBeTrue();
+});
+
+it('refuses a renewal the wallet cannot cover', function (): void {
+    actingConsoleAdmin();
+
+    $reseller = Reseller::factory()->active()->create();
+    consoleResellerUserFor($reseller);
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->priced(3_000)->graceDays(5))->expired()->create();
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('renew')->table($reseller))
+        ->assertNotified(__('vendra-console::messages.insufficient_wallet_balance'));
+
+    expect($reseller->subscriptions()->count())->toBe(1);
+});
+
+it('hides renewal while a subscription is running', function (): void {
     actingConsoleAdmin();
 
     $reseller = Reseller::factory()->active()->create();
     Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active())->create();
 
     livewire(ListResellers::class)
-        ->callAction(TestAction::make('renew')->table($reseller));
-
-    expect($reseller->subscriptions()->count())->toBe(2)
-        ->and($reseller->subscriptions()->active()->count())->toBe(1);
+        ->assertActionHidden(TestAction::make('renew')->table($reseller));
 });
 
 it('blocks a renewal that cannot hold the current stores', function (): void {
     actingConsoleAdmin();
 
     $reseller = Reseller::factory()->active()->create();
-    $plan = Plan::factory()->active()->maxUnits(1)->create();
-    Subscription::factory()->forSubscriber($reseller)->for($plan)->create();
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->expired()->create();
     createTestTenant(['reseller_id' => $reseller->getKey()]);
     createTestTenant(['reseller_id' => $reseller->getKey()]);
 
@@ -161,7 +232,31 @@ it('hides account and subscription actions on an offboarded reseller', function 
     'extendSubscription',
     'cancelSubscription',
     'reactivateSubscription',
+    'creditWallet',
 ]);
+
+it('credits a reseller wallet through the table row action and shows the balance', function (): void {
+    actingConsoleAdmin();
+    TransactionGatewayFactory::new()->active()->internal()->create();
+
+    $reseller = Reseller::factory()->active()->create();
+    consoleResellerUserFor($reseller);
+    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->priced(3_000))->create(['currency_code' => 'USD']);
+
+    livewire(ListResellers::class)
+        ->callAction(TestAction::make('creditWallet')->table($reseller), [
+            'amount' => 5_000,
+            'currency_code' => 'usd',
+            'note' => 'Bank transfer 1234',
+        ])
+        ->assertHasNoFormErrors()
+        ->assertNotified();
+
+    expect($reseller->walletBalance('USD'))->toBe(5_000);
+
+    livewire(ViewReseller::class, ['record' => $reseller->getKey()])
+        ->assertSee('$50.00');
+});
 
 it('changes a reseller user password through the table row action', function (): void {
     $admin = actingConsoleAdmin();

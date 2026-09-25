@@ -119,4 +119,10 @@ return [
     'subscriptions_started' => 'اشتراک‌های آغازشده',
     'last_days' => ':days روز گذشته',
     'recent_activity' => 'فعالیت‌های اخیر',
+    'amount' => 'مبلغ',
+    'amount_hint' => 'مبلغ به واحد خرد (مثلاً سِنت).',
+    'credit_note' => 'یادداشت',
+    'credit_note_hint' => 'نحوه پرداخت نماینده، مثلاً شماره پیگیری انتقال بانکی. همراه تراکنش ذخیره می‌شود.',
+    'wallet' => 'کیف پول',
+    'wallet_balance' => 'موجودی',
 ];

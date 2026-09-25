@@ -59,6 +59,15 @@ final class ResellerInfolist
                     ]),
                 ])
                 ->columnSpanFull(),
+            Section::make(__('vendra-console::attributes.wallet'))
+                ->schema([
+                    TextEntry::make('wallet_balances')
+                        ->label(__('vendra-console::attributes.wallet_balance'))
+                        ->state(fn (Reseller $record): array => $record->formattedWalletBalances())
+                        ->listWithLineBreaks()
+                        ->placeholder('—'),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 

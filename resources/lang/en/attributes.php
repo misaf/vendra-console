@@ -119,4 +119,10 @@ return [
     'subscriptions_started' => 'Subscriptions started',
     'last_days' => 'Last :days days',
     'recent_activity' => 'Recent activity',
+    'amount' => 'Amount',
+    'amount_hint' => 'Amount in minor units (e.g. cents).',
+    'credit_note' => 'Note',
+    'credit_note_hint' => 'How the reseller paid, such as a bank transfer reference. Kept on the transaction.',
+    'wallet' => 'Wallet',
+    'wallet_balance' => 'Balance',
 ];
