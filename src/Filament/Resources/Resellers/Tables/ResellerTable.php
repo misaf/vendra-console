@@ -8,8 +8,10 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -28,9 +30,12 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\OffboardResellerTab
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReactivateSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\RenewSubscriptionTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ReplaceUserAccountTableAction;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Actions\ResetUserTwoFactorTableAction;
 use Misaf\VendraConsole\Filament\Resources\Resellers\ResellerResource;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraReseller\Support\ResellersOverPlan;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
+use Misaf\VendraSupport\Enums\PlanFeature;
 use Misaf\VendraSupport\Filament\Tables\Columns\CreatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
@@ -59,6 +64,12 @@ final class ResellerTable
                     ->label(__('vendra-console::attributes.stores_count'))
                     ->alignCenter(),
 
+                IconColumn::make('has_priority_support')
+                    ->label(PlanFeature::PrioritySupport->getLabel())
+                    ->boolean()
+                    ->alignCenter()
+                    ->sortable(),
+
                 IsActiveIconColumn::make(),
 
                 CreatedAtColumn::make()
@@ -84,6 +95,16 @@ final class ResellerTable
                         ])
                         ->query(fn (Builder $query, array $data): Builder => self::filterBySubscription($query, Arr::get($data, 'value', null))),
 
+                    Filter::make('priority_support')
+                        ->label(PlanFeature::PrioritySupport->getLabel())
+                        ->toggle()
+                        ->query(fn (Builder $query): Builder => self::filterByPrioritySupport($query)),
+
+                    Filter::make('over_plan')
+                        ->label(__('vendra-console::attributes.over_plan'))
+                        ->toggle()
+                        ->query(fn (Builder $query): Builder => $query->whereKey(resolve(ResellersOverPlan::class)->ids())),
+
                     TrashedFilter::make(),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
@@ -95,6 +116,7 @@ final class ResellerTable
                         ChangeUserPasswordTableAction::make(),
                         ChangeUserEmailTableAction::make(),
                         ReplaceUserAccountTableAction::make(),
+                        ResetUserTwoFactorTableAction::make(),
                     ])->dropdown(false),
                     ActionGroup::make([
                         ChangePlanTableAction::make(),
@@ -118,6 +140,15 @@ final class ResellerTable
                 ]),
             ])
             ->defaultSort(column: 'id', direction: 'desc');
+    }
+
+    /**
+     * @param  Builder<Reseller>  $query
+     * @return Builder<Reseller>
+     */
+    private static function filterByPrioritySupport(Builder $query): Builder
+    {
+        return $query->withPlanFeature(PlanFeature::PrioritySupport);
     }
 
     /**

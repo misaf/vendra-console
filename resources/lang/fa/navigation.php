@@ -19,4 +19,6 @@ return [
     'storefront_images' => 'تصاویر کانتینر فروشگاه',
     'storefront_deployment' => 'استقرار ویترین',
     'storefront_deployments' => 'استقرارهای ویترین',
+    'invoice' => 'صورت‌حساب',
+    'invoices' => 'صورت‌حساب‌ها',
 ];

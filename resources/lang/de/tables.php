@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'description' => [
         'activity_logs' => 'Nachvollziehen, was in allen Shops der Plattform passiert ist.',
+        'invoices' => 'Jede Rechnung, die für eine Tarifzahlung eines Resellers ausgestellt wurde.',
         'plans' => 'Verwalten Sie die verfügbaren Abonnement-Tarife.',
         'resellers' => 'Verwalten Sie Konten und deren Store-Kapazität.',
         'stores' => 'Verwalten Sie Stores, Domains und Zugriffsstatus.',
@@ -14,6 +15,7 @@ return [
     'empty_state' => [
         'heading' => [
             'activity_logs' => 'Keine Aktivität',
+            'invoices' => 'Keine Rechnungen',
             'plans' => 'Keine Tarife',
             'resellers' => 'Keine Konten',
             'stores' => 'Keine Stores',
@@ -22,6 +24,7 @@ return [
         ],
         'description' => [
             'activity_logs' => 'Aktivität erscheint hier, sobald Administratoren und Shops Änderungen vornehmen.',
+            'invoices' => 'Rechnungen werden automatisch ausgestellt, wenn ein Reseller für einen Tarif bezahlt.',
             'plans' => 'Erstellen Sie einen Tarif, um Limits und Abrechnungszeiträume festzulegen.',
             'resellers' => 'Erstellen Sie ein Konto, um Stores zuzuweisen.',
             'stores' => 'Erstellen Sie einen Store, um Domain und Zugriff einzurichten.',

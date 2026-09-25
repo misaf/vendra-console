@@ -19,4 +19,6 @@ return [
     'storefront_images' => 'Storefront images',
     'storefront_deployment' => 'Storefront deployment',
     'storefront_deployments' => 'Storefront deployments',
+    'invoice' => 'Invoice',
+    'invoices' => 'Invoices',
 ];

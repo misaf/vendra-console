@@ -14,6 +14,7 @@ use Misaf\VendraSubscription\Exceptions\SubscriptionLimitException;
 use Misaf\VendraSubscription\Exceptions\SubscriptionPaymentException;
 use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSubscription\Support\PlanCoverage;
 
 final class RenewSubscriptionTableAction extends Action
 {
@@ -32,7 +33,7 @@ final class RenewSubscriptionTableAction extends Action
             ->label(__('vendra-console::actions.renew'))->icon(Heroicon::OutlinedArrowPath)
             ->hidden(fn (Reseller $record): bool => $record->trashed() || ! $record->renewableSubscription() instanceof Subscription)
             ->requiresConfirmation()
-            ->modalDescription(fn (Reseller $record): ?string => self::renewalPlan($record->renewableSubscription())?->formattedPrice())
+            ->modalDescription(fn (Reseller $record): ?string => self::describe($record->renewableSubscription()))
             ->action(function (Reseller $record): void {
                 $subscription = $record->renewableSubscription();
 
@@ -60,11 +61,22 @@ final class RenewSubscriptionTableAction extends Action
             });
     }
 
-    /**
-     * The plan the next period is charged for: a scheduled downgrade, or the same plan.
-     */
     private static function renewalPlan(?Subscription $subscription): ?Plan
     {
-        return $subscription->scheduledPlan ?? $subscription?->plan;
+        return $subscription instanceof Subscription ? resolve(PlanCoverage::class)->renewalPlan($subscription) : null;
+    }
+
+    private static function describe(?Subscription $subscription): ?string
+    {
+        $price = self::renewalPlan($subscription)?->formattedPrice();
+
+        if (! $subscription instanceof Subscription || ! resolve(PlanCoverage::class)->scheduledPlanOutgrown($subscription)) {
+            return $price;
+        }
+
+        return implode(' ', array_filter([$price, __('vendra-console::messages.scheduled_plan_outgrown', [
+            'plan' => $subscription->scheduledPlan?->name,
+            'current' => $subscription->plan?->name,
+        ])]));
     }
 }

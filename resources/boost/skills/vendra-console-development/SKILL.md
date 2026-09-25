@@ -1,6 +1,6 @@
 ---
 name: vendra-console-development
-description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and stores across every tenant. Use for ConsolePanelServiceProvider, ConsoleSeeder, Dashboard (NeedsAttention, PlatformMetrics, PlatformGrowthChart, RecentActivity), StoreResource, StoreForm, StoreTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, the console auth guard, the consoles authorization table, and the console.<host> panel domain."
+description: "Create, modify, review, or test the Vendra Console module in packages/vendra-console, changing the console (platform admin) panel that manages resellers, plans, and stores across every tenant. Use for ConsolePanelServiceProvider, ConsoleSeeder, Dashboard (NeedsAttention, PlatformMetrics, PlatformGrowthChart, RecentActivity), StoreResource, StoreForm, StoreTable, DomainsRelationManager, ResellerResource, ResellerForm, ResellerTable, PlanResource, PlanForm, PlanTable, InvoiceResource, InvoiceTable, BillingSettings, SettingsBillingProfile, the console auth guard, the consoles authorization table, and the console.<host> panel domain."
 ---
 
 # Vendra Console
@@ -11,6 +11,8 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 - Use Laravel Boost `application-info` and `search-docs` before code changes.
 - Apply `laravel-best-practices` to Laravel PHP and `pest-testing` whenever tests change.
 - Keep changes inside this package's boundary and preserve its public contracts.
+- `PlanForm` edits plan features (`PlanFeature`) and per-store limits (`PlanLimit`, under `limits`); `CreatePlan`/`EditPlan` normalize them with `PlanForm::normalizeLimits()` so empty limits stay unlimited. Lowering a plan is allowed, but `EditPlan` warns after a save that leaves resellers on the plan over it (`Misaf\VendraReseller\Support\ResellersOverPlan`), and the reseller table's `over_plan` filter lists every reseller whose stores no longer fit its active plan.
+- `ChangePlanTableAction` disables and labels plans a reseller's stores have outgrown (`PlanCoverage::covers()`); the current plan stays selectable to drop a scheduled change. `RenewSubscriptionTableAction` charges and describes the plan `PlanCoverage::renewalPlan()` returns and notes an outgrown scheduled downgrade. The reseller table and view show `PlanFeature::PrioritySupport` from the active plan (`has_priority_support`, a `withExists` on the resource query) and filter by it.
 - Add or update focused Pest coverage, then run `php artisan test --compact --testsuite=vendra-console` from the project root.
 
 ## Translatable Persistence
@@ -39,6 +41,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 
 - `Providers\ConsolePanelServiceProvider` owns the panel: `console` auth guard against the canonical `User` (the `console` provider and broker), `console.<app host>` domain derived from `app.url`, top navigation, and the `AddPanelToRequestJobContext` / `SetLocale` middleware.
 - Authentication is against the canonical user model, not a separate console model; panel access is an active `consoles` row, modelled by `Models\Console` (one per user, with a `user()` relation and `active()`/`inactive()`/`forUser()` scopes, never an authenticatable model). Email verification is required. The first console user is created by `ConsoleSeeder` with a generated password printed once; afterwards `vendra-console:user-create` creates another, `vendra-console:user-password` issues a new password (`--force` skips the confirmation, for unattended runs), `vendra-console:user-grant` grants access to an existing tenantless user, and `vendra-console:user-revoke` revokes it (`RevokeConsoleUserAction`, which deactivates the console and never the last active one) — there is no credentials config.
+- Two-factor authentication is required on the console: the panel registers Filament's `AppAuthentication` provider with recovery codes and `isRequired: true`, so a console user without an authenticator app is sent to set one up before any page, and manages it from the profile page. A console user who lost both the app and the recovery codes is reset with `vendra-console:user-two-factor-reset` (same identifier handling as `user-revoke`, `--force` to skip the confirmation), never from the panel, so one console account cannot strip another's second factor. A reseller's user is reset from the reseller row's `ResetUserTwoFactorTableAction`. Both go through `vendra-user`'s `ResetUserAppAuthenticationAction`. Console tests that make HTTP requests act as a user from `User::factory()->withAppAuthentication()`, or the request redirects to the setup page.
 - Do not hard-code the panel host; it is derived from configuration.
 
 ### Console user commands
@@ -62,6 +65,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 ## Platform Settings
 
 - The console has no config file. The brand name is `Settings\ConsoleSettings::$brand_name` (global repository), edited on `ManagePlatformSettings`. Anything a console user flips at runtime is a settings row.
+- `Filament\Pages\ManagePlatformSettings` also edits `Settings\BillingSettings` (seller details, tax rate in basis points, tax label); `Support\SettingsBillingProfile` is bound as the subscription engine's `BillingProfile`, so tax and seller come from there and never from panel code. `InvoiceResource` is read-only.
 - `Filament\Pages\ManagePlatformSettings` edits `Misaf\VendraStore\Settings\StoreCreationSettings`; `StoreResource::canCreate()` reads its `open` flag. A rule the reseller or store layer must honour belongs to the layer that enforces it.
 
 ## Testing

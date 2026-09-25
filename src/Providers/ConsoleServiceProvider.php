@@ -10,7 +10,10 @@ use Misaf\VendraConsole\Auth\ConsolePanelAccessResolver;
 use Misaf\VendraConsole\Console\Commands\CreateConsoleUserCommand;
 use Misaf\VendraConsole\Console\Commands\GrantConsoleAccessCommand;
 use Misaf\VendraConsole\Console\Commands\IssueConsolePasswordCommand;
+use Misaf\VendraConsole\Console\Commands\ResetConsoleTwoFactorCommand;
 use Misaf\VendraConsole\Console\Commands\RevokeConsoleUserCommand;
+use Misaf\VendraConsole\Support\SettingsBillingProfile;
+use Misaf\VendraSubscription\Contracts\BillingProfile;
 use Misaf\VendraUser\Support\PanelAccessRegistry;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -32,11 +35,17 @@ final class ConsoleServiceProvider extends PackageServiceProvider
                 IssueConsolePasswordCommand::class,
                 GrantConsoleAccessCommand::class,
                 RevokeConsoleUserCommand::class,
+                ResetConsoleTwoFactorCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command): void {
                 $command
                     ->askToStarRepoOnGitHub('misaf/vendra-console');
             });
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(BillingProfile::class, SettingsBillingProfile::class);
     }
 
     public function packageBooted(): void

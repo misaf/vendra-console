@@ -43,7 +43,7 @@ beforeEach(function (): void {
 
 function actAsOperationalConsoleUser(): User
 {
-    $consoleUser = User::factory()->create(['tenant_id' => null]);
+    $consoleUser = User::factory()->withAppAuthentication()->create(['tenant_id' => null]);
 
     Console::factory()->active()->for($consoleUser)->create();
 

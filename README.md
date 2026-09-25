@@ -35,7 +35,7 @@ output (the container's first-boot log). That address is a plain config value ra
 something derived from `app.url`, and it is validated by `UserRules::email()` like every
 other address in the application, so a dotless domain such as `console@localhost` is rejected.
 
-Four commands manage console users; each does one job and points at its sibling when the
+Five commands manage console users; each does one job and points at its sibling when the
 user it names is in the wrong state.
 
 - `php artisan vendra-console:user-create` creates a console user with `--username`,
@@ -58,6 +58,13 @@ user it names is in the wrong state.
 - `php artisan vendra-console:user-revoke` deactivates the user's console while keeping the
   user, and refuses to deactivate the last active console user. It names the user the same
   way.
+
+- `php artisan vendra-console:user-two-factor-reset` removes the authenticator
+  app and recovery codes of a console user who lost both, so they set it up
+  again on their next sign-in. It names the user like `user-revoke`, asks before
+  resetting unless `--force` is given, and reports a user without two-factor
+  without changing anything. There is deliberately no panel control for this,
+  so one console account cannot remove another's second factor.
 
 `user-create`, `user-password` and `user-grant` ask for the password without echoing it
 when `--password` is given without a value, which keeps it out of shell history and the
@@ -93,6 +100,9 @@ command unable to issue one.
   `consoles` row, with password reset and required email verification
 - top navigation, global search key bindings, database notifications and
   transactions
+- required two-factor authentication through an authenticator app, with
+  recovery codes: a console user without one is sent to set it up before any
+  page, and manages it from the profile page
 
 **It runs outside the tenant middleware stack** so a console user can work across
 every tenant. There is no current tenant: never scope a console query with
@@ -105,8 +115,9 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 | `StoreResource` | `Misaf\VendraStore`'s provisioning, lifecycle, storefront, domain, billing-reseller, and offboarding actions; administrator membership delegates to `misaf/vendra-user` |
 | `StorefrontDeploymentResource` | Read-only deployment history, with live observation through `StorefrontProvisioner` in the lazy `StorefrontRuntimeObservation` footer widget; recovery delegates to `vendra-store` actions |
 | `ResellerResource` | `Misaf\VendraReseller`'s reseller/user account actions and `misaf/vendra-subscription`'s lifecycle actions |
-| `PlanResource` | `misaf/vendra-subscription`'s plan model |
+| `PlanResource` | `misaf/vendra-subscription`'s plan model; the form edits the plan's `PlanFeature` flags and one field per `PlanLimit`, where an empty limit means unlimited |
 | `ActivityLogResource` | `misaf/vendra-activity-log`'s model, read-only and across every tenant |
+| `InvoiceResource` | `misaf/vendra-subscription`'s issued invoices, read-only, filtered by reseller, with an on-demand PDF download |
 
 `DomainsRelationManager` manages a store's domains.
 
@@ -137,9 +148,11 @@ store, and request date and exposes confirmed recovery controls without copying
 provisioning logic into Filament. The edit
 page manages store administrators without permitting the final enabled
 administrator to be removed, demoted, or disabled. Reseller row actions manage
-user credentials/account replacement and subscription change, renewal,
+user credentials/account replacement, two-factor reset for a reseller user
+who lost their authenticator, and subscription change, renewal,
 extension, cancellation, and reactivation; a plan change or renewal whose plan
-cannot hold the reseller's current stores is refused with a notification.
+cannot hold the reseller's current stores is disabled and labelled in the
+plan picker, and refused with a notification if it slips through.
 Plan changes go through `Misaf\VendraSubscription\Actions\ChangeSubscriptionPlanAction`:
 each option is labelled with its effect, an upgrade applies now with a
 prorated charge up to the current end date, a downgrade is scheduled for the
@@ -147,8 +160,11 @@ period end, and picking the current plan drops a scheduled change. A change
 that charges now is refused with the charge and balance when the wallet cannot
 cover it, so staff credit the wallet first. Renewal is offered only when nothing is running and no renewal awaits payment,
 and goes through `Misaf\VendraSubscription\Actions\RenewSubscriptionAction`: it
-takes a scheduled downgrade, keeps the auto-renew choice, and continues from
-the old end date while within grace. The
+takes a scheduled downgrade unless the stores have outgrown it (the modal says
+so and the renewal stays on the current plan), keeps the auto-renew choice, and
+continues from the old end date while within grace. The reseller table and
+overview show whether the active plan includes priority support, and the table
+filters by it. The
 `Credit wallet` row action records a payment the reseller made outside the
 platform through `Misaf\VendraReseller\Actions\CreditResellerWalletAction`
 (amount in minor units, currency, and a required note), and the reseller
@@ -186,6 +202,14 @@ The panel's brand name is `Misaf\VendraConsole\Settings\ConsoleSettings::$brand_
 seeded as `Vendra Console` by a settings migration and read per request, so a
 rename takes effect on the next page load.
 
+The Billing section edits `Settings\BillingSettings`: the seller name (falling
+back to the brand name), address and tax ID named on invoices, and the tax rate
+and label added to every plan charge. The rate is entered as a percentage and
+stored in basis points. `Support\SettingsBillingProfile` reads it as the
+subscription engine's `BillingProfile`, so a change applies to the next charge;
+issued invoices keep what they were issued with. The reseller overview counts a
+reseller's invoices and links to them.
+
 The page also exposes one platform rule: whether the platform is creating
 stores at all. That rule is
 `Misaf\VendraStore\Settings\StoreCreationSettings`, and it lives in
@@ -212,6 +236,9 @@ Nothing depends on this package, so anything reusable belongs one layer down.
 ## Testing
 
 Act as a canonical user with an active `consoles` row on the `console` guard.
+A test that makes an HTTP request creates that user with
+`User::factory()->withAppAuthentication()`, or the panel redirects it to the
+two-factor setup page.
 A test that sets up a current tenant is testing the wrong panel. Assert that
 the domain action ran rather than re-asserting the domain package's own
 behaviour.

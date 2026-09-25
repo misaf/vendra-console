@@ -60,7 +60,7 @@ beforeEach(function (): void {
 
 function consoleAdmin(): User
 {
-    $admin = User::factory()->create(['tenant_id' => null]);
+    $admin = User::factory()->withAppAuthentication()->create(['tenant_id' => null]);
 
     Console::factory()->active()->for($admin)->create();
 
@@ -267,6 +267,36 @@ it('requires a currency for a paid plan', function (): void {
         ])
         ->call('create')
         ->assertHasFormErrors(['currency_code' => 'required']);
+});
+
+it('saves plan features and limits and stores empty limits as unlimited', function (): void {
+    actAsConsoleAdmin();
+
+    livewire(CreatePlan::class)
+        ->fillForm([
+            'name' => 'Limited',
+            'max_units' => 3,
+            'period_unit' => 'month',
+            'period_count' => 1,
+            'active' => true,
+            'features' => ['custom_domain'],
+            'limits' => ['domains_per_store' => 2, 'products_per_store' => null, 'storage_megabytes_per_store' => ''],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $plan = Plan::query()->where('name', 'Limited')->sole();
+
+    expect($plan->features)->toBe(['custom_domain'])
+        ->and($plan->limits)->toBe(['domains_per_store' => 2]);
+
+    livewire(EditPlan::class, ['record' => $plan->getKey()])
+        ->assertSchemaStateSet(['limits.domains_per_store' => 2])
+        ->fillForm(['limits' => ['domains_per_store' => null]])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($plan->refresh()->limits)->toBeNull();
 });
 
 it('honors a disabled state when creating a reseller', function (): void {

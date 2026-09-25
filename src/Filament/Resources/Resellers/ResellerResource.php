@@ -22,6 +22,8 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerForm;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerInfolist;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Tables\ResellerTable;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraSubscription\Models\Subscription;
+use Misaf\VendraSupport\Enums\PlanFeature;
 
 final class ResellerResource extends Resource
 {
@@ -78,12 +80,22 @@ final class ResellerResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withCount('stores')
+            ->withExists(['subscriptions as has_priority_support' => self::activeWithPrioritySupport(...)])
             ->with([
                 'user',
                 'subscriptions' => fn (Relation $relation): Relation => $relation
                     ->with('plan')
                     ->latest('starts_at'),
             ]);
+    }
+
+    /**
+     * @param  Builder<Subscription>  $query
+     * @return Builder<Subscription>
+     */
+    private static function activeWithPrioritySupport(Builder $query): Builder
+    {
+        return $query->active()->onPlanWithFeature(PlanFeature::PrioritySupport->value);
     }
 
     public static function table(Table $table): Table

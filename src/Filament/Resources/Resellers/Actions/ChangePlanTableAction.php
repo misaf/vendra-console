@@ -19,6 +19,8 @@ use Misaf\VendraSubscription\Models\Plan;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSubscription\Support\MoneyFormatter;
 use Misaf\VendraSubscription\Support\PlanChangeQuote;
+use Misaf\VendraSubscription\Support\PlanCoverage;
+use Misaf\VendraSubscription\Support\TaxedAmount;
 
 final class ChangePlanTableAction extends Action
 {
@@ -38,7 +40,9 @@ final class ChangePlanTableAction extends Action
             ->icon(Heroicon::OutlinedArrowsRightLeft)
             ->hidden(fn (Reseller $record): bool => $record->trashed())->slideOver()
             ->schema([Select::make('plan_id')->label(__('vendra-console::navigation.plan'))
-                ->options(fn (Reseller $record): array => self::planOptions($record->activeSubscription()))->required()->native(false)])
+                ->options(fn (Reseller $record): array => self::planOptions($record))
+                ->disableOptionWhen(fn (Reseller $record, string $value): bool => ! self::planFits($record, (int) $value))
+                ->required()->native(false)])
             ->action(function (Reseller $record, array $data): void {
                 $plan = Plan::query()->findOrFail(Arr::integer($data, 'plan_id'));
 
@@ -64,22 +68,42 @@ final class ChangePlanTableAction extends Action
      *
      * @return array<int, string>
      */
-    private static function planOptions(?Subscription $current): array
+    private static function planOptions(Reseller $reseller): array
     {
+        $current = $reseller->activeSubscription();
+
         return Plan::query()
             ->active()
             ->orderBy('price')
             ->get()
-            ->mapWithKeys(fn (Plan $plan): array => [$plan->id => self::describe($plan, $current)])
+            ->mapWithKeys(fn (Plan $plan): array => [$plan->id => self::describe($reseller, $plan, $current)])
             ->all();
     }
 
-    private static function describe(Plan $plan, ?Subscription $current): string
+    /**
+     * The current plan always fits, since choosing it only drops a scheduled change.
+     */
+    private static function planFits(Reseller $reseller, int $planId): bool
+    {
+        $plan = Plan::query()->find($planId);
+
+        if (! $plan instanceof Plan) {
+            return false;
+        }
+
+        return $reseller->activeSubscription()?->plan_id === $plan->id || resolve(PlanCoverage::class)->covers($reseller, $plan);
+    }
+
+    private static function describe(Reseller $reseller, Plan $plan, ?Subscription $current): string
     {
         $label = "{$plan->name} · {$plan->formattedPrice()}";
 
         if ($current?->plan_id === $plan->id) {
             return $label.' · '.__('vendra-console::messages.plan_change_current');
+        }
+
+        if (! resolve(PlanCoverage::class)->covers($reseller, $plan)) {
+            return $label.' · '.__('vendra-console::messages.plan_outgrown');
         }
 
         $quote = PlanChangeQuote::for($current, $plan);
@@ -89,7 +113,7 @@ final class ChangePlanTableAction extends Action
         }
 
         if ($quote->isProrated()) {
-            return $label.' · '.__('vendra-console::messages.plan_change_prorated', ['amount' => MoneyFormatter::format($quote->amount, $plan->currency_code)]);
+            return $label.' · '.__('vendra-console::messages.plan_change_prorated', ['amount' => MoneyFormatter::format(TaxedAmount::withProfileTax($quote->amount ?? 0)->total, $plan->currency_code)]);
         }
 
         return $label;

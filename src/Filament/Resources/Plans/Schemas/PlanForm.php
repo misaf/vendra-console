@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace Misaf\VendraConsole\Filament\Resources\Plans\Schemas;
 
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Livewire\Component as Livewire;
 use Misaf\VendraSubscription\Enums\PeriodUnit;
+use Misaf\VendraSupport\Enums\PlanFeature;
+use Misaf\VendraSupport\Enums\PlanLimit;
 use Misaf\VendraSupport\Filament\Forms\Components\DescriptionTextarea;
 use Misaf\VendraSupport\Filament\Forms\Components\IsActiveToggle;
 use Misaf\VendraSupport\Filament\Forms\Components\IsDefaultToggle;
@@ -107,7 +113,50 @@ final class PlanForm
                 IsDefaultToggle::make()
                     ->helperText(__('vendra-console::attributes.is_default_hint'))
                     ->visible(fn (Get $get): bool => (bool) $get('active')),
+
+                Section::make(__('vendra-console::attributes.entitlements'))
+                    ->schema([
+                        CheckboxList::make('features')
+                            ->label(__('vendra-console::attributes.features'))
+                            ->options(PlanFeature::class)
+                            ->columnSpanFull(),
+
+                        Group::make(array_map(
+                            fn (PlanLimit $limit): TextInput => TextInput::make($limit->value)
+                                ->label($limit->getLabel())
+                                ->placeholder(__('vendra-console::attributes.unlimited'))
+                                ->integer()
+                                ->minValue(0),
+                            PlanLimit::cases(),
+                        ))
+                            ->statePath('limits')
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->description(__('vendra-console::attributes.limits_hint'))
+                    ->columnSpanFull(),
             ])
             ->columns(2);
+    }
+
+    /**
+     * Drop empty limits, which mean unlimited, and store no map when none is set.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function normalizeLimits(array $data): array
+    {
+        $limits = [];
+
+        foreach (Arr::array($data, 'limits', []) as $key => $limit) {
+            if (is_numeric($limit)) {
+                $limits[$key] = (int) $limit;
+            }
+        }
+
+        $data['limits'] = $limits === [] ? null : $limits;
+
+        return $data;
     }
 }

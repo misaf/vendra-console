@@ -40,4 +40,6 @@ return [
     'view_logs' => 'View logs',
     'view_all' => 'View all',
     'credit_wallet' => 'Credit wallet',
+    'download' => 'Download',
+    'reset_user_two_factor' => 'Reset two-factor',
 ];

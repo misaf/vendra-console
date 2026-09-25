@@ -40,4 +40,6 @@ return [
     'view_logs' => 'Logs anzeigen',
     'view_all' => 'Alle anzeigen',
     'credit_wallet' => 'Guthaben aufladen',
+    'download' => 'Herunterladen',
+    'reset_user_two_factor' => 'Zwei-Faktor zurücksetzen',
 ];
