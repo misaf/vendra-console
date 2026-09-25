@@ -417,6 +417,22 @@ describe('activity visibility', function (): void {
             ->assertSee('Beta Store');
     });
 
+    it('labels activity made outside any store as platform activity', function (): void {
+        $platformActivity = ActivityLog::query()->create([
+            'log_name' => 'default',
+            'description' => 'Console created a reseller',
+            'event' => 'created',
+        ]);
+
+        actAsAdministeringConsoleUser();
+
+        livewire(ListActivityLogs::class)
+            ->call('loadTable')
+            ->assertCanSeeTableRecords([$platformActivity])
+            ->assertTableColumnStateSet('store', null, $platformActivity)
+            ->assertSee(__('vendra-console::attributes.platform'));
+    });
+
     it('names and filters by an offboarded store without listing every store up front', function (): void {
         $offboarded = Store::factory()->active()->create(['name' => 'Gamma Store']);
         $other = Store::factory()->active()->create(['name' => 'Delta Store']);

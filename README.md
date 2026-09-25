@@ -226,6 +226,8 @@ console's own resource rather than the clustered, permission-gated one
 holds no tenant roles and is trusted by panel access alone, so the read is
 granted here and every write stays closed. Rows arrive unscoped because the
 tenant scope applies only while a tenant is current and this panel has none.
+Changes made in the console itself, such as creating a reseller or a platform
+language, are platform activity and show `Platform` in the Store column.
 
 ## Platform settings
 
@@ -260,7 +262,7 @@ managed storefront.
 Store creation asks for the domain, administrator email, and managed storefront
 identity. The managed storefront starts with sample contact, location, and social
 details and deploys when the runtime is configured. The store administrator
-replaces those details in Admin General Settings.
+replaces those details on the admin Storefront settings page.
 
 ## Layering
 

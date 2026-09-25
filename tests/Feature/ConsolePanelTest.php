@@ -500,7 +500,7 @@ it('creates a storefront with sample details for its administrator to update', f
         'domain' => 'console-flowers.test',
     ]);
     $deployment = StorefrontDeployment::query()->where('domain', 'console-flowers.test')->firstOrFail();
-    expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('console.flowers@gmail.com')
+    expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('contact@console-flowers.test')
         ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000');
     expect(session('filament.notifications.0.body'))
         ->toContain(__('vendra-store::messages.storefront_requested'));
@@ -1068,7 +1068,7 @@ it('manages platform currencies apart from store currencies', function (): void 
 
 it('manages platform languages apart from store languages', function (): void {
     $store = createTestTenant();
-    $storeEnglish = LanguageFactory::new()->createOne(['tenant_id' => $store?->getKey(), 'locale' => 'en']);
+    $storeEnglish = LanguageFactory::new()->active()->createOne(['tenant_id' => $store?->getKey(), 'locale' => 'en']);
 
     actAsConsoleAdmin();
 

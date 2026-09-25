@@ -12,8 +12,11 @@ use Misaf\VendraConsole\Console\Commands\GrantConsoleAccessCommand;
 use Misaf\VendraConsole\Console\Commands\IssueConsolePasswordCommand;
 use Misaf\VendraConsole\Console\Commands\ResetConsoleTwoFactorCommand;
 use Misaf\VendraConsole\Console\Commands\RevokeConsoleUserCommand;
+use Misaf\VendraConsole\Settings\BillingSettings;
+use Misaf\VendraConsole\Settings\ConsoleSettings;
 use Misaf\VendraConsole\Support\SettingsBillingProfile;
 use Misaf\VendraSubscription\Contracts\BillingProfile;
+use Misaf\VendraSupport\Settings\RegistersSettings;
 use Misaf\VendraUser\Support\PanelAccessRegistry;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -21,6 +24,8 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 final class ConsoleServiceProvider extends PackageServiceProvider
 {
+    use RegistersSettings;
+
     public function configurePackage(Package $package): void
     {
         $package
@@ -45,6 +50,8 @@ final class ConsoleServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        $this->registerSettings([BillingSettings::class, ConsoleSettings::class], __DIR__.'/../../database/settings');
+
         $this->app->singleton(BillingProfile::class, SettingsBillingProfile::class);
     }
 

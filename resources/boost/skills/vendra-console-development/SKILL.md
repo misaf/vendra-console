@@ -62,7 +62,7 @@ description: "Create, modify, review, or test the Vendra Console module in packa
 - `ContainerRuntimeHealth` only reads the report `vendra-store`'s `RecordStorefrontRuntimeHealthJob` records on the storefront worker (`StorefrontRuntimeHealth::latest()`). Never call the runtime from a panel request: the web container has no runtime socket.
 - Keep `NeedsAttention` and `PlatformMetrics` stat counts aligned with their destination resource filters. Count stores by status with `StoreStatusCounts`.
 - Never expose direct active/domain toggle columns or raw store delete/force-delete actions. Invoke `vendra-store` lifecycle/offboarding actions, `vendra-user` administrator actions, `vendra-reseller` user actions, and `vendra-subscription` lifecycle actions.
-- The console store form picks the optional billing reseller and exposes a `create_storefront` toggle that defaults on. An explicit off creates only the store and domain; the reseller panel keeps storefront creation mandatory. Collect image and slug at creation, deploy with sample storefront details, and let the tenant administrator replace them in General Settings.
+- The console store form picks the optional billing reseller and exposes a `create_storefront` toggle that defaults on. An explicit off creates only the store and domain; the reseller panel keeps storefront creation mandatory. Collect image and slug at creation, deploy with sample storefront details, and let the tenant administrator replace them on the admin Storefront settings page.
 
 ## Platform Settings
 

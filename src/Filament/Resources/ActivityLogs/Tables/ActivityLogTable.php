@@ -32,7 +32,7 @@ final class ActivityLogTable
                     ->label(__('vendra-console::navigation.store'))
                     ->icon(Heroicon::GlobeAlt)
                     ->state(fn (ActivityLog $record): ?string => self::storeName($record->getAttribute(TenantSchema::column())))
-                    ->placeholder(__('vendra-console::attributes.platform_owned_store')),
+                    ->placeholder(__('vendra-console::attributes.platform')),
 
                 ...self::activityColumns(searchable: true),
 
