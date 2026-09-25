@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Filament\Facades\Filament;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Livewire\Livewire;
 use Misaf\VendraActivityLog\Models\ActivityLog;
 use Misaf\VendraConsole\Filament\Pages\Dashboard;
 use Misaf\VendraConsole\Filament\Resources\ActivityLogs\ActivityLogResource;
@@ -34,6 +36,7 @@ use Misaf\VendraSubscription\Models\SubscriptionPayment;
 use Misaf\VendraSupport\Tenancy\Events\TenantProvisioned;
 use Misaf\VendraUser\Models\User;
 
+use function Livewire\invade;
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
 
@@ -120,7 +123,7 @@ describe('needs attention', function (): void {
             ->assertSee(__('vendra-console::attributes.past_due_subscriptions'))
             ->assertSee(__('vendra-console::attributes.expiring_soon'))
             ->assertSeeHtml('href="'.e(ResellerResource::getUrl('index', [
-                'tableFilters' => ['subscription_health' => ['value' => 'past_due']],
+                'filters' => ['subscription_health' => ['value' => 'past_due']],
             ])).'"');
     });
 
@@ -184,9 +187,15 @@ describe('needs attention', function (): void {
 
         actAsConsoleUser();
 
-        livewire(ListResellers::class)
+        $link = collect(invade(livewire(NeedsAttention::class)->instance())->getStats())
+            ->first(fn (Stat $stat): bool => $stat->getLabel() === __('vendra-console::attributes.past_due_subscriptions'))
+            ?->getUrl();
+        parse_str((string) parse_url((string) $link, PHP_URL_QUERY), $query);
+
+        Livewire::withQueryParams($query)
+            ->test(ListResellers::class)
             ->call('loadTable')
-            ->filterTable('subscription_health', 'past_due')
+            ->assertSet('tableFilters.subscription_health.value', 'past_due')
             ->assertCanSeeTableRecords([$pastDue])
             ->assertCanNotSeeTableRecords([$current]);
     });

@@ -7,6 +7,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -30,10 +31,13 @@ use Misaf\VendraConsole\Filament\Resources\Stores\Pages\ViewStore;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\AdministratorsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelationManager;
 use Misaf\VendraConsole\Filament\Resources\Stores\StoreResource as ConsoleStoreResource;
+use Misaf\VendraConsole\Filament\Resources\Stores\Widgets\StoreStatusOverview;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraReseller\Actions\OffboardResellerAction;
 use Misaf\VendraReseller\Models\Reseller;
+use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StorefrontDesiredState;
+use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StoreDomain;
 use Misaf\VendraStore\Models\StorefrontDeployment;
@@ -46,6 +50,7 @@ use Misaf\VendraUser\Actions\AddTenantAdministratorAction;
 use Misaf\VendraUser\Models\User;
 use Spatie\Permission\PermissionRegistrar;
 
+use function Livewire\invade;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseMissing;
@@ -177,6 +182,7 @@ it('uses a reseller overview as the record landing page', function (): void {
     $user = User::factory()->create([
         'tenant_id' => null,
         'username' => 'overview_owner',
+        'email_verified_at' => '2026-01-02 08:15:00',
     ]);
     $reseller->user()->associate($user)->save();
     Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['ends_at' => '2026-03-15 09:30:00']);
@@ -188,6 +194,9 @@ it('uses a reseller overview as the record landing page', function (): void {
     livewire(ViewReseller::class, ['record' => $reseller->getKey()])
         ->assertOk()
         ->assertSee($user->username)
+        ->assertSee($user->email)
+        ->assertSee('2026-01-02 08:15')
+        ->assertSee($reseller->created_at?->format('Y-m-d H:i'))
         ->assertSee('Growth')
         ->assertSee('2026-03-15 09:30');
 });
@@ -595,55 +604,31 @@ it('validates store domains during creation', function (): void {
         ->assertHasFormErrors(['domain' => 'unique']);
 });
 
-it('lets a console admin replace a domain and shows the old one in trashed history', function (): void {
+it('lets a console admin add and remove domain aliases but never the primary domain', function (): void {
     actAsConsoleAdmin();
 
     $store = Store::factory()->create(['active' => true]);
-    $original = StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
+    $primary = StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
 
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'new.test'])
-        ->assertHasNoErrors();
-
-    $current = $store->execute(fn () => $store->storeDomains()->where('active', true)->value('name'));
-    expect($current)->toBe('new.test');
-
-    livewire(DomainsRelationManager::class, [
-        'ownerRecord' => $store,
-        'pageClass' => EditStore::class,
-    ])
-        ->call('loadTable')
-        ->filterTable('trashed', ['value' => '0'])
-        ->assertCanSeeTableRecords([$original]);
-});
-
-it('lets a console admin add a domain alias, make it primary and remove the old one', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
-
-    livewire(ListStores::class)
-        ->assertTableActionHidden('makeDomainPrimary', $store)
-        ->callAction(TestAction::make('addDomainAlias')->table($store), ['domain' => 'Alias.test'])
-        ->assertHasNoErrors();
+    $domains = livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
+        ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => 'Alias.test'])
+        ->assertHasNoFormErrors()
+        ->assertNotified(__('vendra-store::messages.domain_alias_added'));
 
     $alias = $store->aliasDomains()->sole();
 
     expect($alias->name)->toBe('alias.test');
 
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('makeDomainPrimary')->table($store), ['domain' => $alias->getKey()])
-        ->assertHasNoErrors();
+    $domains
+        ->assertActionHidden(TestAction::make('removeDomainAlias')->table($primary))
+        ->callAction(TestAction::make('removeDomainAlias')->table($alias))
+        ->assertNotified(__('vendra-store::messages.domain_alias_removed'))
+        ->filterTable('trashed', ['value' => '0'])
+        ->assertCanSeeTableRecords([$primary, $alias]);
 
-    expect($store->primaryDomain()->value('name'))->toBe('alias.test')
-        ->and($store->aliasDomains()->pluck('name')->all())->toBe(['main.test']);
-
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('removeDomainAlias')->table($store), ['domain' => $store->aliasDomains()->value('id')])
-        ->assertHasNoErrors();
-
-    expect($store->aliasDomains()->exists())->toBeFalse();
+    expect($store->aliasDomains()->exists())->toBeFalse()
+        ->and($store->primaryDomain()->value('name'))->toBe('main.test');
 });
 
 it('uses a store overview as the console record landing page', function (): void {
@@ -723,33 +708,21 @@ it('adds a store administrator through the tenant membership action', function (
         ->and($store->execute(fn (): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
 });
 
-it('rejects a replacement domain already active on another store', function (): void {
+it('rejects an alias domain already active on another store or running another storefront', function (string $domain): void {
     actAsConsoleAdmin();
 
-    $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
     StoreDomain::factory()->for(Store::factory()->create())->primary()->create(['name' => 'taken.test']);
-
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])
-        ->assertHasFormErrors(['domain' => 'unique']);
-
-    expect($store->execute(fn () => $store->storeDomains()->where('active', true)->value('name')))->toBe('old.test');
-});
-
-it('rejects a replacement domain another store runs its storefront on', function (): void {
-    actAsConsoleAdmin();
-
-    StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'taken.test']);
+    StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'running.test']);
     $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->primary()->create(['name' => 'old.test']);
+    StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
 
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('replaceDomain')->table($store), ['domain' => 'taken.test'])
+    livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+        ->loadTable()
+        ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => $domain])
         ->assertHasFormErrors(['domain' => 'unique']);
 
-    expect($store->execute(fn () => $store->storeDomains()->where('active', true)->value('name')))->toBe('old.test');
-});
+    expect($store->aliasDomains()->exists())->toBeFalse();
+})->with(['taken.test', 'running.test']);
 
 it('rejects an incomplete storefront before provisioning the store', function (): void {
     actAsConsoleAdmin();
@@ -1029,4 +1002,21 @@ it('names the offboarded reseller of an offboarded store', function (): void {
         ->loadTable()
         ->filterTable('trashed', ['value' => 'trashed'])
         ->assertTableColumnStateSet('reseller', $resellerName, $store);
+});
+
+it('counts every store by status above the console store list', function (): void {
+    actAsConsoleAdmin();
+
+    Store::factory()->active()->count(2)->create();
+    Store::factory()->suspended()->create();
+    $failing = Store::factory()->active()->create();
+    StorefrontDeployment::factory()->for($failing)->create(['status' => StorefrontDeploymentStatus::Failed]);
+
+    $stats = collect(invade(livewire(StoreStatusOverview::class)->instance())->getStats())
+        ->keyBy(fn (Stat $stat): string => (string) $stat->getLabel());
+
+    expect($stats->get(StoreStatus::Active->getLabel())?->getValue())->toBe(3)
+        ->and($stats->get(StoreStatus::Suspended->getLabel())?->getValue())->toBe(1)
+        ->and($stats->get(__('vendra-store::attributes.failed_storefronts'))?->getValue())->toBe(1)
+        ->and(urldecode((string) $stats->get(StoreStatus::Suspended->getLabel())?->getUrl()))->toContain('filters[status][values][0]=suspended');
 });

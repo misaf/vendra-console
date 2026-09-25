@@ -50,7 +50,7 @@ final class PlatformMetrics extends StatsOverviewWidget
             Stat::make(__('vendra-console::attributes.active_subscriptions'), Subscription::query()->active()->count())
                 ->icon(Heroicon::OutlinedCheckBadge)
                 ->url(ResellerResource::getUrl('index', [
-                    'tableFilters' => ['subscription_health' => ['value' => 'active']],
+                    'filters' => ['subscription_health' => ['value' => 'active']],
                 ]))
                 ->chart($this->dailyTrend(Subscription::query()->withTrashed(), 'starts_at')),
             Stat::make(

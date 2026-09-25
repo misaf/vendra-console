@@ -44,7 +44,7 @@ final class NeedsAttention extends StatsOverviewWidget
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->color('danger')
                 ->url(StoreResource::getUrl('index', [
-                    'tableFilters' => [
+                    'filters' => [
                         'status' => ['values' => array_map(
                             fn (StoreStatus $status): string => $status->value,
                             StoreStatusCounts::NEEDING_ATTENTION,
@@ -55,13 +55,13 @@ final class NeedsAttention extends StatsOverviewWidget
                 ->icon(Heroicon::OutlinedExclamationCircle)
                 ->color('danger')
                 ->url(StorefrontDeploymentResource::getUrl('index', [
-                    'tableFilters' => ['status' => ['value' => StorefrontDeploymentStatus::Failed->value]],
+                    'filters' => ['status' => ['value' => StorefrontDeploymentStatus::Failed->value]],
                 ])) : null,
             $pastDueSubscriptions > 0 ? Stat::make(__('vendra-console::attributes.past_due_subscriptions'), $pastDueSubscriptions)
                 ->icon(Heroicon::OutlinedCreditCard)
                 ->color('danger')
                 ->url(ResellerResource::getUrl('index', [
-                    'tableFilters' => ['subscription_health' => ['value' => 'past_due']],
+                    'filters' => ['subscription_health' => ['value' => 'past_due']],
                 ])) : null,
             $paymentsNeedingReview > 0 ? Stat::make(__('vendra-console::attributes.payments_needing_review'), $paymentsNeedingReview)
                 ->description(__('vendra-console::attributes.payments_needing_review_description'))
@@ -71,7 +71,7 @@ final class NeedsAttention extends StatsOverviewWidget
                 ->icon(Heroicon::OutlinedClock)
                 ->color('warning')
                 ->url(ResellerResource::getUrl('index', [
-                    'tableFilters' => ['subscription_health' => ['value' => 'expiring_soon']],
+                    'filters' => ['subscription_health' => ['value' => 'expiring_soon']],
                 ])) : null,
             $failedJobs > 0 ? Stat::make(__('vendra-console::attributes.failed_jobs'), $failedJobs)
                 ->description(__('vendra-console::attributes.failed_jobs_description'))

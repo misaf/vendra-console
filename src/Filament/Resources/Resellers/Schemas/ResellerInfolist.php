@@ -17,7 +17,10 @@ use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Enums\SubscriptionStatus;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Enums\PlanFeature;
+use Misaf\VendraSupport\Filament\Infolists\Components\CreatedAtEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\DateTimeEntry;
 use Misaf\VendraSupport\Filament\Infolists\Components\IsActiveEntry;
+use Misaf\VendraSupport\Filament\Infolists\Components\UpdatedAtEntry;
 
 final class ResellerInfolist
 {
@@ -30,6 +33,8 @@ final class ResellerInfolist
                         IsActiveEntry::make(),
                         TextEntry::make('stores_count')
                             ->label(__('vendra-console::attributes.stores_count')),
+                        CreatedAtEntry::make(),
+                        UpdatedAtEntry::make(),
                     ]),
                 ])
                 ->columnSpanFull(),
@@ -37,10 +42,15 @@ final class ResellerInfolist
                 ->schema([
                     Grid::make(2)->schema([
                         TextEntry::make('user.username')
-                            ->label(__('vendra-console::attributes.username')),
+                            ->label(__('vendra-user::attributes.username')),
                         TextEntry::make('user.email')
-                            ->label(__('vendra-console::attributes.email'))
+                            ->label(__('vendra-user::attributes.email'))
                             ->copyable(),
+                        DateTimeEntry::make('user.email_verified_at')
+                            ->label(__('vendra-user::attributes.email_verified_at'))
+                            ->placeholder('—'),
+                        CreatedAtEntry::make('user.created_at'),
+                        UpdatedAtEntry::make('user.updated_at'),
                     ]),
                 ])
                 ->columnSpanFull(),

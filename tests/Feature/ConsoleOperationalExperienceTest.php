@@ -245,12 +245,12 @@ it('links operational dashboard stats to resource filters', function (): void {
     actAsOperationalConsoleUser();
 
     $failedDeploymentsUrl = StorefrontDeploymentResource::getUrl('index', [
-        'tableFilters' => [
+        'filters' => [
             'status' => ['value' => StorefrontDeploymentStatus::Failed->value],
         ],
     ]);
     $failedStoresUrl = StoreResource::getUrl('index', [
-        'tableFilters' => [
+        'filters' => [
             'status' => ['values' => array_map(
                 fn (StoreStatus $status): string => $status->value,
                 StoreStatusCounts::NEEDING_ATTENTION,

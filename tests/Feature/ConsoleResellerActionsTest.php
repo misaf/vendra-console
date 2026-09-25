@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Misaf\VendraConsole\Filament\Resources\Plans\Pages\EditPlan;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ListResellers;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Widgets\ResellerSubscriptionOverview;
 use Misaf\VendraConsole\Filament\Widgets\PlatformMetrics;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraReseller\Actions\CreditResellerWalletAction;
@@ -23,6 +25,7 @@ use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraTransaction\Database\Factories\TransactionGatewayFactory;
 use Misaf\VendraUser\Models\User;
 
+use function Livewire\invade;
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;
 
@@ -191,6 +194,29 @@ it('flags and filters resellers whose plan includes priority support', function 
         ->assertCanSeeTableRecords([$priority])
         ->assertCanNotSeeTableRecords([$standard]);
 });
+
+it('shows the reseller user and filters resellers by it', function (string $type, array $settings, string $operator): void {
+    actingConsoleAdmin();
+
+    $matching = Reseller::factory()->active()->create();
+    $matching->user->forceFill(['username' => 'acme', 'email' => 'sales@acme.test', 'email_verified_at' => null])->save();
+    $other = Reseller::factory()->active()->create();
+    $other->user->forceFill(['username' => 'globex', 'email' => 'sales@globex.test', 'email_verified_at' => now()])->save();
+
+    livewire(ListResellers::class)
+        ->loadTable()
+        ->assertTableColumnStateSet('user.email', 'sales@acme.test', $matching)
+        ->assertTableColumnExists('user.email_verified_at')
+        ->filterTable('queryBuilder', ['rules' => [
+            'rule' => ['type' => $type, 'data' => ['operator' => $operator, 'settings' => $settings]],
+        ]])
+        ->assertCanSeeTableRecords([$matching])
+        ->assertCanNotSeeTableRecords([$other]);
+})->with([
+    'username' => ['user.username', ['text' => 'acme'], 'contains'],
+    'email' => ['user.email', ['text' => 'acme.test'], 'endsWith'],
+    'unverified email' => ['user.email_verified_at', [], 'isFilled.inverse'],
+]);
 
 it('warns when lowering a plan leaves resellers over it and filters them in the reseller list', function (): void {
     actingConsoleAdmin();
@@ -466,4 +492,24 @@ it('renders the platform metrics widget', function (): void {
     Reseller::factory()->active()->count(2)->create();
 
     livewire(PlatformMetrics::class)->assertOk();
+});
+
+it('counts resellers by subscription health above the list and links each count to its filter', function (): void {
+    actingConsoleAdmin();
+
+    $plan = Plan::factory()->active()->maxUnits(1)->create();
+    $active = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($active)->for($plan)->create(['starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+    $overPlan = Reseller::factory()->active()->create();
+    Subscription::factory()->forSubscriber($overPlan)->for($plan)->create(['starts_at' => now()->subDay(), 'ends_at' => now()->addMonth()]);
+    Store::factory()->count(2)->create(['reseller_id' => $overPlan->getKey()]);
+    Reseller::factory()->active()->create();
+
+    $stats = collect(invade(livewire(ResellerSubscriptionOverview::class)->instance())->getStats())
+        ->keyBy(fn (Stat $stat): string => (string) $stat->getLabel());
+
+    expect($stats->get(SubscriptionStatus::Active->getLabel())?->getValue())->toBe(2)
+        ->and($stats->get(__('vendra-console::attributes.no_active_subscription'))?->getValue())->toBe(1)
+        ->and($stats->get(__('vendra-console::attributes.over_plan'))?->getValue())->toBe(1)
+        ->and(urldecode((string) $stats->get(__('vendra-console::attributes.over_plan'))?->getUrl()))->toContain('filters[over_plan][isActive]=1');
 });

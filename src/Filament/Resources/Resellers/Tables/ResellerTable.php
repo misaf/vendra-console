@@ -12,6 +12,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\QueryBuilder;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -41,6 +42,12 @@ use Misaf\VendraSupport\Filament\Tables\Columns\IsActiveIconColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\RowIndexColumn;
 use Misaf\VendraSupport\Filament\Tables\Columns\UpdatedAtColumn;
 use Misaf\VendraSupport\Filament\Tables\Filters\IsActiveFilter;
+use Misaf\VendraUser\Filament\Tables\Columns\EmailColumn;
+use Misaf\VendraUser\Filament\Tables\Columns\EmailVerifiedAtColumn;
+use Misaf\VendraUser\Filament\Tables\Columns\UsernameColumn;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\EmailConstraint;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\EmailVerifiedAtConstraint;
+use Misaf\VendraUser\Filament\Tables\Filters\QueryBuilder\Constraints\UsernameConstraint;
 
 final class ResellerTable
 {
@@ -50,15 +57,13 @@ final class ResellerTable
             ->columns([
                 RowIndexColumn::make(),
 
-                TextColumn::make('user.username')
-                    ->label(__('vendra-console::attributes.username'))
-                    ->searchable()
+                UsernameColumn::make('user.username')
                     ->sortable(),
 
-                TextColumn::make('user.email')
-                    ->label(__('vendra-console::attributes.email'))
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                EmailColumn::make('user.email')
+                    ->sortable(),
+
+                EmailVerifiedAtColumn::make('user.email_verified_at'),
 
                 TextColumn::make('stores_count')
                     ->label(__('vendra-console::attributes.stores_count'))
@@ -106,6 +111,13 @@ final class ResellerTable
                         ->query(fn (Builder $query): Builder => $query->whereKey(resolve(ResellersOverPlan::class)->ids())),
 
                     TrashedFilter::make(),
+
+                    QueryBuilder::make()
+                        ->constraints([
+                            UsernameConstraint::make('user.username'),
+                            EmailConstraint::make('user.email'),
+                            EmailVerifiedAtConstraint::make('user.email_verified_at'),
+                        ]),
                 ],
                 layout: FiltersLayout::AboveContentCollapsible,
             )

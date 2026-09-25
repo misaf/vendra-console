@@ -87,7 +87,6 @@ return [
     'storefront_status' => 'Shop-Status',
     'storefront_not_requested' => 'Nicht angefordert',
     'admin_url' => 'Admin-URL',
-    'domain_history' => 'Domain-Verlauf',
     'created_at' => 'Erstellt am',
     'updated_at' => 'Aktualisiert am',
     'active' => 'Aktiv',

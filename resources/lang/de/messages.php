@@ -11,7 +11,7 @@ return [
     'plan_change_current' => 'aktueller Tarif · verwirft einen geplanten Wechsel',
     'plan_outgrown' => 'die Stores des Resellers nutzen mehr, als dieser Tarif erlaubt',
     'plan_leaves_resellers_over' => '{1} 1 Reseller nutzt jetzt mehr, als dieser Tarif erlaubt|[2,*] :count Reseller nutzen jetzt mehr, als dieser Tarif erlaubt',
-    'plan_leaves_resellers_over_body' => 'Sie behalten, was sie haben, können aber nichts hinzufügen, und eine Verlängerung auf diesen Tarif wird abgelehnt. Filtern Sie die Resellerliste nach „Über Tariflimits“, um sie zu finden.',
+    'plan_leaves_resellers_over_body' => 'Sie behalten, was sie haben, können aber nichts hinzufügen, und eine Verlängerung auf diesen Tarif wird abgelehnt; sie wurden per E-Mail gebeten, einen passenden Tarif zu wählen. Filtern Sie die Resellerliste nach „Über Tariflimits“, um sie zu finden.',
     'plan_change_from' => 'wechselt am :date',
     'plan_change_prorated' => 'belastet jetzt :amount',
     'plan_change_scheduled' => 'Wechselt zu :plan, wenn der aktuelle Zeitraum endet.',

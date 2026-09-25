@@ -24,6 +24,8 @@ use Misaf\VendraConsole\Filament\Resources\Stores\RelationManagers\DomainsRelati
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreForm;
 use Misaf\VendraConsole\Filament\Resources\Stores\Schemas\StoreInfolist;
 use Misaf\VendraConsole\Filament\Resources\Stores\Tables\StoreTable;
+use Misaf\VendraConsole\Filament\Resources\Stores\Widgets\StoreStatusOverview;
+use Misaf\VendraStore\Filament\Widgets\StorePlanUsage;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Settings\StoreCreationSettings;
 
@@ -147,6 +149,14 @@ final class StoreResource extends Resource
     public static function canCreate(): bool
     {
         return resolve(StoreCreationSettings::class)->open;
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            StoreStatusOverview::class,
+            StorePlanUsage::class,
+        ];
     }
 
     public static function getPages(): array

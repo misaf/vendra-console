@@ -119,7 +119,20 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 | `ActivityLogResource` | `misaf/vendra-activity-log`'s model, read-only and across every tenant |
 | `InvoiceResource` | `misaf/vendra-subscription`'s issued invoices, read-only, filtered by reseller, with an on-demand PDF download |
 
-`DomainsRelationManager` manages a store's domains.
+`DomainsRelationManager` (a subclass of `vendra-store`'s) manages a store's domains, like `AdministratorsRelationManager`
+manages its administrators: its header action adds an alias and each alias row
+can be removed (soft-deleted, so it stays listed as trashed history). The
+primary domain, the one the store was created with, cannot be replaced, demoted
+or removed.
+
+The store and reseller lists carry header stats: `Stores\Widgets\StoreStatusOverview`
+counts every store per status and failed storefronts, and
+`Resellers\Widgets\ResellerSubscriptionOverview` counts resellers by subscription
+health and over-plan; each stat opens the list with the matching filter. The
+store view page shows `Misaf\VendraStore\Filament\Widgets\StorePlanUsage` for a
+store whose plan sets limits. The reseller view shows every column of the reseller
+list, and its user account section mirrors the user list (username, email,
+email verification, created and updated).
 
 The console dashboard (`Filament\Pages\Dashboard`) lists its widgets by
 urgency. `NeedsAttention` shows only what a console user should act on — stores
@@ -164,7 +177,9 @@ takes a scheduled downgrade unless the stores have outgrown it (the modal says
 so and the renewal stays on the current plan), keeps the auto-renew choice, and
 continues from the old end date while within grace. The reseller table and
 overview show whether the active plan includes priority support, and the table
-filters by it. The
+filters by it. Like the user list, the table shows the main account's username,
+email and email verification (reusing `vendra-user`'s columns) and filters by
+them with a query builder over the `user` relationship. The
 `Credit wallet` row action records a payment the reseller made outside the
 platform through `Misaf\VendraReseller\Actions\CreditResellerWalletAction`
 (amount in minor units, currency, and a required note), and the reseller

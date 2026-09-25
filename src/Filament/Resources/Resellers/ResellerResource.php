@@ -21,6 +21,7 @@ use Misaf\VendraConsole\Filament\Resources\Resellers\Pages\ViewReseller;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerForm;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Schemas\ResellerInfolist;
 use Misaf\VendraConsole\Filament\Resources\Resellers\Tables\ResellerTable;
+use Misaf\VendraConsole\Filament\Resources\Resellers\Widgets\ResellerSubscriptionOverview;
 use Misaf\VendraReseller\Models\Reseller;
 use Misaf\VendraSubscription\Models\Subscription;
 use Misaf\VendraSupport\Enums\PlanFeature;
@@ -128,6 +129,13 @@ final class ResellerResource extends Resource
 
         return [
             __('vendra-console::attributes.email') => $reseller->user->email,
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            ResellerSubscriptionOverview::class,
         ];
     }
 

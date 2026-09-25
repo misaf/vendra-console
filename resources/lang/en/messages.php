@@ -11,7 +11,7 @@ return [
     'plan_change_current' => 'current plan · clears a scheduled change',
     'plan_outgrown' => "the reseller's stores use more than this plan allows",
     'plan_leaves_resellers_over' => '{1} 1 reseller now uses more than this plan allows|[2,*] :count resellers now use more than this plan allows',
-    'plan_leaves_resellers_over_body' => 'They keep what they have but cannot add more, and a renewal on this plan is refused. Filter the reseller list by "Over plan limits" to find them.',
+    'plan_leaves_resellers_over_body' => 'They keep what they have but cannot add more, and a renewal on this plan is refused, so they have been emailed to choose a plan that fits. Filter the reseller list by "Over plan limits" to find them.',
     'plan_change_from' => 'switches on :date',
     'plan_change_prorated' => 'charges :amount now',
     'plan_change_scheduled' => 'Switches to :plan when the current period ends.',
