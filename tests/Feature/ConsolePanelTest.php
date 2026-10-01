@@ -501,9 +501,8 @@ it('creates a storefront with sample details for its administrator to update', f
     ]);
     $deployment = StorefrontDeployment::query()->where('domain', 'console-flowers.test')->firstOrFail();
     expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('contact@console-flowers.test')
-        ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000');
-    expect(session('filament.notifications.0.body'))
-        ->toContain(__('vendra-store::messages.storefront_requested'));
+        ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000')
+        ->and(session('filament.notifications.0.body'))->toContain(__('vendra-store::messages.storefront_requested'));
 });
 
 it('reports a missing runtime after creating sample storefront details', function (): void {
@@ -1135,7 +1134,7 @@ it('manages platform translations apart from store translations', function (): v
         ->assertNotified();
 
     expect($storeLine->refresh()->text)->toBe(['en' => 'Store language'])
-        ->and($platformLine->refresh()->text['en'])->toBe('Platform language');
+        ->and(Arr::get($platformLine->refresh()->text, 'en'))->toBe('Platform language');
 });
 
 it('opens platform language and translation records in the console', function (): void {
