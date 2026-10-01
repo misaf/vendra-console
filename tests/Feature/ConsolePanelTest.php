@@ -109,1079 +109,1089 @@ function consoleStorefrontFormData(): array
     ];
 }
 
-it('uses the Vendra logo in light and dark modes', function (): void {
-    $panel = Filament::getPanel('console');
-
-    expect($panel->getBrandName())->toBe('Vendra Console')
-        ->and($panel->getBrandLogo())->toBe(asset('images/vendra-logo.svg'))
-        ->and($panel->getDarkModeBrandLogo())->toBe(asset('images/vendra-logo-dark.svg'))
-        ->and($panel->getBrandLogoHeight())->toBe('2rem');
-});
-
-it('lets console users define storefront images', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStorefrontImage::class)
-        ->fillForm([
-            'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
-            'notes' => 'Florist build used by demo stores.',
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors()
-        ->assertNotified()
-        ->assertRedirect();
-
-    assertDatabaseHas('storefront_images', [
-        'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
-        'notes' => 'Florist build used by demo stores.',
-        'active' => true,
-    ]);
-});
-
-it('globally searches console resources', function (): void {
-    actAsConsoleAdmin();
-
-    $plan = Plan::factory()->active()->create(['name' => 'Enterprise Search Plan']);
-    $reseller = Reseller::factory()->active()
-        ->for(User::factory()->state([
-            'tenant_id' => null,
-            'username' => 'search_partner',
-            'email' => 'partner-search@example.com',
-        ]))
-        ->create();
-    $store = Store::factory()->create(['name' => 'Search Store']);
-    StoreDomain::factory()->for($store)->primary()->create([
-        'name' => 'global-search-store.test',
-    ]);
-
-    $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
-    $resellerResult = ResellerResource::getGlobalSearchResults('partner-search@example.com')->sole();
-    $storeResult = ConsoleStoreResource::getGlobalSearchResults('global-search-store.test')->sole();
-    $storeAction = Arr::get($storeResult->actions, 0);
-
-    expect($planResult->title)->toBe($plan->name)
-        ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
-        ->and($resellerResult->title)->toBe('search_partner')
-        ->and($resellerResult->details)->toBe([
-            __('vendra-console::attributes.email') => 'partner-search@example.com',
-        ])
-        ->and($resellerResult->url)->toBe(ResellerResource::getUrl('view', ['record' => $reseller]))
-        ->and($storeResult->title)->toBe($store->name)
-        ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('view', ['record' => $store]))
-        ->and($storeResult->details)->toBe([
-            __('vendra-console::attributes.domain') => 'global-search-store.test',
-        ])
-        ->and($storeAction->getLabel())->toBe(__('vendra-console::attributes.admin_url'))
-        ->and($storeAction->getUrl())->toBe(
-            'https://'.$store->slug.'.admin.'.Config::string('vendra-tenant.central_host'),
-        )
-        ->and($storeAction->shouldOpenUrlInNewTab())->toBeTrue();
-});
-
-it('uses a reseller overview as the record landing page', function (): void {
-    actAsConsoleAdmin();
-
-    $plan = Plan::factory()->active()->create(['name' => 'Growth']);
-    $reseller = Reseller::factory()->active()->create();
-    $user = User::factory()->create([
-        'tenant_id' => null,
-        'username' => 'overview_owner',
-        'email_verified_at' => '2026-01-02 08:15:00',
-    ]);
-    $reseller->user()->associate($user)->save();
-    Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['ends_at' => '2026-03-15 09:30:00']);
-    Store::factory()->count(2)->create(['reseller_id' => $reseller->getKey()]);
-
-    livewire(ListResellers::class)
-        ->assertActionVisible(TestAction::make('view')->table($reseller));
-
-    livewire(ViewReseller::class, ['record' => $reseller->getKey()])
-        ->assertOk()
-        ->assertSee($user->username)
-        ->assertSee($user->email)
-        ->assertSee('2026-01-02 08:15')
-        ->assertSee($reseller->created_at?->format('Y-m-d H:i'))
-        ->assertSee('Growth')
-        ->assertSee('2026-03-15 09:30');
-});
-
-it('isolates console users from application users', function (): void {
-    $tenant = createTestTenant();
-    $admin = consoleAdmin();
-    $regular = User::factory()->forTenant($tenant)->create();
-
-    $panel = Filament::getPanel('console');
-
-    expect($admin->tenant_id)->toBeNull()
-        ->and($admin->canAccessPanel($panel))->toBeTrue()
-        ->and($admin->canAccessPanel(Filament::getPanel('admin')))->toBeFalse()
-        ->and($admin->canAccessPanel(Filament::getPanel('reseller')))->toBeFalse()
-        ->and($admin->canAccessTenant($tenant))->toBeFalse()
-        ->and($regular->canAccessPanel($panel))->toBeFalse()
-        ->and($panel->getAuthGuard())->toBe('console')
-        ->and($panel->getAuthPasswordBroker())->toBe('console')
-        ->and(config('auth.guards.console.provider'))->toBe('console')
-        ->and(config('auth.providers.console.model'))->toBe(User::class)
-        ->and(Filament::getPanel('reseller')->getAuthGuard())->toBe('reseller')
-        ->and(Filament::getPanel('admin')->getAuthGuard())->toBe('web');
-
-    actingAs($admin, 'console');
-
-    expect(auth('console')->id())->toBe($admin->getKey())
-        ->and(auth('web')->check())->toBeFalse();
-});
-
-it('redirects an application user away from the console panel', function (): void {
-    actingAs(User::factory()->forTenant(createTestTenant())->create());
-
-    $this->get('https://console.vendra.test')
-        ->assertRedirect('https://console.vendra.test/login');
-});
-
-it('allows a verified console user into the console panel', function (): void {
-    actingAs(consoleAdmin(), 'console');
-
-    $this->get('https://console.vendra.test')->assertOk();
-});
-
-it('lets a console admin create a plan', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreatePlan::class)
-        ->fillForm([
-            'name' => 'Pro',
-            'max_units' => 3,
-            'period_unit' => 'month',
-            'period_count' => 1,
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('plans', [
-        'name' => 'Pro',
-        'max_units' => 3,
-        'period_unit' => 'month',
-    ]);
-});
-
-it('requires a currency for a paid plan', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreatePlan::class)
-        ->fillForm([
-            'name' => 'Paid',
-            'max_units' => 3,
-            'period_unit' => 'month',
-            'period_count' => 1,
-            'price' => 1500,
-            'currency_code' => null,
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasFormErrors(['currency_code' => 'required']);
-});
-
-it('saves plan features and limits and stores empty limits as unlimited', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreatePlan::class)
-        ->fillForm([
-            'name' => 'Limited',
-            'max_units' => 3,
-            'period_unit' => 'month',
-            'period_count' => 1,
-            'active' => true,
-            'features' => ['custom_domain'],
-            'limits' => ['domains_per_store' => 2, 'products_per_store' => null, 'storage_megabytes_per_store' => ''],
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    $plan = Plan::query()->where('name', 'Limited')->sole();
-
-    expect($plan->features)->toBe(['custom_domain'])
-        ->and($plan->limits)->toBe(['domains_per_store' => 2]);
-
-    livewire(EditPlan::class, ['record' => $plan->getKey()])
-        ->assertSchemaStateSet(['limits.domains_per_store' => 2])
-        ->fillForm(['limits' => ['domains_per_store' => null]])
-        ->call('save')
-        ->assertHasNoFormErrors();
-
-    expect($plan->refresh()->limits)->toBeNull();
-});
-
-it('honors a disabled state when creating a reseller', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateReseller::class)
-        ->fillForm([
-            'plan_id' => Plan::factory()->active()->create()->getKey(),
-            'username' => 'paused_owner',
-            'email' => 'reseller@gmail.com',
-            'password' => 'Secure123',
-            'password_confirmation' => 'Secure123',
-            'active' => false,
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    $reseller = Reseller::forUser(User::query()->where('username', 'paused_owner')->sole());
-
-    expect($reseller?->active)->toBeFalse()
-        ->and($reseller?->user)->toBeInstanceOf(User::class)
-        ->and(Hash::check('Secure123', $reseller?->user->password))->toBeTrue();
-});
-
-it('creates a reseller whose username and email are only used inside a store', function (): void {
-    actAsConsoleAdmin();
-
-    User::factory()->forTenant(createTestTenant())->create([
-        'username' => 'shared_name',
-        'email' => 'shared@gmail.com',
-    ]);
-
-    livewire(CreateReseller::class)
-        ->fillForm([
-            'plan_id' => Plan::factory()->active()->create()->getKey(),
-            'username' => 'shared_name',
-            'email' => 'shared@gmail.com',
-            'password' => 'Secure123',
-            'password_confirmation' => 'Secure123',
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    expect(User::query()->whereNull('tenant_id')->where('username', 'shared_name')->exists())->toBeTrue();
-});
-
-it('rejects a reseller username another tenantless user already holds', function (): void {
-    actAsConsoleAdmin();
-
-    User::factory()->create(['tenant_id' => null, 'username' => 'taken_name']);
-
-    livewire(CreateReseller::class)
-        ->fillForm([
-            'plan_id' => Plan::factory()->active()->create()->getKey(),
-            'username' => 'taken_name',
-            'email' => 'fresh@gmail.com',
-            'password' => 'Secure123',
-            'password_confirmation' => 'Secure123',
-        ])
-        ->call('create')
-        ->assertHasFormErrors(['username' => 'unique']);
-});
-
-it('prevents deleting a plan used by subscriptions from list and edit pages', function (): void {
-    actAsConsoleAdmin();
-
-    $plan = Plan::factory()->active()->create();
-    Subscription::factory()->for($plan)->create();
-
-    livewire(ListPlans::class)
-        ->assertActionHidden(TestAction::make('delete')->table($plan));
-
-    livewire(EditPlan::class, ['record' => $plan->getKey()])
-        ->assertActionHidden(DeleteAction::class);
-});
-
-it('allows deleting an unused plan from list and edit pages', function (): void {
-    actAsConsoleAdmin();
-
-    $plan = Plan::factory()->active()->create();
-
-    livewire(ListPlans::class)
-        ->assertActionVisible(TestAction::make('delete')->table($plan));
-
-    livewire(EditPlan::class, ['record' => $plan->getKey()])
-        ->assertActionVisible(DeleteAction::class);
-});
-
-it('creates a store for a reseller within its plan limit', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => $reseller->getKey(),
-            'domain' => 'acme.test',
-            'email' => 'admin@gmail.com',
-            'active' => true,
-            ...consoleStorefrontFormData(),
-            'storefront_slug' => 'acme',
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('stores', [
-        'name' => 'Acme',
-        'reseller_id' => $reseller->getKey(),
-    ]);
-    assertDatabaseHas('users', [
-        'username' => 'admin',
-        'email' => 'admin@gmail.com',
-    ]);
-    expect(StorefrontDeployment::query()->count())->toBe(1);
-});
-
-it('asks only for store and deployment identity when creating a store', function (): void {
-    actAsConsoleAdmin();
-
-    $component = livewire(CreateStore::class);
-
-    $component
-        ->assertFormFieldExists('create_storefront')
-        ->assertFormFieldExists('storefront_image_id')
-        ->assertFormFieldExists('storefront_slug')
-        ->assertFormFieldDoesNotExist('storefront_mobile_phone')
-        // The reseller is optional, so it must not appear among the errors.
-        ->assertFormFieldExists('reseller_id')
-        ->call('create')
-        ->assertHasFormErrors([
-            'domain' => 'required',
-            'email' => 'required',
-            'storefront_slug' => 'required',
-            'storefront_image_id' => 'required',
-        ])
-        ->assertHasNoFormErrors(['reseller_id']);
-});
-
-it('lets a console admin create a store without a managed storefront', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'domain' => 'local-source.test',
-            'email' => 'local-source@gmail.com',
-            'active' => true,
-            'create_storefront' => false,
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('store_domains', ['name' => 'local-source.test']);
-    assertDatabaseMissing('storefront_deployments', ['domain' => 'local-source.test']);
-    expect(session('filament.notifications.0.body'))
-        ->toContain('Administrator username:')
-        ->not->toContain(__('vendra-store::messages.storefront_requested'));
-});
-
-it('suggests the storefront slug from the store domain', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStore::class)
-        ->set('data.domain', 'Rose-Garden.Example')
-        ->assertHasNoFormErrors(['domain'])
-        ->assertFormSet(['storefront_slug' => 'rose-garden']);
-});
-
-it('creates a storefront with sample details for its administrator to update', function (): void {
-    actAsConsoleAdmin();
-    $reseller = Reseller::factory()->active()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => $reseller->getKey(),
-            'domain' => 'console-flowers.test',
-            'email' => 'console.flowers@gmail.com',
-            'active' => true,
-            ...consoleStorefrontFormData(),
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('storefront_deployments', [
-        'slug' => 'console-flowers',
-        'domain' => 'console-flowers.test',
-    ]);
-    $deployment = StorefrontDeployment::query()->where('domain', 'console-flowers.test')->firstOrFail();
-    expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('contact@console-flowers.test')
-        ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000')
-        ->and(session('filament.notifications.0.body'))->toContain(__('vendra-store::messages.storefront_requested'));
-});
-
-it('reports a missing runtime after creating sample storefront details', function (): void {
-    actAsConsoleAdmin();
-    Config::set('container.drivers.docker.host', '');
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'domain' => 'waiting-store.test',
-            'email' => 'admin@waiting-store.test',
-            ...consoleStorefrontFormData(),
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('storefront_deployments', [
-        'domain' => 'waiting-store.test',
-        'status' => 'pending',
-    ]);
-    expect(session('filament.notifications.0.body'))
-        ->toContain(__('vendra-store::messages.storefront_waiting_for_runtime'));
-});
-
-it('does not report credentials when storefront creation fails and rolls back', function (): void {
-    actAsConsoleAdmin();
-
-    DB::listen(function ($query): void {
-        throw_if(str_contains($query->sql, 'insert into "storefront_deployments"'), RuntimeException::class, 'Deployment write failed.');
-    });
-
-    expect(fn () => livewire(CreateStore::class)
-        ->fillForm([
-            'domain' => 'failed-store.test',
-            'email' => 'admin@failed-store.test',
-            ...consoleStorefrontFormData(),
-        ])
-        ->call('create'))
-        ->toThrow(RuntimeException::class, 'Deployment write failed.');
-
-    assertDatabaseMissing('store_domains', ['name' => 'failed-store.test']);
-    expect(session('filament.notifications'))->toBeNull();
-});
-
-it('blocks store creation once the reseller reaches its plan limit', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->create();
-    Store::factory()->create(['reseller_id' => $reseller->getKey()]);
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => $reseller->getKey(),
-            'domain' => 'second.test',
-            'email' => 'admin@second.test',
-            'active' => true,
-        ])
-        ->call('create');
-
-    assertDatabaseMissing('store_domains', ['name' => 'second.test']);
-    expect($reseller->stores()->count())->toBe(1);
-});
-
-it('validates store domains during creation', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(3))->create();
-    $existingStore = Store::factory()->create();
-    StoreDomain::factory()->for($existingStore)->primary()->create(['name' => 'taken.test']);
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => $reseller->getKey(),
-            'domain' => 'not a domain',
-            'email' => 'invalid@example.test',
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasFormErrors(['domain' => 'regex']);
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => $reseller->getKey(),
-            'domain' => 'taken.test',
-            'email' => 'duplicate@example.test',
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasFormErrors(['domain' => 'unique']);
-});
-
-it('lets a console admin add and remove domain aliases but never the primary domain', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create(['active' => true]);
-    $primary = StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
-
-    $domains = livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
-        ->loadTable()
-        ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => 'Alias.test'])
-        ->assertHasNoFormErrors()
-        ->assertNotified(__('vendra-store::messages.domain_alias_added'));
-
-    $alias = $store->aliasDomains()->sole();
-
-    expect($alias->name)->toBe('alias.test');
-
-    $domains
-        ->assertActionHidden(TestAction::make('removeDomainAlias')->table($primary))
-        ->callAction(TestAction::make('removeDomainAlias')->table($alias))
-        ->assertNotified(__('vendra-store::messages.domain_alias_removed'))
-        ->filterTable('trashed', ['value' => '0'])
-        ->assertCanSeeTableRecords([$primary, $alias]);
-
-    expect($store->aliasDomains()->exists())->toBeFalse()
-        ->and($store->primaryDomain()->value('name'))->toBe('main.test');
-});
-
-it('uses a store overview as the console record landing page', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create(['name' => 'Console overview store']);
-    StoreDomain::factory()->for($store)->primary()->create(['name' => 'overview.test']);
-    StorefrontDeployment::factory()->for($store)->create(['domain' => 'shop.overview.test', 'desired_state' => StorefrontDesiredState::Stopped]);
-
-    livewire(ListStores::class)
-        ->assertActionVisible(TestAction::make('view')->table($store));
-
-    livewire(ViewStore::class, ['record' => $store->getKey()])
-        ->assertOk()
-        ->assertSee('Console overview store')
-        ->assertSee('overview.test')
-        ->assertSee(StorefrontDesiredState::Stopped->getLabel());
-});
-
-it('edits store details without directly mutating operational identity fields', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    $otherReseller = Reseller::factory()->active()->create();
-    $store = Store::factory()->active()->create([
-        'reseller_id' => $reseller->getKey(),
-        'name' => 'Original store',
-    ]);
-    $originalSlug = $store->slug;
-
-    livewire(EditStore::class, ['record' => $store->getKey()])
-        ->assertFormFieldDoesNotExist('storefront_mobile_phone')
-        ->fillForm([
-            'name' => 'Updated store',
-            'description' => 'Operational description.',
-            'slug' => 'protected-slug',
-            'reseller_id' => $otherReseller->getKey(),
-            'active' => false,
-        ])
-        ->call('save')
-        ->assertHasNoFormErrors()
-        ->assertNotified();
-
-    $store->refresh();
-
-    expect($store->name)->toBe('Updated store')
-        ->and($store->description)->toBe('Operational description.')
-        ->and($store->slug)->toBe($originalSlug)
-        ->and($store->reseller_id)->toBe($reseller->getKey())
-        ->and($store->active)->toBeTrue();
-});
-
-it('adds a store administrator through the tenant membership action', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create();
-    $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
-    $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
-        'name' => Config::string('vendra-permission.admin_role'),
-        'guard_name' => 'web',
-    ]));
-
-    livewire(AdministratorsRelationManager::class, [
-        'ownerRecord' => $store,
-        'pageClass' => EditStore::class,
-    ])
-        ->callAction(TestAction::make('addAdministrator')->table(), [
-            'username' => 'second_admin',
-            'email' => 'second-admin@example.com',
-            'password' => 'SecurePassword123',
-            'password_confirmation' => 'SecurePassword123',
-        ])
-        ->assertHasNoActionErrors();
-
-    $administrator = $store->execute(fn (): User => User::query()->where('email', 'second-admin@example.com')->sole());
-
-    expect($administrator->tenants()->whereKey($store->getKey())->exists())->toBeTrue()
-        ->and($store->execute(fn (): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
-});
-
-it('rejects an alias domain already active on another store or running another storefront', function (string $domain): void {
-    actAsConsoleAdmin();
-
-    StoreDomain::factory()->for(Store::factory()->create())->primary()->create(['name' => 'taken.test']);
-    StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'running.test']);
-    $store = Store::factory()->create(['active' => true]);
-    StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
-
-    livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
-        ->loadTable()
-        ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => $domain])
-        ->assertHasFormErrors(['domain' => 'unique']);
-
-    expect($store->aliasDomains()->exists())->toBeFalse();
-})->with(['taken.test', 'running.test']);
-
-it('creates a store without asking for storefront contact details', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'domain' => 'incomplete.test',
-            'email' => 'admin@incomplete.test',
-            'active' => true,
-            ...consoleStorefrontFormData(),
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('store_domains', ['name' => 'incomplete.test']);
-    assertDatabaseHas('storefront_deployments', ['domain' => 'incomplete.test']);
-    expect(Arr::get(StorefrontDeployment::query()->where('domain', 'incomplete.test')->firstOrFail()->configuration, 'contact.mobilePhone'))
-        ->toBe('00000000000');
-});
-
-it('rejects an inactive storefront image before provisioning the store', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'domain' => 'inactive-image.test',
-            'email' => 'admin@inactive-image.test',
-            'active' => true,
-            ...consoleStorefrontFormData(),
-            'storefront_image_id' => StorefrontImage::factory()->create(['active' => false])->id,
-        ])
-        ->call('create')
-        ->assertHasFormErrors(['storefront_image_id']);
-
-    assertDatabaseMissing('store_domains', ['name' => 'inactive-image.test']);
-    expect(StorefrontDeployment::query()->count())->toBe(0);
-});
-
-it('rejects a store administrator email another user of the store already holds', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create();
-    $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
-    $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
-        'name' => Config::string('vendra-permission.admin_role'),
-        'guard_name' => 'web',
-    ]));
-    $administrator = resolve(AddTenantAdministratorAction::class)->execute($store, 'first_admin', 'first-admin@example.com', 'SecurePassword123');
-    resolve(AddTenantAdministratorAction::class)->execute($store, 'second_admin', 'second-admin@example.com', 'SecurePassword123');
-
-    livewire(AdministratorsRelationManager::class, [
-        'ownerRecord' => $store,
-        'pageClass' => EditStore::class,
-    ])
-        ->callAction(TestAction::make('changeAdministratorEmail')->table($administrator), [
-            'email' => 'second-admin@example.com',
-        ])
-        ->assertHasFormErrors(['email' => 'unique']);
-
-    expect($store->execute(fn (): ?string => User::query()->find($administrator->getKey())?->email))->toBe('first-admin@example.com');
-});
-
-it('lets a console admin offboard then restore a store', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->create(['active' => true]);
-
-    livewire(ListStores::class)
-        ->callAction(TestAction::make('offboardStore')->table($store), [
-            'reason' => '  Customer requested account closure.  ',
-        ])
-        ->assertHasNoErrors();
-
-    expect($store->fresh()?->trashed())->toBeTrue()
-        ->and(Arr::get($store->fresh()?->metadata ?? [], 'offboarding.reason'))->toBe('Customer requested account closure.');
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('trashed', ['value' => 'trashed'])
-        ->callAction(TestAction::make('restoreOffboardedStore')->table($store))
-        ->assertHasNoErrors();
-
-    expect($store->fresh()?->trashed())->toBeFalse();
-});
-
-it('notifies instead of failing when restoring a store whose reseller was offboarded', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
-    resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('trashed', ['value' => 'trashed'])
-        ->callAction(TestAction::make('restoreOffboardedStore')->table($store))
-        ->assertNotified(__('vendra-console::messages.store_restore_failed'));
-
-    expect($store->fresh()?->trashed())->toBeTrue();
-});
-
-it('does not expose permanent deletion for an offboarded store', function (): void {
-    actAsConsoleAdmin();
-
-    $store = Store::factory()->trashed()->create();
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('trashed', ['value' => 'trashed'])
-        ->assertActionDoesNotExist(TestAction::make('forceDelete')->table($store));
-
-    expect($store->fresh()?->trashed())->toBeTrue();
-});
-
-it('filters stores by active', function (): void {
-    actAsConsoleAdmin();
-
-    $active = Store::factory()->create(['active' => true]);
-    $inactive = Store::factory()->create(['active' => false]);
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('active', ['value' => true])
-        ->assertCanSeeTableRecords([$active])
-        ->assertCanNotSeeTableRecords([$inactive]);
-});
-
-it('filters stores by reseller', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->create(['active' => true]);
-    $owned = Store::factory()->create(['reseller_id' => $reseller->getKey(), 'active' => true]);
-    $unowned = Store::factory()->create(['active' => true]);
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('reseller_id', $reseller->getKey())
-        ->assertCanSeeTableRecords([$owned])
-        ->assertCanNotSeeTableRecords([$unowned]);
-});
-
-it('filters resellers by active', function (): void {
-    actAsConsoleAdmin();
-
-    $active = Reseller::factory()->create(['active' => true]);
-    $inactive = Reseller::factory()->create(['active' => false]);
-
-    livewire(ListResellers::class)
-        ->loadTable()
-        ->filterTable('active', ['value' => true])
-        ->assertCanSeeTableRecords([$active])
-        ->assertCanNotSeeTableRecords([$inactive]);
-});
-
-it('filters plans by period unit', function (): void {
-    actAsConsoleAdmin();
-
-    $monthly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Month]);
-    $yearly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Year]);
-
-    livewire(ListPlans::class)
-        ->loadTable()
-        ->filterTable('period_unit', PeriodUnit::Month->value)
-        ->assertCanSeeTableRecords([$monthly])
-        ->assertCanNotSeeTableRecords([$yearly]);
-});
-
-it('uses the package table presentation conventions in the console', function (
-    string $page,
-    string $resource,
-    Heroicon $emptyStateIcon,
-): void {
-    actAsConsoleAdmin();
-
-    $component = livewire($page)
-        ->assertTableColumnExists('row')
-        ->assertTableColumnExists('created_at')
-        ->assertTableColumnExists('updated_at');
-    $table = $component->instance()->getTable();
-
-    expect($table->getDescription())->toBe(__("vendra-console::tables.description.{$resource}"))
-        ->and($table->getEmptyStateHeading())->toBe(__("vendra-console::tables.empty_state.heading.{$resource}"))
-        ->and($table->getEmptyStateDescription())->toBe(__("vendra-console::tables.empty_state.description.{$resource}"))
-        ->and($table->getEmptyStateIcon())->toBe($emptyStateIcon)
-        ->and($table->getFiltersLayout())->toBe(FiltersLayout::AboveContentCollapsible);
-})->with([
-    'plans' => [
-        ListPlans::class,
-        'plans',
-        Heroicon::OutlinedRectangleStack,
-    ],
-    'resellers' => [
-        ListResellers::class,
-        'resellers',
-        Heroicon::OutlinedBuildingOffice2,
-    ],
-    'stores' => [
-        ListStores::class,
-        'stores',
-        Heroicon::OutlinedGlobeAlt,
-    ],
-    'storefront images' => [
-        ListStorefrontImages::class,
-        'storefront_images',
-        Heroicon::OutlinedCube,
-    ],
-]);
-
-it('creates a store the platform owns directly, with no reseller', function (): void {
-    actAsConsoleAdmin();
-
-    livewire(CreateStore::class)
-        ->fillForm([
-            'reseller_id' => null,
-            'domain' => 'direct.test',
-            'email' => 'reseller@gmail.com',
-            'active' => true,
-            ...consoleStorefrontFormData(),
-            'storefront_slug' => 'direct',
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
-
-    assertDatabaseHas('stores', [
-        'name' => 'Direct',
-        'reseller_id' => null,
-    ]);
-
-    $store = Store::query()->where('name', 'Direct')->firstOrFail();
-
-    expect($store->reseller_id)->toBeNull()
-        ->and($store->domains()->where('active', true)->value('name'))->toBe('direct.test');
-});
-
-it('manages resellers and the stores that belong to them', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    $other = Reseller::factory()->active()->create();
-
-    $owned = Store::factory()->active()->create(['reseller_id' => $reseller->getKey()]);
-    $foreign = Store::factory()->active()->create(['reseller_id' => $other->getKey()]);
-    $direct = Store::factory()->active()->create();
-
-    // The console sees every store, whoever owns it.
-    livewire(ListStores::class)
-        ->loadTable()
-        ->assertCanSeeTableRecords([$owned, $foreign, $direct]);
-
-    livewire(ListResellers::class)
-        ->loadTable()
-        ->assertCanSeeTableRecords([$reseller, $other]);
-
-    expect($reseller->stores()->pluck('id')->all())->toBe([$owned->getKey()])
-        ->and($other->stores()->pluck('id')->all())->toBe([$foreign->getKey()])
-        ->and($direct->reseller_id)->toBeNull();
-});
-
-it('opens the view page of an offboarded store and reseller', function (): void {
-    actAsConsoleAdmin();
-    $reseller = Reseller::factory()->active()->create();
-    $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
-    resolve(OffboardResellerAction::class)->execute($reseller, 'Closed.');
-
-    livewire(ViewStore::class, ['record' => $store->getKey()])->assertOk();
-    livewire(ViewReseller::class, ['record' => $reseller->getKey()])->assertOk();
-});
-
-it('names the offboarded reseller of an offboarded store', function (): void {
-    actAsConsoleAdmin();
-
-    $reseller = Reseller::factory()->active()->create();
-    $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
-    $resellerName = $reseller->displayName();
-    resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
-
-    livewire(ListStores::class)
-        ->loadTable()
-        ->filterTable('trashed', ['value' => 'trashed'])
-        ->assertTableColumnStateSet('reseller', $resellerName, $store);
-});
-
-it('counts every store by status above the console store list', function (): void {
-    actAsConsoleAdmin();
-
-    Store::factory()->active()->count(2)->create();
-    Store::factory()->suspended()->create();
-    $failing = Store::factory()->active()->create();
-    StorefrontDeployment::factory()->for($failing)->create(['status' => StorefrontDeploymentStatus::Failed]);
-
-    $stats = collect(invade(livewire(StoreStatusOverview::class)->instance())->getStats())
-        ->keyBy(fn (Stat $stat): string => (string) $stat->getLabel());
-
-    expect($stats->get(StoreStatus::Active->getLabel())?->getValue())->toBe(3)
-        ->and($stats->get(StoreStatus::Suspended->getLabel())?->getValue())->toBe(1)
-        ->and($stats->get(__('vendra-store::attributes.failed_storefronts'))?->getValue())->toBe(1)
-        ->and(urldecode((string) $stats->get(StoreStatus::Suspended->getLabel())?->getUrl()))->toContain('filters[status][values][0]=suspended');
-});
-
-it('edits the console profile without a name field and changes the password through the user action', function (): void {
-    $user = actAsConsoleAdmin();
-    $user->forceFill(['password' => Hash::make('old-password'), 'remember_token' => 'old-token'])->save();
-
-    livewire(EditProfile::class)
-        ->assertFormFieldDoesNotExist('name')
-        ->assertFormFieldIsDisabled('username')
-        ->assertFormFieldIsDisabled('email')
-        ->assertSchemaStateSet(['username' => $user->username, 'email' => $user->email])
-        ->fillForm([
-            'password' => 'new-password-123',
-            'passwordConfirmation' => 'new-password-123',
-            'currentPassword' => 'old-password',
-        ])
-        ->call('save')
-        ->assertHasNoFormErrors();
-
-    $user->refresh();
-
-    expect(Hash::check('new-password-123', $user->password))->toBeTrue()
-        ->and($user->remember_token)->not->toBe('old-token');
-});
-
 function platformCurrency(string $code): Currency
 {
     return Currency::query()->platform()->where('code', $code)->sole();
 }
 
-it('manages platform currencies apart from store currencies', function (): void {
-    $store = createTestTenant();
-    $storeEuro = CurrencyFactory::new()->active()->code('EUR')->createOne(['tenant_id' => $store?->getKey(), 'position' => 1]);
+describe('console panel', function (): void {
+    it('uses the Vendra logo in light and dark modes', function (): void {
+        $panel = Filament::getPanel('console');
 
-    actAsConsoleAdmin();
+        expect($panel->getBrandName())->toBe('Vendra Console')
+            ->and($panel->getBrandLogo())->toBe(asset('images/vendra-logo.svg'))
+            ->and($panel->getDarkModeBrandLogo())->toBe(asset('images/vendra-logo-dark.svg'))
+            ->and($panel->getBrandLogoHeight())->toBe('2rem');
+    });
 
-    livewire(ListCurrencies::class)
-        ->call('loadTable')
-        ->assertCanNotSeeTableRecords([$storeEuro])
-        ->callAction('installCurrencies', ['codes' => ['USD', 'EUR']])
-        ->assertHasNoFormErrors();
+    it('globally searches console resources', function (): void {
+        actAsConsoleAdmin();
 
-    livewire(ListCurrencies::class)
-        ->call('loadTable')
-        ->assertCanSeeTableRecords([platformCurrency('USD'), platformCurrency('EUR')])
-        ->assertCanNotSeeTableRecords([$storeEuro])
-        ->callAction(TestAction::make('setDefault')->table(platformCurrency('EUR')));
+        $plan = Plan::factory()->active()->create(['name' => 'Enterprise Search Plan']);
+        $reseller = Reseller::factory()->active()
+            ->for(User::factory()->state([
+                'tenant_id' => null,
+                'username' => 'search_partner',
+                'email' => 'partner-search@example.com',
+            ]))
+            ->create();
+        $store = Store::factory()->create(['name' => 'Search Store']);
+        StoreDomain::factory()->for($store)->primary()->create([
+            'name' => 'global-search-store.test',
+        ]);
 
-    expect(platformCurrency('EUR')->is_default)->toBeTrue()
-        ->and(platformCurrency('USD')->is_default)->toBeFalse()
-        ->and($storeEuro->refresh()->is_default)->toBeTrue();
-});
+        $planResult = PlanResource::getGlobalSearchResults('enterprise')->sole();
+        $resellerResult = ResellerResource::getGlobalSearchResults('partner-search@example.com')->sole();
+        $storeResult = ConsoleStoreResource::getGlobalSearchResults('global-search-store.test')->sole();
+        $storeAction = Arr::get($storeResult->actions, 0);
 
-it('manages platform languages apart from store languages', function (): void {
-    $store = createTestTenant();
-    $storeEnglish = LanguageFactory::new()->active()->createOne(['tenant_id' => $store?->getKey(), 'locale' => 'en']);
+        expect($planResult->title)->toBe($plan->name)
+            ->and($planResult->url)->toBe(PlanResource::getUrl('edit', ['record' => $plan]))
+            ->and($resellerResult->title)->toBe('search_partner')
+            ->and($resellerResult->details)->toBe([
+                __('vendra-console::attributes.email') => 'partner-search@example.com',
+            ])
+            ->and($resellerResult->url)->toBe(ResellerResource::getUrl('view', ['record' => $reseller]))
+            ->and($storeResult->title)->toBe($store->name)
+            ->and($storeResult->url)->toBe(ConsoleStoreResource::getUrl('view', ['record' => $store]))
+            ->and($storeResult->details)->toBe([
+                __('vendra-console::attributes.domain') => 'global-search-store.test',
+            ])
+            ->and($storeAction->getLabel())->toBe(__('vendra-console::attributes.admin_url'))
+            ->and($storeAction->getUrl())->toBe(
+                'https://'.$store->slug.'.admin.'.Config::string('vendra-tenant.central_host'),
+            )
+            ->and($storeAction->shouldOpenUrlInNewTab())->toBeTrue();
+    });
 
-    actAsConsoleAdmin();
+    it('isolates console users from application users', function (): void {
+        $tenant = createTestTenant();
+        $admin = consoleAdmin();
+        $regular = User::factory()->forTenant($tenant)->create();
 
-    livewire(CreateLanguage::class)
-        ->fillForm(['locale' => 'en', 'active' => true])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        $panel = Filament::getPanel('console');
 
-    $platformEnglish = Language::query()->whereNull('tenant_id')->where('locale', 'en')->sole();
-    $platformGerman = Language::query()->create(['locale' => 'de', 'position' => 2]);
+        expect($admin->tenant_id)->toBeNull()
+            ->and($admin->canAccessPanel($panel))->toBeTrue()
+            ->and($admin->canAccessPanel(Filament::getPanel('admin')))->toBeFalse()
+            ->and($admin->canAccessPanel(Filament::getPanel('reseller')))->toBeFalse()
+            ->and($admin->canAccessTenant($tenant))->toBeFalse()
+            ->and($regular->canAccessPanel($panel))->toBeFalse()
+            ->and($panel->getAuthGuard())->toBe('console')
+            ->and($panel->getAuthPasswordBroker())->toBe('console')
+            ->and(config('auth.guards.console.provider'))->toBe('console')
+            ->and(config('auth.providers.console.model'))->toBe(User::class)
+            ->and(Filament::getPanel('reseller')->getAuthGuard())->toBe('reseller')
+            ->and(Filament::getPanel('admin')->getAuthGuard())->toBe('web');
 
-    livewire(ListLanguages::class)
-        ->loadTable()
-        ->assertCanSeeTableRecords([$platformEnglish, $platformGerman])
-        ->assertCanNotSeeTableRecords([$storeEnglish])
-        ->assertActionExists('syncLanguageLines')
-        ->callAction(TestAction::make('setDefault')->table($platformGerman));
+        actingAs($admin, 'console');
 
-    expect($platformGerman->refresh()->is_default)->toBeTrue()
-        ->and($platformEnglish->refresh()->is_default)->toBeFalse()
-        ->and($storeEnglish->refresh()->is_default)->toBeTrue();
-});
+        expect(auth('console')->id())->toBe($admin->getKey())
+            ->and(auth('web')->check())->toBeFalse();
+    });
 
-it('manages platform translations apart from store translations', function (): void {
-    $store = createTestTenant();
-    $storeLine = LanguageLineFactory::new()->createOne([
-        'tenant_id' => $store?->getKey(),
-        'namespace' => 'vendra-language',
-        'group' => 'navigation',
-        'key' => 'language',
-        'text' => ['en' => 'Store language'],
+    it('redirects an application user away from the console panel', function (): void {
+        actingAs(User::factory()->forTenant(createTestTenant())->create());
+
+        $this->get('https://console.vendra.test')
+            ->assertRedirect('https://console.vendra.test/login');
+    });
+
+    it('allows a verified console user into the console panel', function (): void {
+        actingAs(consoleAdmin(), 'console');
+
+        $this->get('https://console.vendra.test')->assertOk();
+    });
+
+    it('uses the package table presentation conventions in the console', function (
+        string $page,
+        string $resource,
+        Heroicon $emptyStateIcon,
+    ): void {
+        actAsConsoleAdmin();
+
+        $component = livewire($page)
+            ->assertTableColumnExists('row')
+            ->assertTableColumnExists('created_at')
+            ->assertTableColumnExists('updated_at');
+        $table = $component->instance()->getTable();
+
+        expect($table->getDescription())->toBe(__("vendra-console::tables.description.{$resource}"))
+            ->and($table->getEmptyStateHeading())->toBe(__("vendra-console::tables.empty_state.heading.{$resource}"))
+            ->and($table->getEmptyStateDescription())->toBe(__("vendra-console::tables.empty_state.description.{$resource}"))
+            ->and($table->getEmptyStateIcon())->toBe($emptyStateIcon)
+            ->and($table->getFiltersLayout())->toBe(FiltersLayout::AboveContentCollapsible);
+    })->with([
+        'plans' => [
+            ListPlans::class,
+            'plans',
+            Heroicon::OutlinedRectangleStack,
+        ],
+        'resellers' => [
+            ListResellers::class,
+            'resellers',
+            Heroicon::OutlinedBuildingOffice2,
+        ],
+        'stores' => [
+            ListStores::class,
+            'stores',
+            Heroicon::OutlinedGlobeAlt,
+        ],
+        'storefront images' => [
+            ListStorefrontImages::class,
+            'storefront_images',
+            Heroicon::OutlinedCube,
+        ],
     ]);
 
-    actAsConsoleAdmin();
-    Language::query()->create(['locale' => 'en', 'position' => 1]);
+    it('edits the console profile without a name field and changes the password through the user action', function (): void {
+        $user = actAsConsoleAdmin();
+        $user->forceFill(['password' => Hash::make('old-password'), 'remember_token' => 'old-token'])->save();
 
-    Cache::forget(LanguageLine::getCacheKey('navigation', 'en', 'vendra-language'));
+        livewire(EditProfile::class)
+            ->assertFormFieldDoesNotExist('name')
+            ->assertFormFieldIsDisabled('username')
+            ->assertFormFieldIsDisabled('email')
+            ->assertSchemaStateSet(['username' => $user->username, 'email' => $user->email])
+            ->fillForm([
+                'password' => 'new-password-123',
+                'passwordConfirmation' => 'new-password-123',
+                'currentPassword' => 'old-password',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
 
-    expect(LanguageLine::getTranslationsForGroup('en', 'navigation', 'vendra-language'))
-        ->not->toHaveKey('language');
+        $user->refresh();
 
-    livewire(CreateLanguageLine::class)
-        ->fillForm([
+        expect(Hash::check('new-password-123', $user->password))->toBeTrue()
+            ->and($user->remember_token)->not->toBe('old-token');
+    });
+});
+
+describe('plans', function (): void {
+    it('lets a console admin create a plan', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreatePlan::class)
+            ->fillForm([
+                'name' => 'Pro',
+                'max_units' => 3,
+                'period_unit' => 'month',
+                'period_count' => 1,
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('plans', [
+            'name' => 'Pro',
+            'max_units' => 3,
+            'period_unit' => 'month',
+        ]);
+    });
+
+    it('requires a currency for a paid plan', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreatePlan::class)
+            ->fillForm([
+                'name' => 'Paid',
+                'max_units' => 3,
+                'period_unit' => 'month',
+                'period_count' => 1,
+                'price' => 1500,
+                'currency_code' => null,
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['currency_code' => 'required']);
+    });
+
+    it('saves plan features and limits and stores empty limits as unlimited', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreatePlan::class)
+            ->fillForm([
+                'name' => 'Limited',
+                'max_units' => 3,
+                'period_unit' => 'month',
+                'period_count' => 1,
+                'active' => true,
+                'features' => ['custom_domain'],
+                'limits' => ['domains_per_store' => 2, 'products_per_store' => null, 'storage_megabytes_per_store' => ''],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $plan = Plan::query()->where('name', 'Limited')->sole();
+
+        expect($plan->features)->toBe(['custom_domain'])
+            ->and($plan->limits)->toBe(['domains_per_store' => 2]);
+
+        livewire(EditPlan::class, ['record' => $plan->getKey()])
+            ->assertSchemaStateSet(['limits.domains_per_store' => 2])
+            ->fillForm(['limits' => ['domains_per_store' => null]])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        expect($plan->refresh()->limits)->toBeNull();
+    });
+
+    it('prevents deleting a plan used by subscriptions from list and edit pages', function (): void {
+        actAsConsoleAdmin();
+
+        $plan = Plan::factory()->active()->create();
+        Subscription::factory()->for($plan)->create();
+
+        livewire(ListPlans::class)
+            ->assertActionHidden(TestAction::make('delete')->table($plan));
+
+        livewire(EditPlan::class, ['record' => $plan->getKey()])
+            ->assertActionHidden(DeleteAction::class);
+    });
+
+    it('allows deleting an unused plan from list and edit pages', function (): void {
+        actAsConsoleAdmin();
+
+        $plan = Plan::factory()->active()->create();
+
+        livewire(ListPlans::class)
+            ->assertActionVisible(TestAction::make('delete')->table($plan));
+
+        livewire(EditPlan::class, ['record' => $plan->getKey()])
+            ->assertActionVisible(DeleteAction::class);
+    });
+
+    it('filters plans by period unit', function (): void {
+        actAsConsoleAdmin();
+
+        $monthly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Month]);
+        $yearly = Plan::factory()->active()->create(['period_unit' => PeriodUnit::Year]);
+
+        livewire(ListPlans::class)
+            ->loadTable()
+            ->filterTable('period_unit', PeriodUnit::Month->value)
+            ->assertCanSeeTableRecords([$monthly])
+            ->assertCanNotSeeTableRecords([$yearly]);
+    });
+
+    it('prices plans in platform currencies and keeps a plan currency when the default changes', function (): void {
+        resolve(InstallCurrenciesAction::class)->execute(['USD', 'EUR']);
+
+        actAsConsoleAdmin();
+
+        livewire(CreatePlan::class)
+            ->assertSchemaStateSet(['currency_code' => 'USD'])
+            ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['USD', 'EUR'])
+            ->fillForm([
+                'name' => 'Growth',
+                'max_units' => 3,
+                'period_unit' => 'month',
+                'period_count' => 1,
+                'price' => 1_500,
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $plan = Plan::query()->where('name', 'Growth')->sole();
+        $subscription = Subscription::factory()->for($plan)->create(['price' => $plan->price, 'currency_code' => $plan->currency_code]);
+
+        resolve(SetDefaultCurrencyAction::class)->execute(platformCurrency('EUR'));
+        platformCurrency('USD')->update(['active' => false]);
+
+        expect($plan->refresh()->currency_code)->toBe('USD')
+            ->and($subscription->refresh()->currency_code)->toBe('USD');
+
+        livewire(EditPlan::class, ['record' => $plan->getKey()])
+            ->assertSchemaStateSet(['currency_code' => 'USD'])
+            ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['EUR', 'USD']);
+
+        livewire(CreatePlan::class)
+            ->assertSchemaStateSet(['currency_code' => 'EUR']);
+    });
+});
+
+describe('resellers', function (): void {
+    it('uses a reseller overview as the record landing page', function (): void {
+        actAsConsoleAdmin();
+
+        $plan = Plan::factory()->active()->create(['name' => 'Growth']);
+        $reseller = Reseller::factory()->active()->create();
+        $user = User::factory()->create([
+            'tenant_id' => null,
+            'username' => 'overview_owner',
+            'email_verified_at' => '2026-01-02 08:15:00',
+        ]);
+        $reseller->user()->associate($user)->save();
+        Subscription::factory()->forSubscriber($reseller)->for($plan)->create(['ends_at' => '2026-03-15 09:30:00']);
+        Store::factory()->count(2)->create(['reseller_id' => $reseller->getKey()]);
+
+        livewire(ListResellers::class)
+            ->assertActionVisible(TestAction::make('view')->table($reseller));
+
+        livewire(ViewReseller::class, ['record' => $reseller->getKey()])
+            ->assertOk()
+            ->assertSee($user->username)
+            ->assertSee($user->email)
+            ->assertSee('2026-01-02 08:15')
+            ->assertSee($reseller->created_at?->format('Y-m-d H:i'))
+            ->assertSee('Growth')
+            ->assertSee('2026-03-15 09:30');
+    });
+
+    it('honors a disabled state when creating a reseller', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateReseller::class)
+            ->fillForm([
+                'plan_id' => Plan::factory()->active()->create()->getKey(),
+                'username' => 'paused_owner',
+                'email' => 'reseller@gmail.com',
+                'password' => 'Secure123',
+                'password_confirmation' => 'Secure123',
+                'active' => false,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $reseller = Reseller::forUser(User::query()->where('username', 'paused_owner')->sole());
+
+        expect($reseller?->active)->toBeFalse()
+            ->and($reseller?->user)->toBeInstanceOf(User::class)
+            ->and(Hash::check('Secure123', $reseller?->user->password))->toBeTrue();
+    });
+
+    it('creates a reseller whose username and email are only used inside a store', function (): void {
+        actAsConsoleAdmin();
+
+        User::factory()->forTenant(createTestTenant())->create([
+            'username' => 'shared_name',
+            'email' => 'shared@gmail.com',
+        ]);
+
+        livewire(CreateReseller::class)
+            ->fillForm([
+                'plan_id' => Plan::factory()->active()->create()->getKey(),
+                'username' => 'shared_name',
+                'email' => 'shared@gmail.com',
+                'password' => 'Secure123',
+                'password_confirmation' => 'Secure123',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        expect(User::query()->whereNull('tenant_id')->where('username', 'shared_name')->exists())->toBeTrue();
+    });
+
+    it('rejects a reseller username another tenantless user already holds', function (): void {
+        actAsConsoleAdmin();
+
+        User::factory()->create(['tenant_id' => null, 'username' => 'taken_name']);
+
+        livewire(CreateReseller::class)
+            ->fillForm([
+                'plan_id' => Plan::factory()->active()->create()->getKey(),
+                'username' => 'taken_name',
+                'email' => 'fresh@gmail.com',
+                'password' => 'Secure123',
+                'password_confirmation' => 'Secure123',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['username' => 'unique']);
+    });
+
+    it('filters resellers by active', function (): void {
+        actAsConsoleAdmin();
+
+        $active = Reseller::factory()->create(['active' => true]);
+        $inactive = Reseller::factory()->create(['active' => false]);
+
+        livewire(ListResellers::class)
+            ->loadTable()
+            ->filterTable('active', ['value' => true])
+            ->assertCanSeeTableRecords([$active])
+            ->assertCanNotSeeTableRecords([$inactive]);
+    });
+
+    it('manages resellers and the stores that belong to them', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        $other = Reseller::factory()->active()->create();
+
+        $owned = Store::factory()->active()->create(['reseller_id' => $reseller->getKey()]);
+        $foreign = Store::factory()->active()->create(['reseller_id' => $other->getKey()]);
+        $direct = Store::factory()->active()->create();
+
+        // The console sees every store, whoever owns it.
+        livewire(ListStores::class)
+            ->loadTable()
+            ->assertCanSeeTableRecords([$owned, $foreign, $direct]);
+
+        livewire(ListResellers::class)
+            ->loadTable()
+            ->assertCanSeeTableRecords([$reseller, $other]);
+
+        expect($reseller->stores()->pluck('id')->all())->toBe([$owned->getKey()])
+            ->and($other->stores()->pluck('id')->all())->toBe([$foreign->getKey()])
+            ->and($direct->reseller_id)->toBeNull();
+    });
+
+    it('opens the view page of an offboarded store and reseller', function (): void {
+        actAsConsoleAdmin();
+        $reseller = Reseller::factory()->active()->create();
+        $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+        resolve(OffboardResellerAction::class)->execute($reseller, 'Closed.');
+
+        livewire(ViewStore::class, ['record' => $store->getKey()])->assertOk();
+        livewire(ViewReseller::class, ['record' => $reseller->getKey()])->assertOk();
+    });
+
+    it('names the offboarded reseller of an offboarded store', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+        $resellerName = $reseller->displayName();
+        resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('trashed', ['value' => 'trashed'])
+            ->assertTableColumnStateSet('reseller', $resellerName, $store);
+    });
+});
+
+describe('stores', function (): void {
+    it('lets console users define storefront images', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStorefrontImage::class)
+            ->fillForm([
+                'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
+                'notes' => 'Florist build used by demo stores.',
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors()
+            ->assertNotified()
+            ->assertRedirect();
+
+        assertDatabaseHas('storefront_images', [
+            'image' => 'ghcr.io/misaf/storefront@sha256:abc123',
+            'notes' => 'Florist build used by demo stores.',
+            'active' => true,
+        ]);
+    });
+
+    it('creates a store for a reseller within its plan limit', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => $reseller->getKey(),
+                'domain' => 'acme.test',
+                'email' => 'admin@gmail.com',
+                'active' => true,
+                ...consoleStorefrontFormData(),
+                'storefront_slug' => 'acme',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('stores', [
+            'name' => 'Acme',
+            'reseller_id' => $reseller->getKey(),
+        ]);
+        assertDatabaseHas('users', [
+            'username' => 'admin',
+            'email' => 'admin@gmail.com',
+        ]);
+        expect(StorefrontDeployment::query()->count())->toBe(1);
+    });
+
+    it('asks only for store and deployment identity when creating a store', function (): void {
+        actAsConsoleAdmin();
+
+        $component = livewire(CreateStore::class);
+
+        $component
+            ->assertFormFieldExists('create_storefront')
+            ->assertFormFieldExists('storefront_image_id')
+            ->assertFormFieldExists('storefront_slug')
+            ->assertFormFieldDoesNotExist('storefront_mobile_phone')
+            // The reseller is optional, so it must not appear among the errors.
+            ->assertFormFieldExists('reseller_id')
+            ->call('create')
+            ->assertHasFormErrors([
+                'domain' => 'required',
+                'email' => 'required',
+                'storefront_slug' => 'required',
+                'storefront_image_id' => 'required',
+            ])
+            ->assertHasNoFormErrors(['reseller_id']);
+    });
+
+    it('lets a console admin create a store without a managed storefront', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'domain' => 'local-source.test',
+                'email' => 'local-source@gmail.com',
+                'active' => true,
+                'create_storefront' => false,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('store_domains', ['name' => 'local-source.test']);
+        assertDatabaseMissing('storefront_deployments', ['domain' => 'local-source.test']);
+        expect(session('filament.notifications.0.body'))
+            ->toContain('Administrator username:')
+            ->not->toContain(__('vendra-store::messages.storefront_requested'));
+    });
+
+    it('suggests the storefront slug from the store domain', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStore::class)
+            ->set('data.domain', 'Rose-Garden.Example')
+            ->assertHasNoFormErrors(['domain'])
+            ->assertFormSet(['storefront_slug' => 'rose-garden']);
+    });
+
+    it('creates a storefront with sample details for its administrator to update', function (): void {
+        actAsConsoleAdmin();
+        $reseller = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(2))->create();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => $reseller->getKey(),
+                'domain' => 'console-flowers.test',
+                'email' => 'console.flowers@gmail.com',
+                'active' => true,
+                ...consoleStorefrontFormData(),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('storefront_deployments', [
+            'slug' => 'console-flowers',
+            'domain' => 'console-flowers.test',
+        ]);
+        $deployment = StorefrontDeployment::query()->where('domain', 'console-flowers.test')->firstOrFail();
+        expect(Arr::get($deployment->configuration, 'contact.email'))->toBe('contact@console-flowers.test')
+            ->and(Arr::get($deployment->configuration, 'contact.mobilePhone'))->toBe('00000000000')
+            ->and(session('filament.notifications.0.body'))->toContain(__('vendra-store::messages.storefront_requested'));
+    });
+
+    it('reports a missing runtime after creating sample storefront details', function (): void {
+        actAsConsoleAdmin();
+        Config::set('container.drivers.docker.host', '');
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'domain' => 'waiting-store.test',
+                'email' => 'admin@waiting-store.test',
+                ...consoleStorefrontFormData(),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('storefront_deployments', [
+            'domain' => 'waiting-store.test',
+            'status' => 'pending',
+        ]);
+        expect(session('filament.notifications.0.body'))
+            ->toContain(__('vendra-store::messages.storefront_waiting_for_runtime'));
+    });
+
+    it('does not report credentials when storefront creation fails and rolls back', function (): void {
+        actAsConsoleAdmin();
+
+        DB::listen(function ($query): void {
+            throw_if(str_contains($query->sql, 'insert into "storefront_deployments"'), RuntimeException::class, 'Deployment write failed.');
+        });
+
+        expect(fn () => livewire(CreateStore::class)
+            ->fillForm([
+                'domain' => 'failed-store.test',
+                'email' => 'admin@failed-store.test',
+                ...consoleStorefrontFormData(),
+            ])
+            ->call('create'))
+            ->toThrow(RuntimeException::class, 'Deployment write failed.');
+
+        assertDatabaseMissing('store_domains', ['name' => 'failed-store.test']);
+        expect(session('filament.notifications'))->toBeNull();
+    });
+
+    it('blocks store creation once the reseller reaches its plan limit', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(1))->create();
+        Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => $reseller->getKey(),
+                'domain' => 'second.test',
+                'email' => 'admin@second.test',
+                'active' => true,
+            ])
+            ->call('create');
+
+        assertDatabaseMissing('store_domains', ['name' => 'second.test']);
+        expect($reseller->stores()->count())->toBe(1);
+    });
+
+    it('validates store domains during creation', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        Subscription::factory()->forSubscriber($reseller)->for(Plan::factory()->active()->maxUnits(3))->create();
+        $existingStore = Store::factory()->create();
+        StoreDomain::factory()->for($existingStore)->primary()->create(['name' => 'taken.test']);
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => $reseller->getKey(),
+                'domain' => 'not a domain',
+                'email' => 'invalid@example.test',
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['domain' => 'regex']);
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => $reseller->getKey(),
+                'domain' => 'taken.test',
+                'email' => 'duplicate@example.test',
+                'active' => true,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['domain' => 'unique']);
+    });
+
+    it('lets a console admin add and remove domain aliases but never the primary domain', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->create(['active' => true]);
+        $primary = StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
+
+        $domains = livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+            ->loadTable()
+            ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => 'Alias.test'])
+            ->assertHasNoFormErrors()
+            ->assertNotified(__('vendra-store::messages.domain_alias_added'));
+
+        $alias = $store->aliasDomains()->sole();
+
+        expect($alias->name)->toBe('alias.test');
+
+        $domains
+            ->assertActionHidden(TestAction::make('removeDomainAlias')->table($primary))
+            ->callAction(TestAction::make('removeDomainAlias')->table($alias))
+            ->assertNotified(__('vendra-store::messages.domain_alias_removed'))
+            ->filterTable('trashed', ['value' => '0'])
+            ->assertCanSeeTableRecords([$primary, $alias]);
+
+        expect($store->aliasDomains()->exists())->toBeFalse()
+            ->and($store->primaryDomain()->value('name'))->toBe('main.test');
+    });
+
+    it('uses a store overview as the console record landing page', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->create(['name' => 'Console overview store']);
+        StoreDomain::factory()->for($store)->primary()->create(['name' => 'overview.test']);
+        StorefrontDeployment::factory()->for($store)->create(['domain' => 'shop.overview.test', 'desired_state' => StorefrontDesiredState::Stopped]);
+
+        livewire(ListStores::class)
+            ->assertActionVisible(TestAction::make('view')->table($store));
+
+        livewire(ViewStore::class, ['record' => $store->getKey()])
+            ->assertOk()
+            ->assertSee('Console overview store')
+            ->assertSee('overview.test')
+            ->assertSee(StorefrontDesiredState::Stopped->getLabel());
+    });
+
+    it('edits store details without directly mutating operational identity fields', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        $otherReseller = Reseller::factory()->active()->create();
+        $store = Store::factory()->active()->create([
+            'reseller_id' => $reseller->getKey(),
+            'name' => 'Original store',
+        ]);
+        $originalSlug = $store->slug;
+
+        livewire(EditStore::class, ['record' => $store->getKey()])
+            ->assertFormFieldDoesNotExist('storefront_mobile_phone')
+            ->fillForm([
+                'name' => 'Updated store',
+                'description' => 'Operational description.',
+                'slug' => 'protected-slug',
+                'reseller_id' => $otherReseller->getKey(),
+                'active' => false,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified();
+
+        $store->refresh();
+
+        expect($store->name)->toBe('Updated store')
+            ->and($store->description)->toBe('Operational description.')
+            ->and($store->slug)->toBe($originalSlug)
+            ->and($store->reseller_id)->toBe($reseller->getKey())
+            ->and($store->active)->toBeTrue();
+    });
+
+    it('adds a store administrator through the tenant membership action', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->create();
+        $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
+        $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
+            'name' => Config::string('vendra-permission.admin_role'),
+            'guard_name' => 'web',
+        ]));
+
+        livewire(AdministratorsRelationManager::class, [
+            'ownerRecord' => $store,
+            'pageClass' => EditStore::class,
+        ])
+            ->callAction(TestAction::make('addAdministrator')->table(), [
+                'username' => 'second_admin',
+                'email' => 'second-admin@example.com',
+                'password' => 'SecurePassword123',
+                'password_confirmation' => 'SecurePassword123',
+            ])
+            ->assertHasNoActionErrors();
+
+        $administrator = $store->execute(fn (): User => User::query()->where('email', 'second-admin@example.com')->sole());
+
+        expect($administrator->tenants()->whereKey($store->getKey())->exists())->toBeTrue()
+            ->and($store->execute(fn (): bool => $administrator->hasRole(Config::string('vendra-permission.admin_role'))))->toBeTrue();
+    });
+
+    it('rejects an alias domain already active on another store or running another storefront', function (string $domain): void {
+        actAsConsoleAdmin();
+
+        StoreDomain::factory()->for(Store::factory()->create())->primary()->create(['name' => 'taken.test']);
+        StorefrontDeployment::factory()->for(Store::factory()->create())->create(['domain' => 'running.test']);
+        $store = Store::factory()->create(['active' => true]);
+        StoreDomain::factory()->for($store)->primary()->create(['name' => 'main.test']);
+
+        livewire(DomainsRelationManager::class, ['ownerRecord' => $store, 'pageClass' => EditStore::class])
+            ->loadTable()
+            ->callAction(TestAction::make('addDomainAlias')->table(), ['domain' => $domain])
+            ->assertHasFormErrors(['domain' => 'unique']);
+
+        expect($store->aliasDomains()->exists())->toBeFalse();
+    })->with(['taken.test', 'running.test']);
+
+    it('creates a store without asking for storefront contact details', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'domain' => 'incomplete.test',
+                'email' => 'admin@incomplete.test',
+                'active' => true,
+                ...consoleStorefrontFormData(),
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('store_domains', ['name' => 'incomplete.test']);
+        assertDatabaseHas('storefront_deployments', ['domain' => 'incomplete.test']);
+        expect(Arr::get(StorefrontDeployment::query()->where('domain', 'incomplete.test')->firstOrFail()->configuration, 'contact.mobilePhone'))
+            ->toBe('00000000000');
+    });
+
+    it('rejects an inactive storefront image before provisioning the store', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'domain' => 'inactive-image.test',
+                'email' => 'admin@inactive-image.test',
+                'active' => true,
+                ...consoleStorefrontFormData(),
+                'storefront_image_id' => StorefrontImage::factory()->create(['active' => false])->id,
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['storefront_image_id']);
+
+        assertDatabaseMissing('store_domains', ['name' => 'inactive-image.test']);
+        expect(StorefrontDeployment::query()->count())->toBe(0);
+    });
+
+    it('rejects a store administrator email another user of the store already holds', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->create();
+        $roleClass = resolve(PermissionRegistrar::class)->getRoleClass();
+        $store->execute(fn (): mixed => $roleClass::query()->firstOrCreate([
+            'name' => Config::string('vendra-permission.admin_role'),
+            'guard_name' => 'web',
+        ]));
+        $administrator = resolve(AddTenantAdministratorAction::class)->execute($store, 'first_admin', 'first-admin@example.com', 'SecurePassword123');
+        resolve(AddTenantAdministratorAction::class)->execute($store, 'second_admin', 'second-admin@example.com', 'SecurePassword123');
+
+        livewire(AdministratorsRelationManager::class, [
+            'ownerRecord' => $store,
+            'pageClass' => EditStore::class,
+        ])
+            ->callAction(TestAction::make('changeAdministratorEmail')->table($administrator), [
+                'email' => 'second-admin@example.com',
+            ])
+            ->assertHasFormErrors(['email' => 'unique']);
+
+        expect($store->execute(fn (): ?string => User::query()->find($administrator->getKey())?->email))->toBe('first-admin@example.com');
+    });
+
+    it('lets a console admin offboard then restore a store', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->create(['active' => true]);
+
+        livewire(ListStores::class)
+            ->callAction(TestAction::make('offboardStore')->table($store), [
+                'reason' => '  Customer requested account closure.  ',
+            ])
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->trashed())->toBeTrue()
+            ->and(Arr::get($store->fresh()?->metadata ?? [], 'offboarding.reason'))->toBe('Customer requested account closure.');
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('trashed', ['value' => 'trashed'])
+            ->callAction(TestAction::make('restoreOffboardedStore')->table($store))
+            ->assertHasNoErrors();
+
+        expect($store->fresh()?->trashed())->toBeFalse();
+    });
+
+    it('notifies instead of failing when restoring a store whose reseller was offboarded', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->active()->create();
+        $store = Store::factory()->create(['reseller_id' => $reseller->getKey()]);
+        resolve(OffboardResellerAction::class)->execute($reseller, 'Contract ended.');
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('trashed', ['value' => 'trashed'])
+            ->callAction(TestAction::make('restoreOffboardedStore')->table($store))
+            ->assertNotified(__('vendra-console::messages.store_restore_failed'));
+
+        expect($store->fresh()?->trashed())->toBeTrue();
+    });
+
+    it('does not expose permanent deletion for an offboarded store', function (): void {
+        actAsConsoleAdmin();
+
+        $store = Store::factory()->trashed()->create();
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('trashed', ['value' => 'trashed'])
+            ->assertActionDoesNotExist(TestAction::make('forceDelete')->table($store));
+
+        expect($store->fresh()?->trashed())->toBeTrue();
+    });
+
+    it('filters stores by active', function (): void {
+        actAsConsoleAdmin();
+
+        $active = Store::factory()->create(['active' => true]);
+        $inactive = Store::factory()->create(['active' => false]);
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('active', ['value' => true])
+            ->assertCanSeeTableRecords([$active])
+            ->assertCanNotSeeTableRecords([$inactive]);
+    });
+
+    it('filters stores by reseller', function (): void {
+        actAsConsoleAdmin();
+
+        $reseller = Reseller::factory()->create(['active' => true]);
+        $owned = Store::factory()->create(['reseller_id' => $reseller->getKey(), 'active' => true]);
+        $unowned = Store::factory()->create(['active' => true]);
+
+        livewire(ListStores::class)
+            ->loadTable()
+            ->filterTable('reseller_id', $reseller->getKey())
+            ->assertCanSeeTableRecords([$owned])
+            ->assertCanNotSeeTableRecords([$unowned]);
+    });
+
+    it('creates a store the platform owns directly, with no reseller', function (): void {
+        actAsConsoleAdmin();
+
+        livewire(CreateStore::class)
+            ->fillForm([
+                'reseller_id' => null,
+                'domain' => 'direct.test',
+                'email' => 'reseller@gmail.com',
+                'active' => true,
+                ...consoleStorefrontFormData(),
+                'storefront_slug' => 'direct',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        assertDatabaseHas('stores', [
+            'name' => 'Direct',
+            'reseller_id' => null,
+        ]);
+
+        $store = Store::query()->where('name', 'Direct')->firstOrFail();
+
+        expect($store->reseller_id)->toBeNull()
+            ->and($store->domains()->where('active', true)->value('name'))->toBe('direct.test');
+    });
+
+    it('counts every store by status above the console store list', function (): void {
+        actAsConsoleAdmin();
+
+        Store::factory()->active()->count(2)->create();
+        Store::factory()->suspended()->create();
+        $failing = Store::factory()->active()->create();
+        StorefrontDeployment::factory()->for($failing)->create(['status' => StorefrontDeploymentStatus::Failed]);
+
+        $stats = collect(invade(livewire(StoreStatusOverview::class)->instance())->getStats())
+            ->keyBy(fn (Stat $stat): string => (string) $stat->getLabel());
+
+        expect($stats->get(StoreStatus::Active->getLabel())?->getValue())->toBe(3)
+            ->and($stats->get(StoreStatus::Suspended->getLabel())?->getValue())->toBe(1)
+            ->and($stats->get(__('vendra-store::attributes.failed_storefronts'))?->getValue())->toBe(1)
+            ->and(urldecode((string) $stats->get(StoreStatus::Suspended->getLabel())?->getUrl()))->toContain('filters[status][values][0]=suspended');
+    });
+});
+
+describe('platform currencies, languages and translations', function (): void {
+    it('manages platform currencies apart from store currencies', function (): void {
+        $store = createTestTenant();
+        $storeEuro = CurrencyFactory::new()->active()->code('EUR')->createOne(['tenant_id' => $store?->getKey(), 'position' => 1]);
+
+        actAsConsoleAdmin();
+
+        livewire(ListCurrencies::class)
+            ->call('loadTable')
+            ->assertCanNotSeeTableRecords([$storeEuro])
+            ->callAction('installCurrencies', ['codes' => ['USD', 'EUR']])
+            ->assertHasNoFormErrors();
+
+        livewire(ListCurrencies::class)
+            ->call('loadTable')
+            ->assertCanSeeTableRecords([platformCurrency('USD'), platformCurrency('EUR')])
+            ->assertCanNotSeeTableRecords([$storeEuro])
+            ->callAction(TestAction::make('setDefault')->table(platformCurrency('EUR')));
+
+        expect(platformCurrency('EUR')->is_default)->toBeTrue()
+            ->and(platformCurrency('USD')->is_default)->toBeFalse()
+            ->and($storeEuro->refresh()->is_default)->toBeTrue();
+    });
+
+    it('manages platform languages apart from store languages', function (): void {
+        $store = createTestTenant();
+        $storeEnglish = LanguageFactory::new()->active()->createOne(['tenant_id' => $store?->getKey(), 'locale' => 'en']);
+
+        actAsConsoleAdmin();
+
+        livewire(CreateLanguage::class)
+            ->fillForm(['locale' => 'en', 'active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $platformEnglish = Language::query()->whereNull('tenant_id')->where('locale', 'en')->sole();
+        $platformGerman = Language::query()->create(['locale' => 'de', 'position' => 2]);
+
+        livewire(ListLanguages::class)
+            ->loadTable()
+            ->assertCanSeeTableRecords([$platformEnglish, $platformGerman])
+            ->assertCanNotSeeTableRecords([$storeEnglish])
+            ->assertActionExists('syncLanguageLines')
+            ->callAction(TestAction::make('setDefault')->table($platformGerman));
+
+        expect($platformGerman->refresh()->is_default)->toBeTrue()
+            ->and($platformEnglish->refresh()->is_default)->toBeFalse()
+            ->and($storeEnglish->refresh()->is_default)->toBeTrue();
+    });
+
+    it('manages platform translations apart from store translations', function (): void {
+        $store = createTestTenant();
+        $storeLine = LanguageLineFactory::new()->createOne([
+            'tenant_id' => $store?->getKey(),
             'namespace' => 'vendra-language',
             'group' => 'navigation',
             'key' => 'language',
-            'text' => ['en' => 'Platform language'],
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+            'text' => ['en' => 'Store language'],
+        ]);
 
-    $platformLine = LanguageLine::query()->whereNull('tenant_id')
-        ->where('namespace', 'vendra-language')
-        ->where('group', 'navigation')
-        ->where('key', 'language')
-        ->sole();
+        actAsConsoleAdmin();
+        Language::query()->create(['locale' => 'en', 'position' => 1]);
 
-    livewire(ListLanguageLines::class)
-        ->loadTable()
-        ->assertCanSeeTableRecords([$platformLine])
-        ->assertCanNotSeeTableRecords([$storeLine])
-        ->assertActionExists('syncLanguageLines')
-        ->callAction('syncLanguageLines')
-        ->assertNotified();
+        Cache::forget(LanguageLine::getCacheKey('navigation', 'en', 'vendra-language'));
 
-    expect($storeLine->refresh()->text)->toBe(['en' => 'Store language'])
-        ->and(Arr::get($platformLine->refresh()->text, 'en'))->toBe('Platform language');
-});
+        expect(LanguageLine::getTranslationsForGroup('en', 'navigation', 'vendra-language'))
+            ->not->toHaveKey('language');
 
-it('opens platform language and translation records in the console', function (): void {
-    actAsConsoleAdmin();
-    Filament::getPanel('console')->strictAuthorization();
+        livewire(CreateLanguageLine::class)
+            ->fillForm([
+                'namespace' => 'vendra-language',
+                'group' => 'navigation',
+                'key' => 'language',
+                'text' => ['en' => 'Platform language'],
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
 
-    $language = Language::query()->create(['locale' => 'en', 'position' => 1]);
-    $line = LanguageLineFactory::new()->createOne();
+        $platformLine = LanguageLine::query()->whereNull('tenant_id')
+            ->where('namespace', 'vendra-language')
+            ->where('group', 'navigation')
+            ->where('key', 'language')
+            ->sole();
 
-    livewire(ViewLanguage::class, ['record' => $language->getKey()])->assertOk();
-    livewire(EditLanguage::class, ['record' => $language->getKey()])->assertOk();
-    livewire(ViewLanguageLine::class, ['record' => $line->getKey()])->assertOk();
-    livewire(EditLanguageLine::class, ['record' => $line->getKey()])->assertOk();
-});
+        livewire(ListLanguageLines::class)
+            ->loadTable()
+            ->assertCanSeeTableRecords([$platformLine])
+            ->assertCanNotSeeTableRecords([$storeLine])
+            ->assertActionExists('syncLanguageLines')
+            ->callAction('syncLanguageLines')
+            ->assertNotified();
 
-it('prices plans in platform currencies and keeps a plan currency when the default changes', function (): void {
-    resolve(InstallCurrenciesAction::class)->execute(['USD', 'EUR']);
+        expect($storeLine->refresh()->text)->toBe(['en' => 'Store language'])
+            ->and(Arr::get($platformLine->refresh()->text, 'en'))->toBe('Platform language');
+    });
 
-    actAsConsoleAdmin();
+    it('opens platform language and translation records in the console', function (): void {
+        actAsConsoleAdmin();
+        Filament::getPanel('console')->strictAuthorization();
 
-    livewire(CreatePlan::class)
-        ->assertSchemaStateSet(['currency_code' => 'USD'])
-        ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['USD', 'EUR'])
-        ->fillForm([
-            'name' => 'Growth',
-            'max_units' => 3,
-            'period_unit' => 'month',
-            'period_count' => 1,
-            'price' => 1_500,
-            'active' => true,
-        ])
-        ->call('create')
-        ->assertHasNoFormErrors();
+        $language = Language::query()->create(['locale' => 'en', 'position' => 1]);
+        $line = LanguageLineFactory::new()->createOne();
 
-    $plan = Plan::query()->where('name', 'Growth')->sole();
-    $subscription = Subscription::factory()->for($plan)->create(['price' => $plan->price, 'currency_code' => $plan->currency_code]);
-
-    resolve(SetDefaultCurrencyAction::class)->execute(platformCurrency('EUR'));
-    platformCurrency('USD')->update(['active' => false]);
-
-    expect($plan->refresh()->currency_code)->toBe('USD')
-        ->and($subscription->refresh()->currency_code)->toBe('USD');
-
-    livewire(EditPlan::class, ['record' => $plan->getKey()])
-        ->assertSchemaStateSet(['currency_code' => 'USD'])
-        ->assertFormFieldExists('currency_code', fn (Select $field): bool => array_keys($field->getOptions()) === ['EUR', 'USD']);
-
-    livewire(CreatePlan::class)
-        ->assertSchemaStateSet(['currency_code' => 'EUR']);
+        livewire(ViewLanguage::class, ['record' => $language->getKey()])->assertOk();
+        livewire(EditLanguage::class, ['record' => $language->getKey()])->assertOk();
+        livewire(ViewLanguageLine::class, ['record' => $line->getKey()])->assertOk();
+        livewire(EditLanguageLine::class, ['record' => $line->getKey()])->assertOk();
+    });
 });
