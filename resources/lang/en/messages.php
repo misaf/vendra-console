@@ -61,6 +61,8 @@ return [
     'runtime_engine_mismatch' => 'Configured as :configured, but :reported answered',
     'runtime_not_checked' => 'Not checked yet · waiting for the storefront worker to record runtime health',
     'runtime_report_stale' => 'Last checked :time · the storefront worker or scheduler may be down',
+    'runtime_checked_at' => 'Checked :time',
+    'runtime_read_pending' => 'Collecting storefront information…',
     'runtime_unavailable' => 'Runtime unavailable',
     'runtime_unavailable_message' => 'Runtime unavailable: :message',
     'storefront_reconciled' => 'Storefront reconciliation queued',

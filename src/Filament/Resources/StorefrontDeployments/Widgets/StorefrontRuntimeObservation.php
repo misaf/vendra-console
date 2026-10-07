@@ -9,24 +9,19 @@ use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Database\Eloquent\Model;
 use LogicException;
-use Misaf\VendraStore\Contracts\StorefrontProvisioner;
 use Misaf\VendraStore\Enums\StorefrontRuntimeState;
 use Misaf\VendraStore\Models\StorefrontDeployment;
 use Misaf\VendraStore\Support\StorefrontObservation;
-use Misaf\VendraStore\Support\StorefrontReference;
+use Misaf\VendraStore\Support\StorefrontRuntimeSnapshots;
 use Throwable;
 
-/**
- * Loads lazily, so a slow or unreachable provisioner never holds up the page,
- * and runs once per page load instead of on every Livewire request.
- */
 final class StorefrontRuntimeObservation extends StatsOverviewWidget
 {
     public ?Model $record = null;
 
     protected int|string|array $columnSpan = 'full';
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '5s';
 
     protected function getHeading(): string
     {
@@ -44,7 +39,7 @@ final class StorefrontRuntimeObservation extends StatsOverviewWidget
     protected function getStats(): array
     {
         try {
-            $observation = resolve(StorefrontProvisioner::class)->observe(StorefrontReference::for($this->deployment()));
+            $snapshot = resolve(StorefrontRuntimeSnapshots::class)->latest($this->deployment());
         } catch (Throwable $exception) {
             report($exception);
 
@@ -56,16 +51,28 @@ final class StorefrontRuntimeObservation extends StatsOverviewWidget
             ];
         }
 
-        return self::observationStats($observation);
+        if ($snapshot?->observation === null) {
+            return [
+                Stat::make(__('vendra-console::attributes.status'), __('vendra-console::attributes.runtime_state_unknown'))
+                    ->description($snapshot?->error === null
+                        ? __('vendra-console::messages.runtime_read_pending')
+                        : __('vendra-console::messages.runtime_unavailable_message', ['message' => $snapshot->error]))
+                    ->icon(Heroicon::OutlinedServerStack)
+                    ->color($snapshot?->error === null ? 'gray' : 'danger'),
+            ];
+        }
+
+        return self::observationStats($snapshot->observation, $snapshot->checkedAt->diffForHumans());
     }
 
     /**
      * @return list<Stat>
      */
-    private static function observationStats(StorefrontObservation $observation): array
+    private static function observationStats(StorefrontObservation $observation, string $checkedAt): array
     {
         return [
             Stat::make(__('vendra-console::attributes.status'), __("vendra-console::attributes.runtime_state_{$observation->state->value}"))
+                ->description(__('vendra-console::messages.runtime_checked_at', ['time' => $checkedAt]))
                 ->icon(Heroicon::OutlinedServerStack)
                 ->color(match ($observation->state) {
                     StorefrontRuntimeState::Running => 'success',

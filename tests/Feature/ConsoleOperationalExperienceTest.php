@@ -18,11 +18,13 @@ use Misaf\VendraConsole\Filament\Widgets\ContainerRuntimeHealth;
 use Misaf\VendraConsole\Filament\Widgets\NeedsAttention;
 use Misaf\VendraConsole\Models\Console;
 use Misaf\VendraStore\Actions\RecordStorefrontRuntimeHealthAction;
+use Misaf\VendraStore\Actions\RecordStorefrontRuntimeSnapshotAction;
 use Misaf\VendraStore\Enums\StorefrontDeploymentStatus;
 use Misaf\VendraStore\Enums\StorefrontDesiredState;
 use Misaf\VendraStore\Enums\StoreStatus;
 use Misaf\VendraStore\Jobs\ProvisionStorefrontJob;
 use Misaf\VendraStore\Jobs\ReconcileStorefrontJob;
+use Misaf\VendraStore\Jobs\RecordStorefrontRuntimeSnapshotJob;
 use Misaf\VendraStore\Jobs\RestartStorefrontJob;
 use Misaf\VendraStore\Models\Store;
 use Misaf\VendraStore\Models\StorefrontDeployment;
@@ -39,6 +41,7 @@ beforeEach(function (): void {
     Artisan::shouldReceive('call')->andReturn(0);
     Config::set('container.drivers.docker.host', 'http://console-runtime.test');
     Config::set('vendra-store.storefront.network', 'traefik-public');
+    Config::set('queue.default', 'database');
 });
 
 function actAsOperationalConsoleUser(): User
@@ -116,7 +119,7 @@ it('retries only failed deployments through the existing provisioning job', func
     );
 });
 
-it('queues reconcile and restart on the storefront worker and reads logs through the runtime contract', function (): void {
+it('queues lifecycle operations and collects deployment logs on the storefront worker', function (): void {
     Queue::fake();
     $deployment = StorefrontDeployment::factory()->for(Store::factory()->active())->create([
         'status' => StorefrontDeploymentStatus::Ready,
@@ -133,10 +136,18 @@ it('queues reconcile and restart on the storefront worker and reads logs through
         ->callAction(TestAction::make('restartDeployment')->table($deployment))
         ->assertNotified();
 
-    livewire(ListStorefrontDeployments::class)
+    $logs = livewire(ListStorefrontDeployments::class)
         ->call('loadTable')
         ->mountAction(TestAction::make('viewLogs')->table($deployment))
-        ->assertActionDataSet(['logs' => "booted\nready"]);
+        ->call('forceRender')
+        ->assertSee(__('vendra-console::messages.runtime_read_pending'));
+
+    expect($runtime->transport->requests)->toBeEmpty();
+    Queue::assertPushedOn(ProvisionStorefrontJob::QUEUE, RecordStorefrontRuntimeSnapshotJob::class, fn (RecordStorefrontRuntimeSnapshotJob $job): bool => $job->deploymentId === $deployment->id && $job->logs);
+
+    new RecordStorefrontRuntimeSnapshotJob($deployment->id, logs: true)->handle(resolve(RecordStorefrontRuntimeSnapshotAction::class));
+
+    $logs->call('forceRender')->assertSee('booted')->assertSee('ready');
 
     Queue::assertPushed(ReconcileStorefrontJob::class, fn (ReconcileStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
     Queue::assertPushed(RestartStorefrontJob::class, fn (RestartStorefrontJob $job): bool => $job->deploymentId === $deployment->id);
@@ -145,7 +156,8 @@ it('queues reconcile and restart on the storefront worker and reads logs through
         ->not->toContain('restart');
 });
 
-it('observes the storefront runtime in a lazy widget instead of on every page render', function (): void {
+it('refreshes the runtime widget from worker snapshots without accessing the runtime in the web process', function (): void {
+    Queue::fake([RecordStorefrontRuntimeSnapshotJob::class]);
     $deployment = StorefrontDeployment::factory()->create([
         'status' => StorefrontDeploymentStatus::Ready,
         'slug' => 'observed-runtime',
@@ -160,12 +172,21 @@ it('observes the storefront runtime in a lazy widget instead of on every page re
 
     expect($runtime->transport->requests)->toBeEmpty();
 
-    livewire(StorefrontRuntimeObservation::class, ['record' => $deployment])
+    $widget = livewire(StorefrontRuntimeObservation::class, ['record' => $deployment])
         ->assertOk()
+        ->assertSee(__('vendra-console::messages.runtime_read_pending'));
+
+    expect($runtime->transport->requests)->toBeEmpty();
+    Queue::assertPushedOn(ProvisionStorefrontJob::QUEUE, RecordStorefrontRuntimeSnapshotJob::class, fn (RecordStorefrontRuntimeSnapshotJob $job): bool => $job->deploymentId === $deployment->id && ! $job->logs);
+
+    new RecordStorefrontRuntimeSnapshotJob($deployment->id)->handle(resolve(RecordStorefrontRuntimeSnapshotAction::class));
+    $requestCount = count($runtime->transport->requests);
+
+    $widget->call('$refresh')
         ->assertSee(__('vendra-console::attributes.runtime_state_running'))
         ->assertSee('ghcr.io/misaf/vendra-storefront-florist@sha256:abc123');
 
-    expect($runtime->transport->requests)->not->toBeEmpty();
+    expect(count($runtime->transport->requests))->toBe($requestCount);
 });
 
 it('degrades deployment inspection and actions when the runtime is unavailable', function (): void {
@@ -178,6 +199,8 @@ it('degrades deployment inspection and actions when the runtime is unavailable',
         : dockerResponse(['message' => 'The fake runtime is configured as unreachable.'], 500));
 
     actAsOperationalConsoleUser();
+
+    new RecordStorefrontRuntimeSnapshotJob($deployment->id)->handle(resolve(RecordStorefrontRuntimeSnapshotAction::class));
 
     livewire(ViewStorefrontDeployment::class, ['record' => $deployment->id])
         ->assertOk();
@@ -356,18 +379,24 @@ describe('store row storefront operations', function (): void {
 
     it('reads storefront logs from the store row', function (): void {
         $store = Store::factory()->active()->create();
-        StorefrontDeployment::factory()->for($store)->create([
+        $deployment = StorefrontDeployment::factory()->for($store)->create([
             'status' => StorefrontDeploymentStatus::Ready,
             'slug' => 'store-row-logs',
         ]);
-        fakeExistingStorefront(logs: "booted\nserving");
+        fakeExistingStorefront(logs: "booted\n<script>alert(1)</script>\nserving");
 
         actAsOperationalConsoleUser();
+
+        new RecordStorefrontRuntimeSnapshotJob($deployment->id, logs: true)->handle(resolve(RecordStorefrontRuntimeSnapshotAction::class));
 
         livewire(ListStores::class)
             ->call('loadTable')
             ->mountAction(TestAction::make('viewStorefrontLogs')->table($store))
-            ->assertActionDataSet(['logs' => "booted\nserving"]);
+            ->call('forceRender')
+            ->assertSee('booted')
+            ->assertSee('serving')
+            ->assertSee('<script>alert(1)</script>')
+            ->assertDontSee('<script>alert(1)</script>', escape: false);
     });
 
     it('links the store row to its latest deployment record', function (): void {

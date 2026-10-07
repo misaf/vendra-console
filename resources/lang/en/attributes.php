@@ -105,7 +105,7 @@ return [
     'recent_storefront_logs' => 'Recent storefront logs',
     'requested_at' => 'Requested at',
     'runtime_observation' => 'Runtime observation',
-    'runtime_observation_description' => 'Live state read through the storefront provisioner.',
+    'runtime_observation_description' => 'Latest storefront state, refreshed automatically.',
     'runtime_state_absent' => 'Absent',
     'runtime_state_created' => 'Created',
     'runtime_state_running' => 'Running',

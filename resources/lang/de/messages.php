@@ -61,6 +61,8 @@ return [
     'runtime_engine_mismatch' => 'Als :configured konfiguriert, aber :reported antwortete',
     'runtime_not_checked' => 'Noch nicht geprüft · wartet darauf, dass der Storefront-Worker den Runtime-Zustand erfasst',
     'runtime_report_stale' => 'Zuletzt geprüft :time · der Storefront-Worker oder der Scheduler läuft möglicherweise nicht',
+    'runtime_checked_at' => 'Geprüft :time',
+    'runtime_read_pending' => 'Storefront-Informationen werden abgerufen…',
     'runtime_unavailable' => 'Laufzeit nicht verfügbar',
     'runtime_unavailable_message' => 'Laufzeit nicht verfügbar: :message',
     'storefront_reconciled' => 'Abgleich der Storefront eingeplant',

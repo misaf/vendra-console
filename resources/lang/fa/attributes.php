@@ -105,7 +105,7 @@ return [
     'recent_storefront_logs' => 'لاگ‌های اخیر ویترین',
     'requested_at' => 'زمان درخواست',
     'runtime_observation' => 'مشاهده محیط اجرا',
-    'runtime_observation_description' => 'وضعیت زنده از طریق سرویس ویترین خوانده می‌شود.',
+    'runtime_observation_description' => 'آخرین وضعیت ویترین، با به‌روزرسانی خودکار.',
     'runtime_state_absent' => 'وجود ندارد',
     'runtime_state_created' => 'ایجادشده',
     'runtime_state_running' => 'در حال اجرا',

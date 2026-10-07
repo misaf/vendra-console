@@ -61,6 +61,8 @@ return [
     'runtime_engine_mismatch' => 'پیکربندی :configured است اما :reported پاسخ داد',
     'runtime_not_checked' => 'هنوز بررسی نشده · در انتظار ثبت وضعیت ران‌تایم توسط ورکر ویترین',
     'runtime_report_stale' => 'آخرین بررسی :time · ممکن است ورکر ویترین یا زمان‌بند متوقف شده باشد',
+    'runtime_checked_at' => 'بررسی شده :time',
+    'runtime_read_pending' => 'در حال دریافت اطلاعات ویترین…',
     'runtime_unavailable' => 'محیط اجرا در دسترس نیست',
     'runtime_unavailable_message' => 'محیط اجرا در دسترس نیست: :message',
     'storefront_reconciled' => 'همگام‌سازی ویترین در صف قرار گرفت',

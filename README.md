@@ -113,7 +113,7 @@ tenant-aware helpers, and join explicitly where a listing must be per-tenant.
 | Resource | Delegates to |
 | --- | --- |
 | `StoreResource` | `Misaf\VendraStore`'s provisioning, lifecycle, storefront, domain, billing-reseller, and offboarding actions; administrator membership delegates to `misaf/vendra-user` |
-| `StorefrontDeploymentResource` | Read-only deployment history, with live observation through `StorefrontProvisioner` in the lazy `StorefrontRuntimeObservation` footer widget; recovery delegates to `vendra-store` actions |
+| `StorefrontDeploymentResource` | Read-only deployment history, with worker-recorded snapshots in the lazy `StorefrontRuntimeObservation` footer widget; recovery delegates to `vendra-store` actions |
 | `ResellerResource` | `Misaf\VendraReseller`'s reseller/user account actions and `misaf/vendra-subscription`'s lifecycle actions |
 | `PlanResource` | `misaf/vendra-subscription`'s plan model; the form edits the plan's `PlanFeature` flags and one field per `PlanLimit`, where an empty limit means unlimited |
 | `ActivityLogResource` | `misaf/vendra-activity-log`'s model, read-only and across every tenant |
@@ -153,6 +153,13 @@ holds the runtime socket. The scheduler dispatches `vendra-store`'s
 `RecordStorefrontRuntimeHealthJob` onto the `storefronts` queue every minute,
 and the widget reads the report it records through `StorefrontRuntimeHealth`,
 warning when no report exists or the last one is more than five minutes old.
+
+Store and deployment log modals and the deployment observation widget read
+`StorefrontRuntimeSnapshots`. Missing results queue collection on the same
+storefront worker; the Console polls every five seconds and results expire after
+30 seconds. Collection failures show an error, and pending reads never probe the
+runtime from the web process. Use an asynchronous queue connection with the
+existing `storefronts` worker and a shared cache.
 
 Store rows expose suspend/reactivate, provisioning recovery, managed storefront
 start/stop/restart/redeploy/retry/reconcile, deployment viewing, recent logs,

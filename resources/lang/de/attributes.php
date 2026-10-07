@@ -105,7 +105,7 @@ return [
     'recent_storefront_logs' => 'Aktuelle Storefront-Logs',
     'requested_at' => 'Angefordert am',
     'runtime_observation' => 'Laufzeitbeobachtung',
-    'runtime_observation_description' => 'Live-Zustand über den Storefront-Provisioner.',
+    'runtime_observation_description' => 'Letzter Storefront-Zustand, automatisch aktualisiert.',
     'runtime_state_absent' => 'Nicht vorhanden',
     'runtime_state_created' => 'Erstellt',
     'runtime_state_running' => 'Laufend',
